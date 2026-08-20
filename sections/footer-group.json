@@ -1,0 +1,41 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "footer",
+  "name": "t:general.footer",
+  "sections": {
+    "footer": {
+      "type": "footer",
+      "settings": {
+        "brand_name": "Swastik Jewels",
+        "brand_description": "<p>Welcome to the world of Swastik Jewels, designed to enhance every moment with elegant designs that shine effortlessly.</p>",
+        "social_facebook_link": "https://www.facebook.com/swastikjewels.bynitingupta/",
+        "social_instagram_link": "https://www.instagram.com/swastikjewels_bynitingupta/",
+        "social_twitter_link": "",
+        "social_youtube_link": "",
+        "menu_title": "KNOW YOUR JEWELLERY",
+        "menu": "know-your-jewellery-menu",
+        "customer_menu_title": "POLICY",
+        "customer_menu": "policy",
+        "help_menu_title": "HELP & SUPPORT",
+        "help_menu": "help-support",
+        "contact_address": "2549, Gali No. 6, Block 35M, Beadonpura, Karol Bagh, New Delhi, Delhi, 110005",
+        "contact_phone": "+91 96600 96700",
+        "contact_email": "contact@swastikjewel.in",
+        "color_footer_bg": "#fdfbf7",
+        "color_footer_text": "#013f3e",
+        "color_footer_accent": "#d4af37"
+      }
+    }
+  },
+  "order": [
+    "footer"
+  ]
+}

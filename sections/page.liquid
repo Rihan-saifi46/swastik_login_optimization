@@ -1,0 +1,108 @@
+{% comment %}
+  This section is used in the page template to render store pages like About us
+  or Contact us.
+
+  https://shopify.dev/docs/storefronts/themes/architecture/templates/page
+{% endcomment %}
+
+<div class="page-header">
+  <div class="page-width container">
+    <h1 class="page-title">{{ page.title }}</h1>
+    <nav class="page-breadcrumb" aria-label="Breadcrumb">
+      <a href="{{ routes.root_url }}">Home</a>
+      <span aria-hidden="true">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+      </span>
+      <span>{{ page.title }}</span>
+    </nav>
+  </div>
+</div>
+
+<div class="page-width container">
+  <div class="rte">
+    {{ page.content }}
+  </div>
+</div>
+
+
+{% stylesheet %}
+  .page-header {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(245, 238, 235, 0.7) 0%, rgba(230, 240, 245, 0.5) 100%);
+    padding: 6rem 2rem;
+    text-align: center;
+    margin-bottom: 4rem;
+  }
+  .page-width {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem 2rem;
+  }
+  .page-title {
+    margin-bottom: 1.5rem;
+    font-size: 4.2rem;
+    color: var(--color-primary, #013F3E);
+  }
+  .page-breadcrumb {
+    font-size: 1.3rem;
+    color: var(--color-foreground, #1A1A1A);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    opacity: 0.8;
+  }
+  .page-breadcrumb a {
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+  .page-breadcrumb a:hover {
+    opacity: 0.7;
+  }
+  .rte {
+    font-size: 1.6rem;
+    line-height: 1.8;
+    color: var(--color-foreground, #1A1A1A);
+  }
+  .rte p {
+    margin-bottom: 1.5rem;
+  }
+  .rte p:last-child {
+    margin-bottom: 0;
+  }
+  .rte h1, .rte h2, .rte h3, .rte h4, .rte h5, .rte h6 {
+    margin-top: 3rem;
+    margin-bottom: 1.2rem;
+    font-weight: 500;
+  }
+  .rte h1:first-child, .rte h2:first-child, .rte h3:first-child, .rte h4:first-child, .rte h5:first-child, .rte h6:first-child {
+    margin-top: 0;
+  }
+  .rte ul, .rte ol {
+    margin-bottom: 2rem;
+    padding-left: 2.5rem;
+  }
+  .rte ul {
+    list-style-type: disc;
+  }
+  .rte ol {
+    list-style-type: decimal;
+  }
+  .rte li {
+    margin-bottom: 0.8rem;
+  }
+  .rte li p {
+    margin-bottom: 0;
+    display: inline;
+  }
+  .rte a {
+    color: var(--color-primary, #013F3E);
+    text-decoration: underline;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:general.page",
+  "settings": []
+}
+{% endschema %}

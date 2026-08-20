@@ -1,0 +1,32 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "custom_contact": {
+      "type": "custom-contact-page",
+      "settings": {
+        "main_heading": "Contact Us",
+        "main_subheading": "We're here to help you sparkle.",
+        "map_embed": "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.311196001928!2d77.19130161089312!3d28.65039937555346!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d03d719622805%3A0x646d4d936b614f0c!2sSwastik%20Jewels!5e0!3m2!1sen!2sin!4v1782280803694!5m2!1sen!2sin\" width=\"600\" height=\"450\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"strict-origin-when-cross-origin\"></iframe>",
+        "heading": "Get in Touch With Us!",
+        "subheading": "Have a question? We're just a message away! 💬",
+        "description": "<p>Whether you're wondering about our latest jewellery collections, need help with a custom order, or just want to say hello — we're all ears!</p>",
+        "business_hours": "Tuesday to Sunday, 12 PM to 8 PM (IST)",
+        "legal_entity": "Swastik Jewels",
+        "email": "contact@swastik.in",
+        "phone": "+91 96719 00007",
+        "address": "2549, Gali No. 6, Block 35M, Beadonpura, Karol Bagh, New Delhi, Delhi, 110005"
+      }
+    }
+  },
+  "order": [
+    "custom_contact"
+  ]
+}

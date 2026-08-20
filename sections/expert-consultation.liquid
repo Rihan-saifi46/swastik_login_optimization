@@ -1,0 +1,529 @@
+{% comment %}
+  Renders the Expert Consultation / Personalized Service section with contact cards,
+  a call-to-action button, and custom styling options.
+{% endcomment %}
+
+<div class="expert-consultation section-spacing" style="
+  --bg-color: {{ section.settings.bg_color | default: '#EBF5F4' }};
+  --text-color: {{ section.settings.text_color | default: '#013F3E' }};
+  --card-bg-color: {{ section.settings.card_bg_color | default: '#FFFFFF' }};
+  --btn-bg-color: {{ section.settings.btn_bg_color | default: '#013F3E' }};
+  --btn-text-color: {{ section.settings.btn_text_color | default: '#FFFFFF' }};
+  --padding-top: {{ section.settings.padding_top | default: 80 }}px;
+  --padding-bottom: {{ section.settings.padding_bottom | default: 40 }}px;
+">
+  <div class="expert-consultation__container">
+    
+    <!-- Section Header -->
+    <div class="expert-consultation__header">
+      {% if section.settings.subheading != blank %}
+        <div class="expert-consultation__subheading-wrapper">
+          <!-- Sparkle Left -->
+          <span class="expert-consultation__sparkle">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z" />
+            </svg>
+          </span>
+          <span class="expert-consultation__subheading">{{ section.settings.subheading | escape }}</span>
+          <!-- Sparkle Right -->
+          <span class="expert-consultation__sparkle">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z" />
+            </svg>
+          </span>
+        </div>
+      {% endif %}
+      
+      {% if section.settings.title != blank %}
+        <h2 class="expert-consultation__heading serif-font">{{ section.settings.title | escape }}</h2>
+      {% endif %}
+      
+      {% if section.settings.description != blank %}
+        <p class="expert-consultation__description">{{ section.settings.description | escape }}</p>
+      {% endif %}
+    </div>
+
+    <!-- Contact Cards Grid -->
+    <div class="expert-consultation__grid">
+      {% for block in section.blocks %}
+        {% if block.type == 'contact_option' %}
+          {% if block.settings.link != blank %}
+            <a href="{{ block.settings.link }}" class="expert-consultation__card-link" {{ block.shopify_attributes }}>
+          {% else %}
+            <div class="expert-consultation__card" {{ block.shopify_attributes }}>
+          {% endif %}
+            
+            <div class="{% if block.settings.link != blank %}expert-consultation__card{% else %}expert-consultation__card-content{% endif %}">
+              <div class="expert-consultation__icon-circle">
+                {% case block.settings.icon %}
+                  {% when 'phone' %}
+                    <svg class="expert-consultation__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                  {% when 'whatsapp' %}
+                    <svg class="expert-consultation__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                    </svg>
+                  {% when 'video' %}
+                    <svg class="expert-consultation__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M23 7l-7 5 7 5V7z"/>
+                      <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                    </svg>
+                {% endcase %}
+              </div>
+              <h3 class="expert-consultation__card-title serif-font">{{ block.settings.title | escape }}</h3>
+              <p class="expert-consultation__card-desc">{{ block.settings.description | escape }}</p>
+            </div>
+
+          {% if block.settings.link != blank %}
+            </a>
+          {% else %}
+            </div>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- CTA Button & Subtext -->
+    <div class="expert-consultation__footer">
+      {% if section.settings.button_text != blank %}
+        <a href="{{ section.settings.button_link | default: '#' }}" class="expert-consultation__button btn">
+          <span class="expert-consultation__button-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </span>
+          {{ section.settings.button_text | escape }}
+        </a>
+      {% endif %}
+      
+      {% if section.settings.sub_text != blank %}
+        <p class="expert-consultation__sub-text">{{ section.settings.sub_text | escape }}</p>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+{% stylesheet %}
+  .expert-consultation {
+    background-color: var(--bg-color, #EBF5F4);
+    color: var(--text-color, #013F3E);
+    padding-top: var(--padding-top, 80px);
+    padding-bottom: var(--padding-bottom, 40px);
+    overflow: hidden;
+  }
+
+  .expert-consultation__container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-left: 4.8rem;
+    padding-right: 4.8rem;
+    text-align: center;
+  }
+
+  /* Header Styling */
+  .expert-consultation__header {
+    margin-bottom: 5rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .expert-consultation__subheading-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .expert-consultation__sparkle {
+    color: var(--color-accent, #D4AF37);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .expert-consultation__subheading {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--color-accent, #D4AF37);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+  }
+
+  .expert-consultation__heading {
+    font-size: 4.5rem;
+    color: var(--text-color, #013F3E);
+    margin-top: 0;
+    margin-bottom: 2rem;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .expert-consultation__description {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.6rem;
+    line-height: 1.6;
+    color: var(--text-color, #013F3E);
+    opacity: 0.8;
+    margin: 0;
+  }
+
+  /* Grid & Cards Styling */
+  .expert-consultation__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 3.2rem;
+    max-width: 1200px;
+    margin: 0 auto 5rem;
+  }
+
+  .expert-consultation__card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    outline: none;
+  }
+
+  .expert-consultation__card {
+    background-color: var(--card-bg-color, #FFFFFF);
+    border-radius: 20px;
+    padding: 4.5rem 3.5rem;
+    box-shadow: 0 10px 30px rgba(1, 63, 62, 0.03);
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), 
+                box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .expert-consultation__card-link:hover .expert-consultation__card {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(1, 63, 62, 0.08);
+  }
+
+  .expert-consultation__icon-circle {
+    width: 6.4rem;
+    height: 6.4rem;
+    border-radius: 50%;
+    background-color: var(--btn-bg-color, #013F3E);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2.4rem;
+    transition: transform 0.4s ease;
+  }
+
+  .expert-consultation__card-link:hover .expert-consultation__icon-circle {
+    transform: scale(1.05);
+  }
+
+  .expert-consultation__icon {
+    width: 2.6rem;
+    height: 2.6rem;
+    color: var(--color-accent, #D4AF37);
+  }
+
+  .expert-consultation__card-title {
+    font-size: 2.2rem;
+    color: var(--text-color, #013F3E);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
+
+  .expert-consultation__card-desc {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.4rem;
+    color: var(--text-color, #013F3E);
+    opacity: 0.7;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Footer Section Styling */
+  .expert-consultation__footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.8rem;
+  }
+
+  .expert-consultation__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    background-color: var(--btn-bg-color, #013F3E);
+    color: var(--btn-text-color, #FFFFFF);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    padding: 1.6rem 3.6rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(1, 63, 62, 0.15);
+    transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+    border: none;
+    cursor: pointer;
+  }
+
+  .expert-consultation__button-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent, #D4AF37);
+  }
+
+  .expert-consultation__button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(1, 63, 62, 0.25);
+    background-color: #012b2a; /* Slightly darker shade for hover interaction */
+  }
+
+  .expert-consultation__sub-text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.3rem;
+    color: var(--text-color, #013F3E);
+    opacity: 0.6;
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+
+  /* Responsive Styling */
+  @media (max-width: 1024px) {
+    .expert-consultation__grid {
+      gap: 2rem;
+    }
+    .expert-consultation__card {
+      padding: 3.5rem 2.5rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .expert-consultation {
+      padding-top: calc(var(--padding-top, 80px) * 0.75);
+      padding-bottom: calc(var(--padding-bottom, 40px) * 0.75);
+    }
+    
+    .expert-consultation__container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+
+    .expert-consultation__heading {
+      font-size: 3.2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .expert-consultation__grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .expert-consultation__card {
+      padding: 4rem 3rem;
+    }
+
+    .expert-consultation__button {
+      width: 100%;
+      max-width: 320px;
+      padding: 1.5rem 2.5rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Expert Consultation",
+  "settings": [
+    {
+      "type": "text",
+      "id": "subheading",
+      "default": "PERSONALIZED SERVICE",
+      "label": "Subheading"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "default": "Not Sure What to Choose?",
+      "label": "Heading"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "default": "Our certified jewelry experts are here to help you find the perfect piece. Get personalized recommendations based on your preferences and budget.",
+      "label": "Description"
+    },
+    {
+      "type": "header",
+      "content": "CTA Button"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "default": "Book Free Consultation",
+      "label": "Button Text"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button Link"
+    },
+    {
+      "type": "text",
+      "id": "sub_text",
+      "default": "Available Mon-Sat, 10 AM - 8 PM | Free Expert Advice",
+      "label": "Subtext below Button"
+    },
+    {
+      "type": "header",
+      "content": "Section Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "default": "#EBF5F4",
+      "label": "Background Color"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "default": "#013F3E",
+      "label": "Text Color"
+    },
+    {
+      "type": "color",
+      "id": "card_bg_color",
+      "default": "#FFFFFF",
+      "label": "Card Background Color"
+    },
+    {
+      "type": "color",
+      "id": "btn_bg_color",
+      "default": "#013F3E",
+      "label": "Button Background Color"
+    },
+    {
+      "type": "color",
+      "id": "btn_text_color",
+      "default": "#FFFFFF",
+      "label": "Button Text Color"
+    },
+    {
+      "type": "header",
+      "content": "Section Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding Top",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 120,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding Bottom",
+      "default": 40
+    }
+  ],
+  "blocks": [
+    {
+      "type": "contact_option",
+      "name": "Contact Option",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Contact Method",
+          "label": "Title"
+        },
+        {
+          "type": "text",
+          "id": "description",
+          "default": "Description of contact method.",
+          "label": "Description"
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "default": "phone",
+          "options": [
+            {
+              "value": "phone",
+              "label": "Phone"
+            },
+            {
+              "value": "whatsapp",
+              "label": "WhatsApp / Chat"
+            },
+            {
+              "value": "video",
+              "label": "Video Call"
+            }
+          ]
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Expert Consultation",
+      "blocks": [
+        {
+          "type": "contact_option",
+          "settings": {
+            "title": "Phone Call",
+            "description": "Speak directly with our experts",
+            "icon": "phone",
+            "link": "tel:+1234567890"
+          }
+        },
+        {
+          "type": "contact_option",
+          "settings": {
+            "title": "WhatsApp Chat",
+            "description": "Quick assistance on the go",
+            "icon": "whatsapp",
+            "link": "https://wa.me/918920905268"
+          }
+        },
+        {
+          "type": "contact_option",
+          "settings": {
+            "title": "Video Call",
+            "description": "Virtual jewelry viewing",
+            "icon": "video",
+            "link": "#"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

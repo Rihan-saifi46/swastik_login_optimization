@@ -1,0 +1,41 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "current": {
+    "max_page_width": "90rem",
+    "color_primary": "#012726",
+    "color_accent": "#D4AF37",
+    "background_color": "#FFFFFF",
+    "color_secondary_bg": "#FDFBF7",
+    "foreground_color": "#1A1A1A",
+    "input_corner_radius": 4,
+    "checkout_logo_image": "logo.png",
+    "sections": {
+      "cart-drawer": {
+        "type": "cart-drawer",
+        "settings": {}
+      },
+      "wishlist-drawer": {
+        "type": "wishlist-drawer",
+        "settings": {}
+      },
+      "whatsapp-widget": {
+        "type": "whatsapp-widget",
+        "settings": {
+          "whatsapp_number": "918920905268"
+        }
+      }
+    },
+    "content_for_index": []
+  },
+  "platform_customizations": {
+    "custom_css": []
+  }
+}

@@ -1,0 +1,841 @@
+
+{%- liquid
+
+  assign bg_color = section.settings.bg_color | default: '#fbf6f0'
+  assign text_color = section.settings.text_color | default: '#0a2a26'
+  assign accent_color = section.settings.accent_color | default: '#b38245'
+-%}
+
+<div class="category-showcase" style="--bg-color: {{ bg_color }}; --text-color: {{ text_color }}; --accent-color: {{ accent_color }};">
+  <div class="category-showcase__wrapper">
+    <!-- Left Banner -->
+    <div class="category-showcase__banner">
+      {%- if section.settings.subheading != blank -%}
+        <span class="category-showcase__subheading">{{ section.settings.subheading | escape }}</span>
+      {%- endif -%}
+      
+      <div class="category-showcase__tagline-divider">
+        <span class="category-showcase__tagline-line"></span>
+        <span class="category-showcase__tagline-sparkle">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,2L14.8,9.2L22,12L14.8,14.8L12,22L9.2,14.8L2,12L9.2,9.2L12,2Z"/>
+          </svg>
+        </span>
+      </div>
+
+      {%- if section.settings.heading != blank -%}
+        <h2 class="category-showcase__heading">{{ section.settings.heading | escape }}</h2>
+      {%- endif -%}
+
+      <span class="category-showcase__heading-underline"></span>
+
+      {%- if section.settings.description != blank -%}
+        <p class="category-showcase__description">{{ section.settings.description | escape }}</p>
+      {%- endif -%}
+
+      {%- if section.settings.button_label != blank -%}
+        <a href="{{ section.settings.button_link | default: routes.all_products_collection_url }}" class="category-showcase__btn">
+          {{ section.settings.button_label | escape }}
+          <span class="category-showcase__btn-arrow">&rarr;</span>
+        </a>
+      {%- endif -%}
+    </div>
+
+    <!-- Right Collections Grid Slider -->
+    <div class="category-showcase__slider-container">
+      <div class="category-showcase__grid">
+        {%- for block in section.blocks -%}
+          {%- liquid
+            assign collection = block.settings.collection
+            assign custom_title = block.settings.title
+            assign custom_image = block.settings.image
+            assign is_coming_soon = block.settings.is_coming_soon
+            
+            assign collection_title = collection.title | default: 'Collection'
+            if custom_title != blank
+              assign collection_title = custom_title
+            endif
+            
+            assign collection_image = collection.featured_image
+            if custom_image != blank
+              assign collection_image = custom_image
+            endif
+            
+            assign collection_url = collection.url | default: routes.all_products_collection_url
+          -%}
+          <div class="category-showcase__item{% if is_coming_soon %} category-showcase__item--coming-soon{% endif %}" {{ block.shopify_attributes }}>
+            {%- if is_coming_soon -%}
+              <div class="category-showcase__img-link" aria-label="{{ collection_title | escape }}">
+            {%- else -%}
+              <a href="{{ collection_url }}" class="category-showcase__img-link" aria-label="{{ collection_title | escape }}">
+            {%- endif -%}
+              <div class="category-showcase__img-container">
+                {%- if collection_image != blank -%}
+                  {{ collection_image | image_url: width: 400, height: 550, crop: 'center' | image_tag: loading: 'lazy', alt: collection_title, class: 'category-showcase__img' }}
+                {%- else -%}
+                  {%- capture placeholder_index -%}{% cycle 1, 2, 3, 4, 5 %}{%- endcapture -%}
+                  {{ 'collection-' | append: placeholder_index | placeholder_svg_tag: 'category-showcase__img placeholder-svg' }}
+                {%- endif -%}
+              </div>
+            {%- if is_coming_soon -%}
+              </div>
+            {%- else -%}
+              </a>
+            {%- endif -%}
+            
+            <div class="category-showcase__item-divider">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12,6L13.8,10.2L18,12L13.8,13.8L12,18L10.2,13.8L6,12L10.2,10.2L12,6Z"/>
+              </svg>
+            </div>
+
+            <h3 class="category-showcase__item-title">{{ collection_title | escape }}</h3>
+            
+            {%- if is_coming_soon -%}
+              <span class="category-showcase__explore category-showcase__explore--disabled">
+                COMING SOON
+              </span>
+            {%- else -%}
+              <a href="{{ collection_url }}" class="category-showcase__explore">
+                {{ 'sections.category_showcase.explore' | t | default: 'EXPLORE' }}
+                <span class="category-showcase__explore-arrow">&rarr;</span>
+              </a>
+            {%- endif -%}
+          </div>
+        {%- endfor -%}
+      </div>
+
+      <!-- Dedicated Luxury Mobile Controls (Below Cards) -->
+      <div class="category-showcase__mobile-controls">
+        <button type="button" class="category-showcase__nav-arrow category-showcase__nav-arrow--left" aria-label="Previous collections">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+
+        <div class="category-showcase__pagination-info">
+          <div class="category-showcase__pagination-text">
+            <span class="category-showcase__current-slide">01</span> <span class="category-showcase__pagination-separator">/</span> <span class="category-showcase__total-slides">0{{ section.blocks.size }}</span>
+          </div>
+          <div class="category-showcase__progress-bar">
+            {%- for block in section.blocks -%}
+              <span class="category-showcase__progress-segment{% if forloop.first %} is-active{% endif %}" data-index="{{ forloop.index0 }}"></span>
+            {%- endfor -%}
+          </div>
+        </div>
+
+        <button type="button" class="category-showcase__nav-arrow category-showcase__nav-arrow--right is-visible" aria-label="Next collections">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+.category-showcase {
+  background-color: var(--bg-color);
+  padding: 80px 40px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.category-showcase__wrapper {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 60px;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.category-showcase__banner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.category-showcase__subheading {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--accent-color);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.category-showcase__tagline-divider {
+  display: flex;
+  align-items: center;
+  margin-bottom: 25px;
+  width: 100px;
+}
+
+.category-showcase__tagline-line {
+  flex-grow: 1;
+  height: 1px;
+  background-color: var(--accent-color);
+  opacity: 0.6;
+}
+
+.category-showcase__tagline-sparkle {
+  width: 10px;
+  height: 10px;
+  color: var(--accent-color);
+  margin-left: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.category-showcase__tagline-sparkle svg {
+  width: 100%;
+  height: 100%;
+}
+
+.category-showcase__heading {
+  font-family: Georgia, serif;
+  font-size: 44px;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--text-color);
+  margin: 0 0 20px 0;
+  font-weight: normal;
+  letter-spacing: 0.05em;
+}
+
+.category-showcase__heading-underline {
+  display: block;
+  width: 60px;
+  height: 1px;
+  background-color: var(--accent-color);
+  margin-bottom: 30px;
+}
+
+.category-showcase__description {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-color);
+  opacity: 0.85;
+  margin: 0 0 10px 0;
+  font-weight: 400;
+  max-width: 280px;
+}
+
+.category-showcase__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--text-color);
+  color: var(--bg-color);
+  border: 1px solid var(--text-color);
+  padding: 13px 26px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  text-transform: uppercase;
+  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  cursor: pointer;
+  margin-top: 25px;
+}
+
+.category-showcase__btn:hover {
+  background-color: transparent;
+  color: var(--text-color);
+  border-color: var(--text-color);
+}
+
+.category-showcase__btn-arrow {
+  margin-left: 8px;
+  transition: transform 0.3s ease;
+}
+
+.category-showcase__btn:hover .category-showcase__btn-arrow {
+  transform: translateX(4px);
+}
+
+.category-showcase__grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
+}
+
+.category-showcase__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.category-showcase__img-link {
+  display: block;
+  width: 100%;
+  text-decoration: none;
+}
+
+.category-showcase__item--coming-soon .category-showcase__img-link {
+  cursor: default;
+}
+
+.category-showcase__img-container {
+  aspect-ratio: 1 / 1.38;
+  border-radius: 50%;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.category-showcase__img-container:hover {
+  transform: scale(1.025);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+}
+
+.category-showcase__item--coming-soon .category-showcase__img-container {
+  opacity: 0.85;
+}
+
+.category-showcase__item--coming-soon .category-showcase__img-container:hover {
+  transform: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.category-showcase__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.category-showcase__img-container:hover .category-showcase__img {
+  transform: scale(1.04);
+}
+
+.category-showcase__item--coming-soon .category-showcase__img-container:hover .category-showcase__img {
+  transform: none;
+}
+
+.category-showcase__img.placeholder-svg {
+  background-color: rgba(0, 0, 0, 0.04);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.category-showcase__item-divider {
+  width: 10px;
+  height: 10px;
+  color: var(--accent-color);
+  margin: 18px auto 12px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+}
+
+.category-showcase__item-divider svg {
+  width: 100%;
+  height: 100%;
+}
+
+.category-showcase__item-title {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-color);
+  margin: 0 0 10px 0;
+}
+
+.category-showcase__explore {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-color);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  padding-bottom: 2px;
+}
+
+.category-showcase__explore::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: var(--accent-color);
+  transform: scaleX(0.4);
+  transform-origin: center;
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.category-showcase__explore:hover::after {
+  transform: scaleX(1);
+}
+
+.category-showcase__explore-arrow {
+  margin-left: 5px;
+  transition: transform 0.3s ease;
+}
+
+.category-showcase__explore:hover .category-showcase__explore-arrow {
+  transform: translateX(3px);
+}
+
+.category-showcase__explore--disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.category-showcase__explore--disabled::after {
+  display: none;
+}
+
+.category-showcase__slider-container {
+  position: relative;
+  width: 100%;
+}
+
+.category-showcase__mobile-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 22px;
+  width: 100%;
+}
+
+.category-showcase__nav-arrow {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: var(--bg-color, #fbf6f0);
+  color: var(--text-color, #0a2a26);
+  border: 1.5px solid var(--accent-color, #b38245);
+  box-shadow: 0 4px 12px rgba(10, 42, 38, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  opacity: 0.35;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.category-showcase__nav-arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+.category-showcase__nav-arrow.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.category-showcase__nav-arrow:hover {
+  background-color: var(--accent-color, #b38245);
+  color: #ffffff;
+  border-color: var(--accent-color, #b38245);
+  transform: scale(1.05);
+}
+
+.category-showcase__nav-arrow:active {
+  transform: scale(0.95);
+}
+
+.category-showcase__pagination-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 140px;
+}
+
+.category-showcase__pagination-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.category-showcase__current-slide {
+  font-weight: 700;
+}
+
+.category-showcase__pagination-separator {
+  opacity: 0.4;
+  font-weight: 400;
+  margin: 0 2px;
+}
+
+.category-showcase__total-slides {
+  opacity: 0.6;
+  font-weight: 400;
+}
+
+.category-showcase__progress-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.category-showcase__progress-segment {
+  flex: 1;
+  height: 2px;
+  background-color: var(--accent-color, #b38245);
+  opacity: 0.2;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+  border-radius: 1px;
+}
+
+.category-showcase__progress-segment.is-active {
+  opacity: 1;
+}
+
+@media screen and (min-width: 991px) {
+  .category-showcase__mobile-controls {
+    display: none !important;
+  }
+}
+
+@media screen and (max-width: 990px) {
+  .category-showcase {
+    padding: 44px 16px 48px;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .category-showcase__wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+  
+  .category-showcase__banner {
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .category-showcase__subheading {
+    margin-bottom: 8px;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+  }
+  
+  .category-showcase__tagline-divider {
+    display: none;
+  }
+
+  .category-showcase__heading {
+    font-size: 34px;
+    margin-bottom: 12px;
+  }
+
+  .category-showcase__heading-underline {
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 16px;
+  }
+  
+  .category-showcase__description {
+    max-width: 100%;
+    margin-bottom: 0;
+    font-size: 15px;
+    text-align: center;
+  }
+
+  .category-showcase__btn {
+    display: none;
+  }
+
+  .category-showcase__slider-container {
+    width: 100%;
+    position: relative;
+    box-sizing: border-box;
+  }
+  
+  .category-showcase__grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 16px;
+    scroll-padding-right: 16px;
+    gap: 16px;
+    padding: 10px 16px 16px 16px;
+    margin: 0 -16px;
+    width: calc(100% + 32px);
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+    scrollbar-width: none;
+  }
+
+  /* Right margin spacer so last item never touches screen edge on mobile horizontal scroll */
+  .category-showcase__grid::after {
+    content: '';
+    flex: 0 0 16px;
+    flex-shrink: 0;
+  }
+  
+  .category-showcase__grid::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .category-showcase__item {
+    flex: 0 0 160px;
+    min-width: 150px;
+    max-width: 175px;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: transform 0.3s ease;
+  }
+
+  .category-showcase__item:active {
+    transform: scale(0.97);
+  }
+
+  .category-showcase__img-container {
+    border-radius: 50%;
+    box-shadow: 0 8px 24px rgba(10, 42, 38, 0.05);
+    border: 1px solid rgba(179, 130, 69, 0.22);
+  }
+}
+{% endstylesheet %}
+
+{% javascript %}
+(function() {
+  function initGoldShowcaseSliders() {
+    const sliderContainers = document.querySelectorAll('.category-showcase__slider-container');
+    
+    sliderContainers.forEach(container => {
+      if (container.dataset.sliderInitialized === 'true') return;
+      container.dataset.sliderInitialized = 'true';
+
+      const grid = container.querySelector('.category-showcase__grid');
+      const prevBtn = container.querySelector('.category-showcase__nav-arrow--left');
+      const nextBtn = container.querySelector('.category-showcase__nav-arrow--right');
+      const dots = container.querySelectorAll('.category-showcase__progress-segment');
+      const currentSlideText = container.querySelector('.category-showcase__current-slide');
+      const items = container.querySelectorAll('.category-showcase__item');
+
+      if (!grid) return;
+
+      function updateControls() {
+        const scrollLeft = grid.scrollLeft;
+        const maxScroll = grid.scrollWidth - grid.clientWidth - 8;
+
+        if (prevBtn) {
+          if (scrollLeft > 10) {
+            prevBtn.classList.add('is-visible');
+          } else {
+            prevBtn.classList.remove('is-visible');
+          }
+        }
+
+        if (nextBtn) {
+          if (scrollLeft < maxScroll) {
+            nextBtn.classList.add('is-visible');
+          } else {
+            nextBtn.classList.remove('is-visible');
+          }
+        }
+
+        if (dots.length > 0 && items.length > 0) {
+          let activeIndex = 0;
+          let minDistance = Infinity;
+
+          items.forEach((item, index) => {
+            const distance = Math.abs(item.offsetLeft - grid.offsetLeft - grid.scrollLeft);
+            if (distance < minDistance) {
+              minDistance = distance;
+              activeIndex = index;
+            }
+          });
+
+          dots.forEach((dot, index) => {
+            if (index === activeIndex) {
+              dot.classList.add('is-active');
+            } else {
+              dot.classList.remove('is-active');
+            }
+          });
+
+          if (currentSlideText) {
+            currentSlideText.textContent = ('0' + (activeIndex + 1)).slice(-2);
+          }
+        }
+      }
+
+      updateControls();
+
+      grid.addEventListener('scroll', updateControls, { passive: true });
+      window.addEventListener('resize', updateControls, { passive: true });
+
+      if (prevBtn) {
+        prevBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const cardWidth = items[0]?.offsetWidth || 160;
+          grid.scrollBy({ left: -(cardWidth + 16), behavior: 'smooth' });
+        });
+      }
+
+      if (nextBtn) {
+        nextBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const cardWidth = items[0]?.offsetWidth || 160;
+          grid.scrollBy({ left: (cardWidth + 16), behavior: 'smooth' });
+        });
+      }
+
+      dots.forEach((dot, index) => {
+        dot.addEventListener('click', function() {
+          if (items[index]) {
+            grid.scrollTo({ left: items[index].offsetLeft - grid.offsetLeft, behavior: 'smooth' });
+          }
+        });
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initGoldShowcaseSliders);
+  } else {
+    initGoldShowcaseSliders();
+  }
+
+  document.addEventListener('shopify:section:load', initGoldShowcaseSliders);
+})();
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "t:sections.category_showcase.name",
+  "settings": [
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "t:sections.category_showcase.settings.subheading",
+      "default": "TIMELESS. TRADITIONAL. YOU."
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:sections.category_showcase.settings.heading",
+      "default": "COLLECTION SHOWCASE"
+    },
+    {
+      "type": "textarea",
+      "id": "description",
+      "label": "t:sections.category_showcase.settings.description",
+      "default": "Classic designs crafted for you, made for every celebration."
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "t:sections.category_showcase.settings.button_label",
+      "default": "EXPLORE COLLECTION"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "t:sections.category_showcase.settings.button_link"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "t:sections.category_showcase.settings.bg_color",
+      "default": "#fbf6f0"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:sections.category_showcase.settings.text_color",
+      "default": "#0a2a26"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "t:sections.category_showcase.settings.accent_color",
+      "default": "#b38245"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "collection",
+      "name": "t:sections.category_showcase.blocks.collection.name",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "t:sections.category_showcase.blocks.collection.settings.collection"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.category_showcase.blocks.collection.settings.title"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "t:sections.category_showcase.blocks.collection.settings.image"
+        },
+        {
+          "type": "checkbox",
+          "id": "is_coming_soon",
+          "label": "Coming Soon",
+          "info": "Displays 'Coming Soon' instead of 'Explore' and disables the link.",
+          "default": false
+        }
+      ]
+    }
+  ],
+  "max_blocks": 5,
+  "presets": [
+    {
+      "name": "t:sections.category_showcase.name",
+      "blocks": [
+        {
+          "type": "collection"
+        },
+        {
+          "type": "collection"
+        },
+        {
+          "type": "collection"
+        },
+        {
+          "type": "collection"
+        },
+        {
+          "type": "collection"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

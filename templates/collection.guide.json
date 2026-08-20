@@ -1,0 +1,156 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "banner": {
+      "type": "main-collection-banner",
+      "settings": {
+        "show_text": false,
+        "title": "COLLECTION GUIDE",
+        "subtitle": "<p>Discover our latest designs.</p>",
+        "button_label": "EXPLORE",
+        "button_link": "",
+        "text_color": "#013f3e",
+        "bg_color": "#f5f0e6",
+        "btn_bg_color": "#013f3e",
+        "btn_text_color": "#ffffff"
+      }
+    },
+    "discover_grid": {
+      "type": "discover-grid",
+      "blocks": {
+        "rings": {
+          "type": "card",
+          "settings": {
+            "image": "shopify://shop_images/new.png",
+            "link": ""
+          }
+        },
+        "earrings": {
+          "type": "card",
+          "settings": {
+            "image": "shopify://shop_images/new_2.png",
+            "image_mobile": "shopify://shop_images/latest_ear_ring_flipped_version.png",
+            "link": ""
+          }
+        },
+        "pendants": {
+          "type": "card",
+          "settings": {
+            "image": "shopify://shop_images/sj_narrow_category.png",
+            "link": ""
+          }
+        },
+        "tennis": {
+          "type": "card",
+          "settings": {
+            "image": "shopify://shop_images/new_3.png",
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "rings",
+        "earrings",
+        "pendants",
+        "tennis"
+      ],
+      "settings": {
+        "subheading": "DISCOVER",
+        "title": "Styles that stay with you",
+        "description": "Explore collections for every memory, and every YOU.",
+        "bg_color": "#fdfcfa",
+        "padding_top": 40,
+        "padding_bottom": 80
+      }
+    },
+    "category_showcase": {
+      "type": "category-showcase",
+      "blocks": {
+        "ring": {
+          "type": "collection",
+          "settings": {
+            "collection": "",
+            "title": "RINGS",
+            "image": "shopify://shop_images/latest_4.png",
+            "is_coming_soon": false
+          }
+        },
+        "necklace": {
+          "type": "collection",
+          "settings": {
+            "collection": "",
+            "title": "NECKLACES",
+            "image": "shopify://shop_images/latest_7.png",
+            "is_coming_soon": false
+          }
+        },
+        "pendant_set": {
+          "type": "collection",
+          "settings": {
+            "collection": "",
+            "title": "PENDANT SETS",
+            "image": "shopify://shop_images/latest_6.png",
+            "is_coming_soon": false
+          }
+        },
+        "earring": {
+          "type": "collection",
+          "settings": {
+            "collection": "",
+            "title": "BRACELETS",
+            "image": "shopify://shop_images/latest_5.png",
+            "is_coming_soon": false
+          }
+        },
+        "bangle": {
+          "type": "collection",
+          "settings": {
+            "collection": "",
+            "title": "CHIKPATTIS",
+            "image": "shopify://shop_images/Gold_Jewellery_1_a2a98288-c703-4edc-b5f2-9cdee7d1d7ac.png",
+            "is_coming_soon": false
+          }
+        }
+      },
+      "block_order": [
+        "ring",
+        "necklace",
+        "pendant_set",
+        "earring",
+        "bangle"
+      ],
+      "settings": {
+        "subheading": "TIMELESS. TRADITIONAL. YOU.",
+        "heading": "COLLECTION SHOWCASE",
+        "description": "Classic designs crafted for you, made for every celebration.",
+        "button_label": "EXPLORE COLLECTION",
+        "button_link": "",
+        "bg_color": "#fbf6f0",
+        "text_color": "#0a2a26",
+        "accent_color": "#b38245"
+      }
+    },
+    "product_grid": {
+      "type": "main-collection-product-grid",
+      "settings": {
+        "bg_color": "#ffffff",
+        "show_coming_soon": true,
+        "coming_soon_text": "New Design"
+      }
+    }
+  },
+  "order": [
+    "banner",
+    "discover_grid",
+    "category_showcase",
+    "product_grid"
+  ]
+}

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+  <head>
+    {% # Inlined CSS Variables %}
+    {% render 'css-variables' %}
+
+    {% comment %}
+      Font preloading:
+      1. Preconnect to font CDN for faster connection
+      2. Preload only the critical font variant (base weight)
+      3. Additional variants load on-demand via @font-face
+    {% endcomment %}
+    {% unless settings.type_primary_font.system? %}
+      <link rel="preconnect" href="https://fonts.shopifycdn.com" crossorigin>
+
+      {% comment %} Preload the base font variant for initial page render {% endcomment %}
+      {{ settings.type_primary_font | font_url | preload_tag: as: 'font', crossorigin: 'anonymous' }}
+    {% endunless %}
+
+    {% comment %} Google Fonts Preconnect & Stylesheet {% endcomment %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:wght@300..700&family=Montserrat:wght@300..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+
+    {% # Load and preload the critical CSS %}
+    {{ 'critical.css' | asset_url | stylesheet_tag: preload: true }}
+
+    {% # Social, title, etc. %}
+    {% render 'meta-tags' %}
+
+    <style>
+      /* Hide Shopify's persistent hCaptcha / reCAPTCHA badge. The invisible spam
+         challenge still runs on submit — only the floating badge is suppressed so it
+         cannot overlap the floating WhatsApp CTA (both sit bottom-right). */
+      .grecaptcha-badge,
+      .hcaptcha-badge,
+      .h-captcha {
+        display: none !important;
+        visibility: hidden !important;
+      }
+      /* The badge iframe. The challenge popup (its title contains "content") is left
+         visible so verification still works. */
+      iframe[src*="hcaptcha.com"]:not([title*="content"]) {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+      /* Hide the badge's positioned wrapper regardless of its inline offset, so an
+         empty box can never sit on top of the WhatsApp button. :has() covers modern
+         browsers; the MutationObserver below covers any that lack it. */
+      div:has(> iframe[src*="hcaptcha.com"]:not([title*="content"])) {
+        display: none !important;
+      }
+      body > div[style*="bottom: 14px"][style*="right: 14px"] {
+        display: none !important;
+      }
+      
+      /* Hide Shopify Inbox and other third-party chat widgets to prevent conflict with custom WhatsApp */
+      #shopify-chat,
+      #dummy-chat-button-iframe,
+      #ShopifyChat,
+      iframe[title*="chat widget" i],
+      iframe[title*="Shopify chat" i],
+      iframe[name="dummy-chat-button-iframe"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+    </style>
+
+    <script>
+      // Reliably hide Shopify's floating hCaptcha badge — including when it is
+      // injected/populated AFTER a form interaction (e.g. selecting "WhatsApp" in
+      // the video-call modal, which triggers Shopify's lazy captcha loader). Only
+      // the persistent badge is hidden, never the challenge popup, so the store's
+      // spam protection stays fully intact.
+      (function () {
+        // The badge iframe lives on *.hcaptcha.com and is NOT the challenge popup
+        // (whose title contains "content"). This matches both the badge and the
+        // invisible widget while leaving a real challenge solvable.
+        const isBadgeIframe = (el) =>
+          el && el.tagName === 'IFRAME' &&
+          /hcaptcha\.com/.test(el.getAttribute('src') || '') &&
+          !/content/i.test(el.getAttribute('title') || '');
+
+        const hide = (el) => {
+          if (!el) return;
+          el.style.setProperty('display', 'none', 'important');
+          el.style.setProperty('visibility', 'hidden', 'important');
+          el.style.setProperty('opacity', '0', 'important');
+          el.style.setProperty('pointer-events', 'none', 'important');
+        };
+
+        // Hide the badge iframe AND its positioned wrapper so no empty box remains
+        // over the WhatsApp button.
+        const hideBadge = (iframe) => {
+          hide(iframe);
+          hide(iframe.closest('div') || iframe.parentElement);
+        };
+
+        // Inspect an added node and its subtree (the iframe is often injected into
+        // an already-present wrapper a tick later).
+        const scan = (root) => {
+          if (!root || root.nodeType !== 1) return;
+          if (isBadgeIframe(root)) { hideBadge(root); return; }
+          if (root.querySelectorAll) {
+            root.querySelectorAll('iframe[src*="hcaptcha.com"]').forEach((f) => {
+              if (isBadgeIframe(f)) hideBadge(f);
+            });
+          }
+        };
+
+        const start = () => {
+          document.querySelectorAll('iframe[src*="hcaptcha.com"]').forEach((f) => {
+            if (isBadgeIframe(f)) hideBadge(f);
+          });
+          // subtree: true is essential — the badge iframe is injected nested and
+          // late, so watching only body's direct children would miss it.
+          const observer = new MutationObserver((mutations) => {
+            mutations.forEach((m) => m.addedNodes.forEach(scan));
+          });
+          observer.observe(document.documentElement, { childList: true, subtree: true });
+        };
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', start);
+        } else {
+          start();
+        }
+      })();
+    </script>
+
+    <script>
+      // Global money formatting helper that honors current active currency and locale
+      window.formatMoney = function(cents) {
+        if (cents === null || cents === undefined) cents = 0;
+        const currencyCode = {{ cart.currency.iso_code | json }};
+        const currencySymbol = {{ cart.currency.symbol | json }};
+        const locale = currencyCode === 'INR' ? 'en-IN' : 'en-US';
+        
+        const value = cents / 100;
+        const hasDecimals = value % 1 !== 0;
+        const formatter = new Intl.NumberFormat(locale, {
+          style: 'currency',
+          currency: currencyCode,
+          minimumFractionDigits: hasDecimals ? 2 : 0,
+          maximumFractionDigits: 2
+        });
+        return formatter.format(value);
+      };
+    </script>
+
+    {{ content_for_header }}
+  </head>
+
+  <body>
+    {% sections 'header-group' %}
+
+    {{ content_for_layout }}
+
+    {% sections 'footer-group' %}
+
+    {% render 'theme-ajax-sync' %}
+    {% section 'cart-drawer' %}
+    {% section 'wishlist-drawer' %}
+    {% section 'whatsapp-widget' %}
+    {% section 'video-call-modal' %}
+    <script>
+      // Global interceptor: catch ANY click going to /cart and open sidebar instead
+      document.addEventListener('click', function(e) {
+        var link = e.target.closest('a[href]');
+        if (!link) return;
+        var href = link.getAttribute('href') || '';
+        var cartPath = (window.Shopify && window.Shopify.routes && window.Shopify.routes.root)
+          ? window.Shopify.routes.root + 'cart'
+          : '/cart';
+        // Match /cart exactly or as a path segment
+        if (href === '/cart' || href === cartPath || href.match(/^\/cart(\?|$)/)) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof window.openCartDrawer === 'function') {
+            window.openCartDrawer();
+          } else {
+            // Fallback: directly open drawer DOM (same as wishlist fallback)
+            var drawer = document.getElementById('CartDrawer');
+            if (drawer) {
+              drawer.classList.add('is-open');
+              document.body.style.overflow = 'hidden';
+            }
+          }
+        }
+      }, true); // capture phase = runs before ALL other handlers
+    </script>
+  </body>
+</html>

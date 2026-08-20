@@ -1,0 +1,412 @@
+{% comment %}
+  Renders the Why Choose Us section with premium value pillars, gold-outline custom SVG icons, and smooth transitions.
+{% endcomment %}
+
+<div class="why-choose-us section-spacing" style="--bg-color: {{ section.settings.bg_color }};">
+  <div class="why-choose-us__container">
+    
+    <!-- Section Header -->
+    <div class="why-choose-us__header">
+      <div class="why-choose-us__logo-mark">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L14.8 8.8L22 9.4L16.5 14.1L18.2 21.2L12 17.5L5.8 21.2L7.5 14.1L2 9.4L9.2 8.8L12 2Z" fill="var(--color-accent, #D4AF37)"/>
+        </svg>
+      </div>
+      
+      {% if section.settings.subheading != blank %}
+        <div class="why-choose-us__subheading-wrapper">
+          <span class="why-choose-us__divider-line"></span>
+          <span class="why-choose-us__subheading">{{ section.settings.subheading | escape }}</span>
+          <span class="why-choose-us__divider-line"></span>
+        </div>
+      {% endif %}
+      
+      {% if section.settings.title != blank %}
+        <h2 class="why-choose-us__heading serif-font">{{ section.settings.title | escape }}</h2>
+      {% endif %}
+      
+      {% if section.settings.description != blank %}
+        <p class="why-choose-us__description">{{ section.settings.description | escape }}</p>
+      {% endif %}
+      
+      <div class="why-choose-us__divider-ornament">
+        <span class="ornament-line"></span>
+        <span class="ornament-diamond"></span>
+        <span class="ornament-line"></span>
+      </div>
+    </div>
+
+    <!-- Value Pillars Grid -->
+    <div class="why-choose-us__grid">
+      {% for block in section.blocks %}
+        <div class="why-choose-us__card" {{ block.shopify_attributes }}>
+          <div class="why-choose-us__icon-wrapper">
+            <div class="why-choose-us__icon-bg"></div>
+            <div class="why-choose-us__icon">
+              {% case block.settings.icon %}
+                {% when 'purity' %}
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <path d="M12 7l3.5 3.5-3.5 3.5-3.5-3.5L12 7z" />
+                    <path d="M8.5 10.5h7M12 7v7" />
+                  </svg>
+                {% when 'craftsmanship' %}
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M2.7 8.5L12 21.5L21.3 8.5H2.7Z" />
+                    <path d="M6.3 3.5H17.7L21.3 8.5H2.7L6.3 3.5Z" />
+                    <path d="M6.3 3.5L2.7 8.5L12 21.5L21.3 8.5L17.7 3.5H6.3Z" />
+                    <path d="M12 3.5V21.5" />
+                    <path d="M6.3 3.5L9.5 8.5L12 21.5" />
+                    <path d="M17.7 3.5L14.5 8.5L12 21.5" />
+                  </svg>
+                {% when 'shipping' %}
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 2L2 7L12 12L22 7L12 2Z" />
+                    <path d="M2 7V17L12 22V12L2 7Z" />
+                    <path d="M22 7V17L12 22V12L22 7Z" />
+                    <path d="M12 10.5L15 12V15L12 17L9 15V12L12 10.5Z" fill="var(--bg-color, #FFFFFF)" />
+                    <path d="M12 10.5L15 12V15L12 17L9 15V12L12 10.5Z" />
+                  </svg>
+                {% when 'exchange' %}
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l.73-.73" />
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M12 10v4M10 12h4" />
+                  </svg>
+              {% endcase %}
+            </div>
+          </div>
+          <h3 class="why-choose-us__card-title serif-font">{{ block.settings.title | escape }}</h3>
+          <p class="why-choose-us__card-desc">{{ block.settings.description | escape }}</p>
+        </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
+{% stylesheet %}
+  .why-choose-us {
+    background-color: var(--bg-color, var(--color-secondary-bg, #FDFBF7));
+    padding-top: 8rem;
+    padding-bottom: 8rem;
+    border-top: 1px solid rgba(1, 63, 62, 0.05);
+    border-bottom: 1px solid rgba(1, 63, 62, 0.05);
+  }
+
+  .why-choose-us__container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-left: 4.8rem;
+    padding-right: 4.8rem;
+  }
+
+  /* Section Header Styling */
+  .why-choose-us__header {
+    margin-bottom: 6rem;
+    text-align: center;
+  }
+
+  .why-choose-us__logo-mark {
+    margin-bottom: 1.5rem;
+    display: inline-flex;
+    justify-content: center;
+  }
+
+  .why-choose-us__subheading-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    width: 100%;
+    margin-bottom: 1.5rem;
+  }
+
+  .why-choose-us__divider-line {
+    height: 1px;
+    background-color: var(--color-accent, #D4AF37);
+    width: 60px;
+    opacity: 0.5;
+  }
+
+  .why-choose-us__subheading {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--color-accent, #D4AF37);
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+  }
+
+  .why-choose-us__heading {
+    font-size: 4.2rem;
+    color: var(--color-primary, #013F3E);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+
+  .why-choose-us__description {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.6rem;
+    font-style: italic;
+    color: var(--color-foreground, #1A1A1A);
+    opacity: 0.85;
+    margin-bottom: 2rem;
+  }
+
+  .why-choose-us__divider-ornament {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+  }
+  
+  .why-choose-us__divider-ornament .ornament-line {
+    height: 1px;
+    background-color: var(--color-primary, #013F3E);
+    width: 40px;
+    opacity: 0.15;
+  }
+  
+  .why-choose-us__divider-ornament .ornament-diamond {
+    width: 8px;
+    height: 8px;
+    background-color: var(--color-accent, #D4AF37);
+    transform: rotate(45deg);
+  }
+
+  /* Value Pillars Grid */
+  .why-choose-us__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3.2rem;
+  }
+
+  .why-choose-us__card {
+    background: #FFFFFF;
+    border-radius: 12px;
+    border: 1px solid rgba(1, 63, 62, 0.05);
+    padding: 4rem 3rem;
+    text-align: center;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .why-choose-us__card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(1, 63, 62, 0.06);
+    border-color: rgba(212, 175, 55, 0.25);
+  }
+
+  /* Icon Area Styling */
+  .why-choose-us__icon-wrapper {
+    width: 7.2rem;
+    height: 7.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent, #D4AF37);
+    margin-bottom: 2.8rem;
+    position: relative;
+  }
+
+  .why-choose-us__icon-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #F8F3ED; /* Light blush cream overlay */
+    border-radius: 50%;
+    opacity: 0.8;
+    transform: scale(1);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s ease;
+  }
+
+  .why-choose-us__card:hover .why-choose-us__icon-bg {
+    transform: scale(1.15);
+    background-color: #F0E8E2;
+  }
+
+  .why-choose-us__icon {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .why-choose-us__card:hover .why-choose-us__icon {
+    transform: scale(1.08);
+  }
+
+  /* Card Content Typography */
+  .why-choose-us__card-title {
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--color-primary, #013F3E);
+    margin-bottom: 1.5rem;
+    line-height: 1.3;
+  }
+
+  .why-choose-us__card-desc {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.4rem;
+    line-height: 1.6;
+    color: #555555;
+    margin: 0;
+  }
+
+  /* Responsive Styling */
+  @media (max-width: 1200px) {
+    .why-choose-us__grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2.4rem;
+    }
+    .why-choose-us__card {
+      padding: 3.5rem 2.5rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .why-choose-us {
+      padding-top: 6rem;
+      padding-bottom: 6rem;
+    }
+    .why-choose-us__container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+    .why-choose-us__heading {
+      font-size: 3.2rem;
+    }
+    .why-choose-us__grid {
+      grid-template-columns: 1fr;
+      gap: 2.4rem;
+    }
+    .why-choose-us__card {
+      padding: 3.5rem 2.5rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Why choose us",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "default": "Why Choose Us",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "default": "THE SWASTIK DIFFERENCE",
+      "label": "Subheading"
+    },
+    {
+      "type": "text",
+      "id": "description",
+      "default": "Discover the pillars of trust, craft, and care that define the Swastik experience.",
+      "label": "Description"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "default": "#FDFBF7",
+      "label": "Background color"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "pillar",
+      "name": "Pillar",
+      "limit": 4,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Pillar Title",
+          "label": "Title"
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "default": "Pillar description goes here.",
+          "label": "Description"
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon",
+          "default": "purity",
+          "options": [
+            {
+              "value": "purity",
+              "label": "Certified Purity"
+            },
+            {
+              "value": "craftsmanship",
+              "label": "Master Craftsmanship"
+            },
+            {
+              "value": "shipping",
+              "label": "Free Insured Shipping"
+            },
+            {
+              "value": "exchange",
+              "label": "Lifetime Exchange"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Why choose us",
+      "blocks": [
+        {
+          "type": "pillar",
+          "settings": {
+            "title": "100% Certified Jewelry",
+            "description": "Every single gold ornament and diamond piece is fully certified by BIS Hallmark & international laboratories.",
+            "icon": "purity"
+          }
+        },
+        {
+          "type": "pillar",
+          "settings": {
+            "title": "Artisan Craftsmanship",
+            "description": "Handcrafted by master Indian artisans with legacy techniques combined with modern, high-precision finishing.",
+            "icon": "craftsmanship"
+          }
+        },
+        {
+          "type": "pillar",
+          "settings": {
+            "title": "Free Insured Shipping",
+            "description": "Your precious parcel is fully covered. We offer complimentary, trackable, and insured delivery right to your door.",
+            "icon": "shipping"
+          }
+        },
+        {
+          "type": "pillar",
+          "settings": {
+            "title": "Lifetime Exchange",
+            "description": "Enjoy peace of mind with our transparent lifetime exchange and buyback values on gold and diamond purchases.",
+            "icon": "exchange"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

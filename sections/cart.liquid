@@ -1,0 +1,23 @@
+<script>
+  (function() {
+    // Set a flag so the cart drawer auto-opens after redirect
+    try { sessionStorage.setItem('swastik_open_cart_drawer', '1'); } catch(e) {}
+
+    // Go back to where the user came from, or homepage
+    var ref = document.referrer;
+    var here = window.location.href;
+    var destination = (ref && ref !== here && ref.indexOf('/cart') === -1) ? ref : '/';
+    window.location.replace(destination);
+  })();
+</script>
+
+<noscript>
+  <meta http-equiv="refresh" content="0;url=/">
+</noscript>
+
+{% schema %}
+{
+  "name": "t:general.cart",
+  "settings": []
+}
+{% endschema %}

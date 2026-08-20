@@ -1,0 +1,652 @@
+{% stylesheet %}
+  .find-store-page {
+    font-family: var(--font-body-family, 'Inter', sans-serif);
+    color: #333;
+    background-color: #FAFAFA;
+    overflow: hidden;
+  }
+  
+  .fs-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  
+  /* --- HERO SECTION --- */
+  .fs-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 550px;
+    background-color: #FFF9F2;
+    overflow: hidden;
+    border-bottom: 1px solid #efe4d8;
+  }
+  .fs-hero-image {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 48%;
+    z-index: 1;
+    border-top-left-radius: 80px;
+    border-bottom-left-radius: 80px;
+    overflow: hidden;
+    box-shadow: -15px 0 40px rgba(1, 63, 62, 0.08);
+  }
+  .fs-hero-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+  .fs-hero-content {
+    position: relative;
+    z-index: 2;
+    width: 52%;
+    padding: 80px 40px 80px 5%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .fs-hero-subtitle {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: #b08958;
+    margin-bottom: 15px;
+  }
+  .fs-hero-title {
+    font-family: var(--font-heading-family, 'Playfair Display', serif);
+    font-size: 5rem;
+    color: #013F3E;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  .fs-hero-divider {
+    width: 60px;
+    height: 1px;
+    background-color: #b08958;
+    margin-bottom: 25px;
+    position: relative;
+  }
+  .fs-hero-divider::after {
+    content: '❖';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: transparent;
+    color: #b08958;
+    font-size: 14px;
+    padding: 0 5px;
+  }
+  .fs-hero-text {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 35px;
+    max-width: 460px;
+  }
+  .fs-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .fs-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .fs-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  .fs-btn-primary {
+    background-color: #013F3E;
+    color: white;
+    border-color: #013F3E;
+  }
+  .fs-btn-primary svg {
+    color: #b08958;
+  }
+  .fs-btn-primary:hover {
+    background-color: #025958;
+  }
+  .fs-btn-secondary {
+    background-color: transparent;
+    border-color: #a4b3b3;
+    color: #4a5c5c;
+  }
+  .fs-btn-secondary:hover {
+    border-color: #013F3E;
+    color: #013F3E;
+  }
+  
+  /* --- DETAILS & MAP --- */
+  .fs-details-section {
+    padding: 80px 0;
+  }
+  .fs-details-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    background: white;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .fs-details-info {
+    flex: 1 1 350px;
+    padding: 60px 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .fs-details-map {
+    flex: 2 1 500px;
+    min-height: 400px;
+    position: relative;
+    background: #f4f4f4;
+  }
+  .fs-details-map iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    position: absolute;
+    top: 0; left: 0;
+  }
+  .fs-store-name {
+    font-family: var(--font-heading-family, 'Playfair Display', serif);
+    font-size: 3.2rem;
+    color: #013F3E;
+    margin-bottom: 40px;
+  }
+  .fs-info-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+  }
+  .fs-info-icon {
+    width: 44px;
+    height: 44px;
+    background: #FFF9F2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #b08958;
+    flex-shrink: 0;
+  }
+  .fs-info-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+  .fs-info-text {
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: #666;
+  }
+  .fs-info-text strong {
+    color: #222;
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .fs-info-text a {
+    color: #666;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .fs-info-text a:hover {
+    color: #b08958;
+  }
+
+  /* --- WHY VISIT US --- */
+  .fs-features-section {
+    padding: 90px 0;
+    background: #FAF8F5;
+    border-top: 1px solid #efe4d8;
+    border-bottom: 1px solid #efe4d8;
+  }
+  .fs-section-title {
+    text-align: center;
+    font-family: var(--font-heading-family, 'Playfair Display', serif);
+    font-size: 3rem;
+    color: #013F3E;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .fs-title-divider {
+    width: 40px;
+    height: 1px;
+    background: #b08958;
+    margin: 0 auto 60px;
+    position: relative;
+  }
+  .fs-title-divider::after {
+    content: '❖';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #FAF8F5;
+    color: #b08958;
+    font-size: 14px;
+    padding: 0 5px;
+  }
+  .fs-features-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 0;
+  }
+  .fs-feature-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 0 10px;
+    border-right: 1px solid #e8e0d5;
+  }
+  .fs-feature-item:last-child {
+    border-right: none;
+  }
+  .fs-feature-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #013F3E;
+  }
+  .fs-feature-icon svg {
+    width: 38px;
+    height: 38px;
+    stroke-width: 1px;
+  }
+  .fs-feature-text {
+    font-size: 0.95rem;
+    color: #333;
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: 0.2px;
+  }
+
+  @media screen and (max-width: 990px) {
+    .fs-hero-image { width: 45%; border-top-left-radius: 50px; border-bottom-left-radius: 50px; }
+    .fs-hero-content { width: 55%; padding-right: 30px; }
+    .fs-details-info { padding: 40px 30px; }
+    .fs-features-grid {
+      flex-wrap: wrap;
+      justify-content: center;
+      row-gap: 40px;
+    }
+    .fs-feature-item {
+      flex: 0 0 33.333%;
+      border-right: none;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .fs-hero { flex-direction: column; min-height: auto; }
+    .fs-hero-image { position: relative; width: 100%; height: 350px; border-radius: 0; box-shadow: none; }
+    .fs-hero-content { width: 100%; padding: 60px 20px; }
+    .fs-hero-title { font-size: 3.5rem; }
+    .fs-store-name { font-size: 2.6rem; }
+    .fs-details-wrapper { flex-direction: column; }
+    .fs-details-map { min-height: 350px; }
+    .fs-feature-item {
+      flex: 0 0 50%;
+    }
+  }
+{% endstylesheet %}
+
+<div class="find-store-page">
+  
+  <!-- HERO SECTION -->
+  <section class="fs-hero">
+    <div class="fs-hero-content">
+      <div class="fs-hero-subtitle">{{ section.settings.hero_subtitle }}</div>
+      <h1 class="fs-hero-title">{{ section.settings.hero_title }}</h1>
+      <div class="fs-hero-divider"></div>
+      <p class="fs-hero-text">{{ section.settings.hero_text }}</p>
+      <div class="fs-buttons">
+        {% if section.settings.btn_directions_link != blank %}
+          <a href="{{ section.settings.btn_directions_link }}" target="_blank" class="fs-btn fs-btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            {{ section.settings.btn_directions_text }}
+          </a>
+        {% endif %}
+        {% if section.settings.btn_call_link != blank %}
+          <a href="tel:{{ section.settings.btn_call_link }}" class="fs-btn fs-btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            {{ section.settings.btn_call_text }}
+          </a>
+        {% endif %}
+        {% if section.settings.btn_whatsapp_link != blank %}
+          <a href="{{ section.settings.btn_whatsapp_link }}" target="_blank" class="fs-btn fs-btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+            {{ section.settings.btn_whatsapp_text }}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="fs-hero-image">
+      {% if section.settings.hero_image != blank %}
+        {{ section.settings.hero_image | image_url: width: 1500 | image_tag: loading: 'lazy', alt: section.settings.hero_title }}
+      {% else %}
+        <div style="background: #e2d9cf; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #888;">Upload Hero Image</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- STORE DETAILS & MAP -->
+  <section class="fs-details-section">
+    <div class="fs-container">
+      <div class="fs-details-wrapper">
+        <div class="fs-details-info">
+          <h2 class="fs-store-name">{{ section.settings.store_name }}</h2>
+          
+          <div class="fs-info-row">
+            <div class="fs-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></div>
+            <div class="fs-info-text">
+              {% if section.settings.store_address_label != blank %}
+                <strong>{{ section.settings.store_address_label }}</strong>
+              {% endif %}
+              {% if section.settings.btn_directions_link != blank and section.settings.btn_directions_link != '#' %}
+                <a href="{{ section.settings.btn_directions_link }}" target="_blank">
+                  {{ section.settings.store_address | newline_to_br }}
+                </a>
+              {% else %}
+                {{ section.settings.store_address | newline_to_br }}
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="fs-info-row">
+            <div class="fs-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+            <div class="fs-info-text">
+              <strong>{{ section.settings.store_hours | newline_to_br }}</strong>
+              {% if section.settings.store_status_text != blank %}
+                <span style="display:inline-block; margin-top: 5px; background: #013F3E; color: white; padding: 3px 10px; border-radius: 12px; font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">{{ section.settings.store_status_text }}</span>
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="fs-info-row">
+            <div class="fs-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg></div>
+            <div class="fs-info-text">
+              {% if section.settings.store_phone_label != blank %}
+                <strong>{{ section.settings.store_phone_label }}</strong>
+              {% endif %}
+              <a href="tel:{{ section.settings.store_phone | replace: ' ', '' }}">{{ section.settings.store_phone }}</a>
+            </div>
+          </div>
+          
+          <div class="fs-info-row">
+            <div class="fs-info-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg></div>
+            <div class="fs-info-text">
+              {% if section.settings.store_email_label != blank %}
+                <strong>{{ section.settings.store_email_label }}</strong>
+              {% endif %}
+              <a href="mailto:{{ section.settings.store_email }}">{{ section.settings.store_email }}</a>
+            </div>
+          </div>
+
+        </div>
+        
+        <div class="fs-details-map">
+          {% if section.settings.map_iframe != blank %}
+            {{ section.settings.map_iframe }}
+          {% else %}
+            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:#888;">Please paste your Google Maps embed iframe in the theme editor.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHY VISIT US -->
+  <section class="fs-features-section">
+    <div class="fs-container">
+      <h2 class="fs-section-title">Why Visit Our Store?</h2>
+      <div class="fs-title-divider"></div>
+      
+      <div class="fs-features-grid">
+        {% for block in section.blocks %}
+          {% if block.type == 'feature' %}
+            <div class="fs-feature-item">
+              <div class="fs-feature-icon">
+                {% if block.settings.icon != blank %}
+                  {{ block.settings.icon }}
+                {% else %}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12l4 6-10 13L2 9Z"></path><path d="M11 3 8 9l4 13 4-13-3-6"></path><path d="M2 9h20"></path></svg>
+                {% endif %}
+              </div>
+              <div class="fs-feature-text">{{ block.settings.text }}</div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+</div>
+
+{% schema %}
+{
+  "name": "Find Store Page",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Hero Section"
+    },
+    {
+      "type": "text",
+      "id": "hero_subtitle",
+      "label": "Hero Subtitle",
+      "default": "FIND OUR STORE"
+    },
+    {
+      "type": "text",
+      "id": "hero_title",
+      "label": "Hero Title",
+      "default": "We'd Love To Welcome You"
+    },
+    {
+      "type": "textarea",
+      "id": "hero_text",
+      "label": "Hero Description",
+      "default": "Visit our showroom to explore our exclusive collections, experience the finest craftsmanship, and receive personalized assistance from our experts."
+    },
+    {
+      "type": "image_picker",
+      "id": "hero_image",
+      "label": "Hero Image"
+    },
+    {
+      "type": "text",
+      "id": "btn_directions_text",
+      "label": "Directions Button Text",
+      "default": "Get Directions"
+    },
+    {
+      "type": "url",
+      "id": "btn_directions_link",
+      "label": "Directions Button Link"
+    },
+    {
+      "type": "text",
+      "id": "btn_call_text",
+      "label": "Call Button Text",
+      "default": "Call Store"
+    },
+    {
+      "type": "text",
+      "id": "btn_call_link",
+      "label": "Call Button Phone (e.g. +91 9876543210)",
+      "default": "+91 9876543210"
+    },
+    {
+      "type": "text",
+      "id": "btn_whatsapp_text",
+      "label": "WhatsApp Button Text",
+      "default": "WhatsApp"
+    },
+    {
+      "type": "url",
+      "id": "btn_whatsapp_link",
+      "label": "WhatsApp Link (e.g. https://wa.me/...)"
+    },
+    {
+      "type": "header",
+      "content": "Store Details Section"
+    },
+    {
+      "type": "text",
+      "id": "store_name",
+      "label": "Store Name",
+      "default": "Swastik Jewels"
+    },
+    {
+      "type": "text",
+      "id": "store_address_label",
+      "label": "Store Address Label",
+      "info": "Optional text to show above the address (e.g., 'Visit Us')"
+    },
+    {
+      "type": "textarea",
+      "id": "store_address",
+      "label": "Store Address",
+      "default": "123, Bank Street,\nKarol Bagh,\nNew Delhi - 110005"
+    },
+    {
+      "type": "textarea",
+      "id": "store_hours",
+      "label": "Store Hours",
+      "default": "Monday - Sunday\n11:00 AM - 8:00 PM"
+    },
+    {
+      "type": "text",
+      "id": "store_status_text",
+      "label": "Store Status Text",
+      "default": "OPEN NOW"
+    },
+    {
+      "type": "text",
+      "id": "store_phone_label",
+      "label": "Store Phone Label",
+      "info": "Optional text to show above the phone number (e.g., 'Call Us')"
+    },
+    {
+      "type": "text",
+      "id": "store_phone",
+      "label": "Store Phone Number",
+      "default": "+91 98765 43210"
+    },
+    {
+      "type": "text",
+      "id": "store_email_label",
+      "label": "Store Email Label",
+      "info": "Optional text to show above the email (e.g., 'Email Us')"
+    },
+    {
+      "type": "text",
+      "id": "store_email",
+      "label": "Store Email Address",
+      "default": "support@swastikjewel.in"
+    },
+    {
+      "type": "html",
+      "id": "map_iframe",
+      "label": "Google Map Iframe HTML"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "feature",
+      "name": "Why Visit Feature",
+      "limit": 6,
+      "settings": [
+        {
+          "type": "html",
+          "id": "icon",
+          "label": "SVG Icon HTML",
+          "info": "Paste custom SVG here. Try finding clean, thin-line SVGs."
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Feature Title",
+          "default": "Feature Name"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Find Store Page",
+      "blocks": [
+        {
+          "type": "feature",
+          "settings": {
+            "text": "See & Try Your Favourites",
+            "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 3h12l4 6-10 13L2 9Z\"></path><path d=\"M11 3 8 9l4 13 4-13-3-6\"></path><path d=\"M2 9h20\"></path></svg>"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "text": "Personalised Expert Guidance",
+            "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"></path><circle cx=\"12\" cy=\"7\" r=\"4\"></circle></svg>"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "text": "Custom Jewellery Consultation",
+            "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"14\" r=\"8\"></circle><path d=\"M12 2L9 8h6l-3-6z\"></path></svg>"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "text": "Gold Exchange & Upgrade",
+            "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"></path><path d=\"M3 3v5h5\"></path></svg>"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "text": "BIS Hallmarked Assurance",
+            "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M22 11.08V12a10 10 0 1 1-5.93-9.14\"></path><polyline points=\"22 4 12 14.01 9 11.01\"></polyline></svg>"
+          }
+        },
+        {
+          "type": "feature",
+          "settings": {
+            "text": "Easy EMI Options",
+            "icon": "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"></rect><line x1=\"2\" y1=\"10\" x2=\"22\" y2=\"10\"></line></svg>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

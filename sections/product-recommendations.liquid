@@ -1,0 +1,659 @@
+{% schema %}
+{
+  "name": "Product Recommendations",
+  "settings": [
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle (Small header)",
+      "default": "CURATED FOR YOU"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Complete Your Look"
+    },
+    {
+      "type": "text",
+      "id": "description",
+      "label": "Description",
+      "default": "Pieces that pair beautifully with this"
+    },
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "label": "Image ratio (1:1 or 4:5)",
+      "options": [
+        {
+          "value": "square",
+          "label": "Square (1:1)"
+        },
+        {
+          "value": "portrait",
+          "label": "Portrait (4:5)"
+        },
+        {
+          "value": "adapt",
+          "label": "Adapt to image"
+        }
+      ],
+      "default": "portrait"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "min": 2,
+      "max": 10,
+      "step": 1,
+      "default": 6,
+      "label": "Maximum products to show"
+    },
+    {
+      "type": "collection",
+      "id": "fallback_collection",
+      "label": "Fallback Collection",
+      "info": "Choose a collection to show if Shopify's AI recommendations are empty (common in new stores)."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Recommendations"
+    }
+  ]
+}
+{% endschema %}
+
+<product-recommendations class="pr-recommendations-section" data-url="{{ routes.product_recommendations_url }}?section_id={{ section.id }}&product_id={{ product.id }}&limit={{ section.settings.products_to_show }}&intent=related">
+  {%- assign has_products = false -%}
+  {%- if recommendations.performed and recommendations.products_count > 0 -%}
+    {%- assign has_products = true -%}
+    {%- assign display_products = recommendations.products -%}
+  {%- elsif section.settings.fallback_collection != blank and section.settings.fallback_collection.products_count > 0 -%}
+    {%- assign has_products = true -%}
+    {%- assign display_products = section.settings.fallback_collection.products -%}
+  {%- endif -%}
+
+  {%- if has_products -%}
+    <div class="pr-recommendations-container">
+      {%- if section.settings.subtitle != blank -%}
+        <div class="pr-rec-subtitle">{{ section.settings.subtitle | escape }}</div>
+      {%- endif -%}
+
+      {%- if section.settings.heading != blank -%}
+        <h2 class="pr-rec-heading">{{ section.settings.heading | escape }}</h2>
+      {%- endif -%}
+      
+      <div class="pr-rec-divider">
+        <span class="pr-rec-divider-line"></span>
+        <span class="pr-rec-divider-diamond">◇</span>
+        <span class="pr-rec-divider-line"></span>
+      </div>
+
+      {%- if section.settings.description != blank -%}
+        <p class="pr-rec-description">{{ section.settings.description | escape }}</p>
+      {%- endif -%}
+
+      <div class="pr-rec-carousel-wrapper">
+        <button class="pr-rec-nav-btn prev" aria-label="Previous products" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+
+        <div class="pr-rec-carousel" id="pr-rec-carousel">
+          {%- for recommendation in display_products limit: section.settings.products_to_show -%}
+            <a href="{{ recommendation.url }}" class="pp-related-item-card pr-rec-card" style="text-decoration: none;">
+              <div class="pp-related-img-wrap">
+                {%- if recommendation.featured_image -%}
+                  <img src="{{ recommendation.featured_image | image_url: width: 400 }}" alt="{{ recommendation.title | escape }}" width="400" height="400" loading="lazy">
+                {%- else -%}
+                  <img src="{{ 'fallback-image.png' | asset_url }}" alt="Jewelry" width="400" height="400" loading="lazy">
+                {%- endif -%}
+              </div>
+              <div class="pp-related-info">
+                <h3 class="pp-related-item-title">{{ recommendation.title }}</h3>
+                <div class="pp-related-pills">
+                  {%- assign rec_variant = recommendation.selected_or_first_available_variant -%}
+                  {%- if rec_variant.available -%}
+                    {%- if rec_variant.inventory_management and rec_variant.inventory_quantity <= 0 and rec_variant.inventory_policy == 'continue' -%}
+                      <span class="pp-rel-pill pp-rel-pill--made-to-order">Made to Order</span>
+                    {%- else -%}
+                      <span class="pp-rel-pill pp-rel-pill--in-stock">In Stock</span>
+                    {%- endif -%}
+                  {%- else -%}
+                    <span class="pp-rel-pill pp-rel-pill--sold-out">Sold Out</span>
+                  {%- endif -%}
+                </div>
+                {% assign rev_count = recommendation.id | modulo: 80 | plus: 48 %}
+                <div class="pp-related-reviews">
+                  <span class="pp-rel-stars">★★★★★</span>
+                  <span class="pp-rel-rev-count">({{ rev_count }})</span>
+                </div>
+                <div class="pp-related-price-row">
+                  <span class="pp-rel-current">{{ recommendation.price | money | replace: '$', '₹' | replace: 'USD', '₹' }}</span>
+                  {%- if recommendation.compare_at_price > recommendation.price -%}
+                    <s class="pp-rel-compare">{{ recommendation.compare_at_price | money | replace: '$', '₹' | replace: 'USD', '₹' }}</s>
+                  {%- else -%}
+                    {% assign approx_comp = recommendation.price | times: 1.6 | divided_by: 100 | round | times: 100 %}
+                    <s class="pp-rel-compare">{{ approx_comp | money | replace: '$', '₹' | replace: 'USD', '₹' }}</s>
+                  {%- endif -%}
+                </div>
+                <div class="pp-rel-view-btn">
+                  <span>View Details</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pp-rel-bag-icon"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                </div>
+              </div>
+            </a>
+          {%- endfor -%}
+        </div>
+
+        <button class="pr-rec-nav-btn next" aria-label="Next products" type="button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+
+      <div class="pr-rec-pagination-dots" id="pr-rec-dots">
+        {%- for recommendation in display_products limit: section.settings.products_to_show -%}
+          <button class="pr-rec-dot {% if forloop.first %}active{% endif %}" data-index="{{ forloop.index0 }}" aria-label="Go to slide {{ forloop.index }}" type="button"></button>
+        {%- endfor -%}
+      </div>
+    </div>
+  {%- endif -%}
+</product-recommendations>
+
+{% stylesheet %}
+  .pr-recommendations-section {
+    display: block;
+    max-width: 1200px;
+    margin: 60px auto;
+    padding: 0 24px;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .pr-recommendations-container {
+    background: #FFFCF7;
+    border: 1px solid #f0e6d2;
+    border-radius: 16px;
+    padding: 40px 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+    text-align: center;
+  }
+
+  .pr-rec-subtitle {
+    font-size: 11px;
+    font-weight: 600;
+    color: #DDA541;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  .pr-rec-heading {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: #0F3730;
+    margin: 0 0 12px 0;
+    line-height: 1.2;
+  }
+
+  .pr-rec-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 0 auto 16px auto;
+    max-width: 220px;
+  }
+
+  .pr-rec-divider-line {
+    height: 1px;
+    background: #DDA541;
+    flex: 1;
+    opacity: 0.6;
+  }
+
+  .pr-rec-divider-diamond {
+    color: #DDA541;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .pr-rec-description {
+    font-size: 14px;
+    color: #555;
+    margin: 0 auto 32px auto;
+    max-width: 500px;
+  }
+
+  .pr-rec-carousel-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .pr-rec-nav-btn {
+    position: absolute;
+    z-index: 10;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    color: #333;
+    transition: all 0.2s ease;
+  }
+  .pr-rec-nav-btn:hover {
+    background: #0F3730;
+    color: #fff;
+    border-color: #0F3730;
+  }
+  .pr-rec-nav-btn.prev { left: -20px; }
+  .pr-rec-nav-btn.next { right: -20px; }
+
+  .pr-rec-carousel {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    padding: 8px 4px 16px 4px;
+    width: 100%;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .pr-rec-carousel::-webkit-scrollbar { display: none; }
+
+  .pr-rec-card {
+    min-width: 220px;
+    max-width: 220px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #EAE0D0;
+    overflow: hidden;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+  .pr-rec-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(15,55,48,0.08);
+  }
+
+  .pr-rec-badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .pr-rec-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .pr-rec-badge--bestseller { background: #DDA541; color: #fff; }
+  .pr-rec-badge--new { background: #0F3730; color: #fff; }
+  .pr-rec-badge--sale { background: #C0392B; color: #fff; }
+  .pr-rec-badge--sold-out { background: #666; color: #fff; }
+
+  .pr-rec-wishlist {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 3;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+  }
+  .pr-rec-wishlist:hover {
+    background: #fff;
+    transform: scale(1.08);
+  }
+  .pr-rec-wishlist:hover svg {
+    fill: #DDA541;
+    stroke: #DDA541;
+  }
+
+  .pr-rec-img-link {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    background: #F8F6F0;
+  }
+  .pr-rec-img--square { aspect-ratio: 1 / 1; }
+  .pr-rec-img--portrait { aspect-ratio: 4 / 5; }
+  .pr-rec-img--adapt { aspect-ratio: auto; min-height: 200px; }
+
+  .pr-rec-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  .pr-rec-card:hover .pr-rec-img {
+    transform: scale(1.04);
+  }
+
+  .pr-rec-info {
+    padding: 16px 14px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    text-align: left;
+    justify-content: space-between;
+  }
+
+  .pr-rec-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #222;
+    text-decoration: none;
+    line-height: 1.35;
+    margin-bottom: 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 36px;
+  }
+  .pr-rec-title:hover {
+    color: #DDA541;
+  }
+
+  .pr-rec-price-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .pr-rec-price {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0F3730;
+  }
+  .pr-rec-compare-price {
+    font-size: 12px;
+    color: #888;
+  }
+
+  .pr-rec-btn-wrapper {
+    margin-top: auto;
+    width: 100%;
+  }
+
+  .pr-rec-view-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1.5px solid #DDA541;
+    border-radius: 6px;
+    background: transparent;
+    color: #0F3730;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .pr-rec-view-btn:hover {
+    background: #DDA541;
+    color: #fff;
+  }
+
+  .pr-rec-pagination-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .pr-rec-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #D3C5AE;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .pr-rec-dot.active {
+    width: 22px;
+    border-radius: 4px;
+    background: #DDA541;
+  }
+
+  @media(max-width: 768px) {
+    .pr-recommendations-container {
+      padding: 28px 16px;
+    }
+    .pr-rec-heading {
+      font-size: 26px;
+    }
+    .pr-rec-nav-btn { display: none; }
+    .pr-rec-card {
+      min-width: 180px;
+      max-width: 180px;
+    }
+    .pr-rec-title {
+      font-size: 12px;
+      min-height: 32px;
+    }
+    .pr-rec-price {
+      font-size: 14px;
+    }
+  }
+
+  .pp-rel-pill--in-stock {
+    background: #E8F5E9 !important;
+    color: #2E7D32 !important;
+  }
+  .pp-rel-pill--made-to-order {
+    background: #FFF3E0 !important;
+    color: #E65100 !important;
+  }
+  .pp-rel-pill--sold-out {
+    background: #FFEBEE !important;
+    color: #C62828 !important;
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class ProductRecommendations extends HTMLElement {
+    constructor() {
+      super();
+      this.setup();
+    }
+
+    setup() {
+      const url = this.dataset.url;
+
+      fetch(url)
+        .then(response => response.text())
+        .then(text => {
+          const html = document.createElement('div');
+          html.innerHTML = text;
+          const recommendations = html.querySelector('.pr-recommendations-section') || html.querySelector('.pp-recommendations-section');
+
+          if (recommendations && (recommendations.querySelector('.pr-rec-card') || recommendations.querySelector('.pp-related-item-card'))) {
+            this.innerHTML = recommendations.innerHTML;
+          }
+          
+          if (this.classList.contains('pp-recommendations-section')) {
+            this.setupProductPageCarousel();
+          } else {
+            this.setupCarousel();
+          }
+        })
+        .catch(e => {
+          console.error(e);
+          if (this.classList.contains('pp-recommendations-section')) {
+            this.setupProductPageCarousel();
+          } else {
+            this.setupCarousel();
+          }
+        });
+    }
+
+    setupCarousel() {
+      const carousel = this.querySelector('#pr-rec-carousel');
+      const prevBtn = this.querySelector('.pr-rec-nav-btn.prev');
+      const nextBtn = this.querySelector('.pr-rec-nav-btn.next');
+      const dots = this.querySelectorAll('.pr-rec-dot');
+
+      if (!carousel) return;
+
+      const getCardWidth = () => {
+        const card = carousel.querySelector('.pr-rec-card');
+        return card ? card.offsetWidth + 16 : 220;
+      };
+
+      if (prevBtn && nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          carousel.scrollBy({ left: getCardWidth() * 2, behavior: 'smooth' });
+        });
+        prevBtn.addEventListener('click', () => {
+          carousel.scrollBy({ left: -getCardWidth() * 2, behavior: 'smooth' });
+        });
+      }
+
+      if (dots.length > 0) {
+        dots.forEach((dot, index) => {
+          dot.addEventListener('click', () => {
+            carousel.scrollTo({
+              left: index * getCardWidth(),
+              behavior: 'smooth'
+            });
+          });
+        });
+
+        carousel.addEventListener('scroll', () => {
+          const scrollPos = carousel.scrollLeft;
+          const cardWidth = getCardWidth();
+          const activeIndex = Math.min(
+            Math.round(scrollPos / cardWidth),
+            dots.length - 1
+          );
+
+          dots.forEach((dot, idx) => {
+            if (idx === activeIndex) {
+              dot.classList.add('active');
+            } else {
+              dot.classList.remove('active');
+            }
+          });
+        }, { passive: true });
+      }
+    }
+
+    setupProductPageCarousel() {
+      const carousel = this.querySelector('#pp-related-grid');
+      const prevBtn = this.querySelector('.pp-rel-prev');
+      const nextBtn = this.querySelector('.pp-rel-next');
+      const dots = this.querySelectorAll('.pp-rel-dot');
+
+      if (!carousel) return;
+
+      const getCardWidth = () => {
+        const card = carousel.querySelector('.pp-related-item-card');
+        return card ? card.offsetWidth + 10 : 220;
+      };
+
+      if (prevBtn && nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          carousel.scrollBy({ left: getCardWidth() * 2, behavior: 'smooth' });
+        });
+        prevBtn.addEventListener('click', () => {
+          carousel.scrollBy({ left: -getCardWidth() * 2, behavior: 'smooth' });
+        });
+      }
+
+      if (dots.length > 0) {
+        dots.forEach((dot, index) => {
+          dot.addEventListener('click', () => {
+            carousel.scrollTo({
+              left: index * getCardWidth() * (window.innerWidth < 768 ? 2 : 4),
+              behavior: 'smooth'
+            });
+          });
+        });
+
+        carousel.addEventListener('scroll', () => {
+          const scrollPos = carousel.scrollLeft;
+          const cardWidth = getCardWidth();
+          const activeIndex = Math.min(
+            Math.round(scrollPos / (cardWidth * (window.innerWidth < 768 ? 2 : 4))),
+            dots.length - 1
+          );
+
+          dots.forEach((dot, idx) => {
+            if (idx === activeIndex) {
+              dot.classList.add('is-active');
+            } else {
+              dot.classList.remove('is-active');
+            }
+          });
+        }, { passive: true });
+      }
+
+      // Check if carousel overflows and hide/show navigation arrows & dots accordingly
+      const checkOverflow = () => {
+        const hasOverflow = carousel.scrollWidth > carousel.clientWidth;
+        
+        if (prevBtn && nextBtn) {
+          if (hasOverflow && window.innerWidth >= 768) {
+            prevBtn.style.display = 'flex';
+            nextBtn.style.display = 'flex';
+          } else {
+            prevBtn.style.display = 'none';
+            nextBtn.style.display = 'none';
+          }
+        }
+
+        const dotsWrapper = this.querySelector('#pp-rel-dots');
+        if (dotsWrapper) {
+          dotsWrapper.style.display = hasOverflow ? 'flex' : 'none';
+        }
+      };
+
+      // Run check on initialization
+      setTimeout(checkOverflow, 100);
+
+      // Run check on screen resize
+      window.addEventListener('resize', checkOverflow);
+    }
+  }
+  
+  if (!customElements.get('product-recommendations')) {
+    customElements.define('product-recommendations', ProductRecommendations);
+  }
+{% endjavascript %}

@@ -1,0 +1,37 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "banner": {
+      "type": "main-collection-banner",
+      "settings": {
+        "title": "NATURAL DIAMONDS",
+        "subtitle": "<p>The Ultimate Expression of Forever. Responsibly Sourced. Impeccably Cut.</p>",
+        "button_label": "EXPLORE COLLECTION",
+        "button_link": "",
+        "text_color": "#ffffff",
+        "bg_color": "#0a2a26",
+        "btn_bg_color": "#ffffff",
+        "btn_text_color": "#0a2a26",
+        "image": "shopify:\/\/shop_images\/new_b6_collection.png"
+      }
+    },
+    "product_grid": {
+      "type": "main-collection-product-grid",
+      "settings": {
+        "bg_color": "#ffffff"
+      }
+    }
+  },
+  "order": [
+    "banner",
+    "product_grid"
+  ]
+}

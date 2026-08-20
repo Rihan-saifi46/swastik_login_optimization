@@ -1,0 +1,32 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "header",
+  "name": "t:general.header",
+  "sections": {
+    "header": {
+      "type": "header",
+      "settings": {
+        "logo_width": 65,
+        "gold_price": "Gold 14500/1g",
+        "wishlist_count": 2,
+        "mock_cart_count": true,
+        "show_announcement": true,
+        "announcement_left_text": "DELHI • SINCE 2011",
+        "announcement_center_text": "MADE FOR MOMENTS THAT MATTER",
+        "announcement_right_text": "FREE INSURANCE",
+        "menu": "navabar"
+      }
+    }
+  },
+  "order": [
+    "header"
+  ]
+}

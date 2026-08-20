@@ -1,0 +1,312 @@
+{% schema %}
+{
+  "name": "Three Worlds Slider",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Heading",
+      "default": "Three Worlds of Beauty"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button Label",
+      "default": "BROWSE COLLECTIONS →"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button Link"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "card",
+      "name": "Card",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Three Worlds Slider",
+      "blocks": [
+        { "type": "card" },
+        { "type": "card" },
+        { "type": "card" }
+      ]
+    }
+  ]
+}
+{% endschema %}
+
+<div class="three-worlds">
+  <div class="three-worlds__header">
+    <h2 class="three-worlds__title">{{ section.settings.title }}</h2>
+  </div>
+  
+  <three-worlds-slider class="three-worlds__slider-wrapper">
+    <div class="three-worlds__slider">
+      {% for block in section.blocks %}
+        <div class="three-worlds__slide" data-index="{{ forloop.index0 }}" {{ block.shopify_attributes }}>
+           {% if block.settings.image %}
+             {{ block.settings.image | image_url: width: 800 | image_tag: class: 'three-worlds__slide-image', loading: 'lazy' }}
+           {% else %}
+             {{ 'image' | placeholder_svg_tag: 'three-worlds__slide-image' }}
+           {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    
+    <div class="three-worlds__pagination">
+      {% for block in section.blocks %}
+        <span class="three-worlds__dot {% if forloop.first %}is-active{% endif %}" data-index="{{ forloop.index0 }}"></span>
+      {% endfor %}
+    </div>
+  </three-worlds-slider>
+  
+  {% if section.settings.button_label != blank %}
+    <div class="three-worlds__footer">
+      <a href="{{ section.settings.button_link | default: routes.all_products_collection_url }}" class="three-worlds__button">
+        {{ section.settings.button_label }}
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+{% stylesheet %}
+  .three-worlds {
+    padding: 60px 0;
+    text-align: center;
+    overflow: hidden;
+    background-color: #ffffff;
+  }
+  .three-worlds__header {
+    padding: 0 20px;
+  }
+  .three-worlds__title {
+    font-size: 32px;
+    font-family: serif;
+    font-weight: 400;
+    margin-bottom: 40px;
+    color: #043e49;
+  }
+  .three-worlds__slider-wrapper {
+    display: block;
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .three-worlds__slider {
+    position: relative;
+    height: 380px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+  .three-worlds__slide {
+    position: absolute;
+    width: 65%;
+    max-width: 320px;
+    height: 100%;
+    border-radius: 20px;
+    transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 0.5s ease, z-index 0s;
+    will-change: transform, opacity;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  }
+  .three-worlds__slide-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    border-radius: 20px;
+  }
+  .three-worlds__pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 30px;
+  }
+  .three-worlds__dot {
+    width: 8px;
+    height: 8px;
+    background-color: #d1d5d6;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .three-worlds__dot.is-active {
+    width: 24px;
+    border-radius: 4px;
+    background-color: #043e49;
+  }
+  .three-worlds__footer {
+    margin-top: 40px;
+  }
+  .three-worlds__button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 35px;
+    background-color: #043e49;
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 13px;
+    transition: opacity 0.3s;
+  }
+  .three-worlds__button:hover {
+    opacity: 0.85;
+  }
+  
+  @media screen and (min-width: 768px) {
+    .three-worlds__title {
+      font-size: 42px;
+    }
+    .three-worlds__slider {
+      height: 480px;
+    }
+    .three-worlds__slide {
+      max-width: 360px;
+      width: 45%;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class ThreeWorldsSlider extends HTMLElement {
+    constructor() {
+      super();
+      this.slider = this.querySelector('.three-worlds__slider');
+      this.slides = Array.from(this.querySelectorAll('.three-worlds__slide'));
+      this.dots = Array.from(this.querySelectorAll('.three-worlds__dot'));
+      
+      if (!this.slider || this.slides.length === 0) return;
+      
+      this.currentIndex = 0;
+      this.totalSlides = this.slides.length;
+      
+      this.init();
+    }
+    
+    init() {
+      this.update();
+      
+      this.dots.forEach((dot) => {
+        dot.addEventListener('click', (e) => {
+          this.currentIndex = parseInt(e.target.dataset.index);
+          this.update();
+        });
+      });
+      
+      this.slides.forEach((slide) => {
+        slide.addEventListener('click', (e) => {
+          const index = parseInt(slide.dataset.index);
+          if (index !== this.currentIndex) {
+            this.currentIndex = index;
+            this.update();
+          }
+        });
+      });
+      
+      let startX = 0;
+      let isDragging = false;
+      
+      this.slider.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].clientX;
+        isDragging = true;
+      }, {passive: true});
+      
+      this.slider.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        const currentX = e.touches[0].clientX;
+        const diff = startX - currentX;
+        
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) {
+            this.next();
+          } else {
+            this.prev();
+          }
+          isDragging = false;
+        }
+      }, {passive: true});
+      
+      this.slider.addEventListener('touchend', () => {
+        isDragging = false;
+      });
+      
+      window.addEventListener('resize', () => {
+        this.update();
+      });
+    }
+    
+    next() {
+      this.currentIndex = (this.currentIndex + 1) % this.totalSlides;
+      this.update();
+    }
+    
+    prev() {
+      this.currentIndex = (this.currentIndex - 1 + this.totalSlides) % this.totalSlides;
+      this.update();
+    }
+    
+    update() {
+      const total = this.totalSlides;
+      const isMobile = window.innerWidth < 768;
+      const xStep = isMobile ? 85 : 95;
+      
+      this.slides.forEach(slide => {
+        let index = parseInt(slide.dataset.index);
+        
+        let offset = index - this.currentIndex;
+        if (offset < -Math.floor(total/2)) offset += total;
+        if (offset > Math.floor(total/2)) offset -= total;
+        
+        let translateX, scale, opacity, zIndex;
+        
+        if (offset === 0) {
+          translateX = 0;
+          scale = 1;
+          opacity = 1;
+          zIndex = 3;
+        } else if (offset === 1 || offset === -1) {
+          translateX = offset * xStep;
+          scale = 0.85;
+          opacity = 0.6;
+          zIndex = 2;
+        } else {
+          translateX = offset * (xStep + 15);
+          scale = 0.7;
+          opacity = 0;
+          zIndex = 1;
+        }
+        
+        slide.style.transform = `translateX(${translateX}%) scale(${scale})`;
+        slide.style.opacity = opacity;
+        slide.style.zIndex = zIndex;
+        
+        if (this.dots[index]) {
+          this.dots[index].classList.toggle('is-active', offset === 0);
+        }
+      });
+    }
+  }
+  
+  if (!customElements.get('three-worlds-slider')) {
+    customElements.define('three-worlds-slider', ThreeWorldsSlider);
+  }
+{% endjavascript %}

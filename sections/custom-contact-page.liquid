@@ -1,0 +1,595 @@
+<div class="custom-contact-page">
+  <div class="contact-header-section">
+    {% if section.settings.main_heading != blank %}
+      <h1 class="main-contact-title">{{ section.settings.main_heading }}</h1>
+    {% endif %}
+    {% if section.settings.main_subheading != blank %}
+      <p class="main-contact-subtitle">{{ section.settings.main_subheading }}</p>
+    {% endif %}
+  </div>
+
+  <div class="custom-contact-container">
+    <!-- LEFT SIDE: Google Map -->
+    <div class="contact-card contact-map-card">
+      {% if section.settings.map_embed != blank %}
+        {{ section.settings.map_embed }}
+      {% else %}
+        <div class="map-placeholder">
+          <p>Please add map iframe in editor</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- RIGHT SIDE: Contact Details -->
+    <div class="contact-card contact-details-card">
+      <h2 class="contact-title">{{ section.settings.heading }}</h2>
+      <div class="contact-title-divider"></div>
+      
+      <p class="contact-subtitle"><strong>{{ section.settings.subheading }}</strong></p>
+      
+      <div class="contact-description">
+        {{ section.settings.description }}
+        <p style="margin-top: 15px; font-weight: 500;">And if we're not available right away, sit back and relax — we'll get back to you within 24 hours. <span style="font-style: normal;">🕒</span></p>
+      </div>
+
+      <div class="contact-section">
+        <h3 class="contact-heading">
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#013F3E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          How to Reach Us!
+        </h3>
+        <p class="contact-info-text">We're available from <strong>{{ section.settings.business_hours }}</strong></p>
+      </div>
+
+      <div class="contact-line-items">
+        <div class="contact-item-row">
+          <span class="contact-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D3C1A5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          </span>
+          <p><strong>Legal Entity Name:</strong> {{ section.settings.legal_entity }}</p>
+        </div>
+
+        <div class="contact-item-row">
+          <span class="contact-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D3C1A5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          </span> 
+          <div class="contact-item-content">
+            <p><strong>Email:</strong> <a href="mailto:{{ section.settings.email }}">{{ section.settings.email }}</a></p>
+            <p class="contact-subtext">(For order updates, exchanges, or general queries)</p>
+          </div>
+        </div>
+
+        <div class="contact-item-row">
+          <span class="contact-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#013F3E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+          </span> 
+          <div class="contact-item-content">
+            <p><strong>Phone / WhatsApp:</strong> <a href="tel:{{ section.settings.phone | replace: ' ', '' }}">{{ section.settings.phone }}</a></p>
+            <p class="contact-subtext">(Call or text us during working hours)</p>
+          </div>
+        </div>
+
+        <div class="contact-item-row">
+          <span class="contact-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#013F3E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+          </span> 
+          <div class="contact-item-content">
+            <p><strong>Office Address:</strong> <a href="https://www.google.com/maps/search/?api=1&query={{ section.settings.address | url_encode }}" target="_blank" rel="noopener noreferrer">{{ section.settings.address }}</a></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="custom-contact-form-container">
+    <div class="contact-form-card">
+      <div class="contact-form-header">
+        <h2>Send us a Message</h2>
+        <p>Fill out the form below and we'll get back to you as soon as possible.</p>
+      </div>
+      {%- form 'contact', id: 'ContactForm', class: 'custom-contact-form' -%}
+        {%- if form.posted_successfully? -%}
+          <div class="form-status form-status-list form__message success-message" tabindex="-1" autofocus>
+            <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #28a745; margin-right: 8px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            Thanks for contacting us. We'll get back to you as soon as possible.
+          </div>
+        {%- elsif form.errors -%}
+          <div class="form__message error-message">
+            <h3 class="form-status" role="alert" tabindex="-1" autofocus style="margin: 0; font-size: 1.4rem;">
+              Please adjust the following:
+            </h3>
+            <ul class="form-status-list">
+              <li>
+                <a href="#ContactForm-email">
+                  {{ form.errors.translated_fields.email | capitalize }} {{ form.errors.messages.email }}
+                </a>
+              </li>
+            </ul>
+          </div>
+        {%- endif -%}
+
+        <div class="contact-fields">
+          <div class="field field-with-icon">
+            <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a0a0a0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <input class="field__input" autocomplete="name" type="text" id="ContactForm-name" name="contact[{{ 'templates.contact.form.name' | t | default: 'name' }}]" value="{% if form.name %}{{ form.name }}{% elsif customer %}{{ customer.name }}{% endif %}" placeholder="Your Name" required>
+          </div>
+          <div class="field field-with-icon">
+            <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a0a0a0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <input
+              autocomplete="email"
+              type="email"
+              id="ContactForm-email"
+              class="field__input"
+              name="contact[email]"
+              spellcheck="false"
+              autocapitalize="off"
+              value="{% if form.email %}{{ form.email }}{% elsif customer %}{{ customer.email }}{% endif %}"
+              aria-required="true"
+              placeholder="Your Email"
+              required
+            >
+          </div>
+        </div>
+        <div class="field field-with-icon">
+          <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a0a0a0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+          <input type="tel" id="ContactForm-phone" class="field__input" autocomplete="tel" name="contact[{{ 'templates.contact.form.phone' | t | default: 'phone' }}]" pattern="[0-9\-]*" value="{% if form.phone %}{{ form.phone }}{% elsif customer %}{{ customer.phone }}{% endif %}" placeholder="Phone Number">
+        </div>
+        <div class="field field-with-icon align-top">
+          <svg class="field-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a0a0a0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          <textarea
+            rows="4"
+            id="ContactForm-body"
+            class="text-area field__input"
+            name="contact[{{ 'templates.contact.form.comment' | t | default: 'message' }}]"
+            placeholder="Your Message"
+            required
+          >{%- if form.body -%}{{- form.body -}}{%- endif -%}</textarea>
+        </div>
+        <div class="contact-submit">
+          <button type="submit" class="button custom-button">
+            Send Message 
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 8px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </div>
+      {%- endform -%}
+    </div>
+  </div>
+</div>
+
+<style>
+  .custom-contact-page {
+    background-color: #FAFAFA; /* Elegant clean background */
+    padding-bottom: 60px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .contact-header-section {
+    text-align: center;
+    padding: 50px 20px 30px;
+  }
+
+  .main-contact-title {
+    font-family: 'Playfair Display', "Times New Roman", Times, serif;
+    font-size: 4.2rem;
+    font-weight: 500;
+    margin: 0;
+    color: #013F3E;
+    line-height: 1.2;
+    letter-spacing: -0.2px;
+  }
+
+  .main-contact-subtitle {
+    font-size: 1.4rem;
+    color: #666;
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .custom-contact-container {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px 50px;
+    gap: 30px;
+  }
+  
+  .contact-card {
+    background: #FFFFFF;
+    border-radius: 4px; /* More tailored, editorial look */
+    border: 1px solid #EAE6DF; /* Extremely delicate border */
+    /* Removed drop shadow for a premium flat aesthetic */
+  }
+
+  .contact-map-card {
+    flex: 1 1 500px;
+    padding: 0;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .contact-map-card iframe {
+    width: 100%;
+    height: 100%;
+    min-height: 420px;
+    border: none;
+  }
+  
+  .map-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 420px;
+    background: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+  }
+  
+  .contact-details-card {
+    flex: 1 1 400px;
+    padding: 45px 40px;
+  }
+
+  .contact-title {
+    font-family: 'Playfair Display', "Times New Roman", Times, serif;
+    font-size: 2.8rem;
+    font-weight: 500;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #013F3E;
+  }
+
+  .contact-title-divider {
+    width: 50px;
+    height: 1px;
+    background-color: #D3C1A5;
+    margin-bottom: 25px;
+  }
+
+  .contact-subtitle {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #333;
+    letter-spacing: 0.2px;
+  }
+
+  .contact-description {
+    font-size: 1.35rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    color: #555;
+  }
+
+  .contact-section { margin-top: 35px; margin-bottom: 25px; }
+
+  .contact-heading {
+    font-size: 1.6rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #111;
+  }
+
+  .contact-heading svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .contact-info-text {
+    font-size: 1.3rem;
+    color: #555;
+    margin-bottom: 20px;
+  }
+
+  .contact-info-text strong {
+    color: #111;
+    font-weight: 600;
+  }
+
+  .contact-line-items { display: flex; flex-direction: column; gap: 20px; }
+  
+  .contact-item-row { 
+    display: flex; 
+    align-items: flex-start; 
+    gap: 14px; 
+  }
+
+  .contact-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .contact-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .contact-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .contact-item-row p {
+    font-size: 1.35rem;
+    margin: 0;
+    line-height: 1.4;
+    color: #555;
+  }
+
+  .contact-item-row strong {
+    color: #111;
+    font-weight: 500;
+  }
+
+  .contact-item-row a {
+    color: #013F3E;
+    text-decoration: none;
+    transition: color 0.2s;
+    border-bottom: 1px solid transparent;
+  }
+  
+  .contact-item-row a:hover {
+    color: #026b68;
+    border-bottom: 1px solid #026b68;
+  }
+
+  .contact-subtext {
+    font-size: 1.15rem !important;
+    color: #888 !important;
+  }
+
+  /* Form Section */
+  .custom-contact-form-container {
+    max-width: 750px; /* Narrower, more elegant form width */
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+  
+  .contact-form-card {
+    background: #FFFFFF;
+    padding: 45px 50px;
+    border-radius: 4px;
+    border: 1px solid #EAE6DF;
+  }
+
+  .contact-form-header {
+    text-align: center;
+    margin-bottom: 35px;
+  }
+
+  .contact-form-header h2 {
+    font-family: 'Playfair Display', "Times New Roman", Times, serif;
+    font-size: 2.8rem;
+    font-weight: 500;
+    margin: 0;
+    color: #013F3E;
+  }
+
+  .contact-form-header p {
+    font-size: 1.35rem;
+    color: #666;
+    margin-top: 10px;
+  }
+
+  .custom-contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .contact-fields {
+    display: flex;
+    gap: 20px;
+  }
+
+  .field-with-icon {
+    position: relative;
+    width: 100%;
+  }
+
+  .field-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #A0A0A0;
+    width: 16px;
+    height: 16px;
+  }
+
+  .field-with-icon.align-top .field-icon {
+    top: 16px;
+    transform: none;
+  }
+
+  .custom-contact-form .field__input {
+    width: 100%;
+    padding: 14px 16px 14px 42px;
+    border: 1px solid #EAE6DF;
+    border-radius: 4px;
+    font-size: 1.35rem;
+    font-family: inherit;
+    background-color: #FFFFFF;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    color: #333;
+  }
+
+  .custom-contact-form .field__input::placeholder {
+    color: #A0A0A0;
+    font-weight: 400;
+  }
+
+  .custom-contact-form .field__input:hover {
+    border-color: #D3C1A5;
+  }
+
+  .custom-contact-form .field__input:focus {
+    outline: none;
+    border-color: #013F3E;
+    box-shadow: 0 0 0 1px #013F3E;
+  }
+
+  .custom-contact-form .text-area {
+    resize: vertical;
+    min-height: 110px;
+  }
+
+  .contact-submit {
+    margin-top: 10px;
+  }
+
+  .custom-contact-form .custom-button {
+    background-color: #013F3E;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.35rem;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .custom-contact-form .custom-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .custom-contact-form .custom-button:hover {
+    background-color: #022b2a;
+    transform: translateY(-1px);
+  }
+
+  .success-message {
+    display: flex;
+    align-items: center;
+    background-color: #f0f9f1;
+    color: #2e7d32;
+    padding: 14px 18px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-size: 1.35rem;
+    border: 1px solid #c8e6c9;
+  }
+
+  .error-message {
+    background-color: #fff5f5;
+    color: #c62828;
+    padding: 14px 18px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-size: 1.35rem;
+    border: 1px solid #ffcdd2;
+  }
+
+  .error-message ul {
+    margin: 8px 0 0 20px;
+    padding: 0;
+  }
+
+  @media screen and (max-width: 768px) {
+    .custom-contact-container { flex-direction: column; padding: 0 15px 40px; gap: 30px; }
+    .contact-map-card iframe { min-height: 350px; }
+    .contact-fields { flex-direction: column; gap: 15px; }
+    .contact-form-card { padding: 35px 20px; }
+    .contact-details-card { padding: 35px 20px; }
+    .main-contact-title { font-size: 3.4rem; }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Custom Contact Layout",
+  "settings": [
+    {
+      "type": "text",
+      "id": "main_heading",
+      "label": "Main Title",
+      "default": "Contact Us"
+    },
+    {
+      "type": "text",
+      "id": "main_subheading",
+      "label": "Main Subtitle",
+      "default": "We're here to help you sparkle."
+    },
+    {
+      "type": "html",
+      "id": "map_embed",
+      "label": "Google Map Embed Iframe Code",
+      "info": "Paste your map iframe code here"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Get In Touch With Us!"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Have a question? We're just a message away! 💬"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "Description Text",
+      "default": "<p>Whether you're wondering about our latest jewellery collections, need help with a custom order, or just want to say hello — we're all ears!</p>"
+    },
+    {
+      "type": "text",
+      "id": "business_hours",
+      "label": "Business Hours",
+      "default": "Monday to Saturday, 12 PM to 8 PM (IST)"
+    },
+    {
+      "type": "text",
+      "id": "legal_entity",
+      "label": "Legal Entity Name",
+      "default": "Swastik Jewels"
+    },
+    {
+      "type": "text",
+      "id": "email",
+      "label": "Email Address",
+      "default": "contact@swastik.in"
+    },
+    {
+      "type": "text",
+      "id": "phone",
+      "label": "Phone Number",
+      "default": "+91 95719 00007"
+    },
+    {
+      "type": "textarea",
+      "id": "address",
+      "label": "Office Address",
+      "default": "2549, Gali No. 6, Block 35M, Beadonpura, Karol Bagh, New Delhi, Delhi, 110005"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Custom Contact Layout"
+    }
+  ]
+}
+{% endschema %}

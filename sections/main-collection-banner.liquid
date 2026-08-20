@@ -1,0 +1,210 @@
+{%- assign desktop_image = collection.image | default: section.settings.image -%}
+{%- assign mobile_image = collection.metafields.custom.mobile_banner | default: section.settings.image_mobile | default: desktop_image -%}
+
+{%- if desktop_image != blank or mobile_image != blank or section.settings.show_text -%}
+  <div class="collection-banner" style="background-color: {{ section.settings.bg_color }};">
+    {%- if desktop_image != blank or mobile_image != blank -%}
+      <div class="collection-banner__image-wrapper">
+        <picture>
+          {%- if mobile_image != blank -%}
+            <source media="(max-width: 768px)" srcset="{{ mobile_image | image_url: width: 800 }}">
+          {%- endif -%}
+          {%- if desktop_image != blank -%}
+            <source media="(min-width: 769px)" srcset="{{ desktop_image | image_url: width: 2800 }}">
+            <img src="{{ desktop_image | image_url: width: 2000 }}" loading="eager" class="collection-banner__image" alt="{{ desktop_image.alt | escape | default: collection.title }}" width="{{ desktop_image.width }}" height="{{ desktop_image.height }}">
+          {%- else -%}
+            <img src="{{ mobile_image | image_url: width: 800 }}" loading="eager" class="collection-banner__image" alt="{{ mobile_image.alt | escape | default: collection.title }}" width="{{ mobile_image.width }}" height="{{ mobile_image.height }}">
+          {%- endif -%}
+        </picture>
+      </div>
+    {%- endif -%}
+    
+    {%- if section.settings.show_text -%}
+      <div class="collection-banner__content">
+        <h1 class="collection-banner__title serif-font" style="color: {{ section.settings.text_color }};">
+          {%- if section.settings.title != blank -%}
+            {{ section.settings.title | escape }}
+          {%- else -%}
+            {{ collection.title | escape }}
+          {%- endif -%}
+        </h1>
+        {%- if section.settings.subtitle != blank -%}
+          <div class="collection-banner__subtitle" style="color: {{ section.settings.text_color }};">
+            {{ section.settings.subtitle }}
+          </div>
+        {%- elsif collection.description != blank -%}
+          <div class="collection-banner__subtitle" style="color: {{ section.settings.text_color }};">
+            {{ collection.description }}
+          </div>
+        {%- endif -%}
+
+        {%- if section.settings.button_label != blank -%}
+          <a href="{{ section.settings.button_link | default: '#' }}" class="collection-banner__btn pill-button" style="background-color: {{ section.settings.btn_bg_color }}; color: {{ section.settings.btn_text_color }};">
+            {{ section.settings.button_label | escape }} &rarr;
+          </a>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .collection-banner {
+    position: relative;
+    width: 100%;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
+  
+  .collection-banner__image-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+  
+  .collection-banner__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+  
+  .collection-banner__content {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+    padding: 4rem 6rem;
+  }
+  
+  .collection-banner__title {
+    font-size: 4rem;
+    font-weight: 500;
+    margin: 0 0 1rem 0;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+  
+  .collection-banner__subtitle {
+    font-size: 1.2rem;
+    line-height: 1.5;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+  }
+  
+  .collection-banner__btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 1rem 2rem;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    text-transform: uppercase;
+    border-radius: 5rem;
+    letter-spacing: 0.1em;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .collection-banner__btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+  }
+
+  @media screen and (max-width: 768px) {
+    .collection-banner {
+      min-height: 225px;
+      align-items: flex-end;
+    }
+    .collection-banner__content {
+      padding: 2rem;
+      background: linear-gradient(to top, rgba(255,255,255,0.9), transparent);
+      width: 100%;
+    }
+    .collection-banner__title {
+      font-size: 2.5rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Collection Banner",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_text",
+      "label": "Show Text Overlay",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Custom Title (Overrides Collection Title)",
+      "default": "LAB GROWN DIAMONDS"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Desktop Background Image (2800x800 recommended)"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_mobile",
+      "label": "Mobile Background Image (800x450 recommended)"
+    },
+    {
+      "type": "richtext",
+      "id": "subtitle",
+      "label": "Subtitle / Description",
+      "default": "<p>Modern Elegance. Crafted for Today.</p>"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button Label",
+      "default": "SHOP COLLECTION"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button Link"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#013F3E"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background Color (Fallback)",
+      "default": "#f5f0e6"
+    },
+    {
+      "type": "color",
+      "id": "btn_bg_color",
+      "label": "Button Background",
+      "default": "#013F3E"
+    },
+    {
+      "type": "color",
+      "id": "btn_text_color",
+      "label": "Button Text",
+      "default": "#ffffff"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Collection Banner"
+    }
+  ]
+}
+{% endschema %}
+
+

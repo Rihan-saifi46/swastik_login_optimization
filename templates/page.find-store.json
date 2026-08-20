@@ -1,0 +1,93 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "page-find-store",
+      "blocks": {
+        "feature_1": {
+          "type": "feature",
+          "settings": {
+            "icon": "<svg viewbox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 3h12l4 6-10 13L2 9Z\"></path><path d=\"M11 3 8 9l4 13 4-13-3-6\"></path><path d=\"M2 9h20\"></path></svg>",
+            "text": "See & Try Your Favourites"
+          }
+        },
+        "feature_2": {
+          "type": "feature",
+          "settings": {
+            "icon": "<svg viewbox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"></path><circle cx=\"12\" cy=\"7\" r=\"4\"></circle></svg>",
+            "text": "Personalised Expert Guidance"
+          }
+        },
+        "feature_3": {
+          "type": "feature",
+          "settings": {
+            "icon": "<svg viewbox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"14\" r=\"8\"></circle><path d=\"M12 2L9 8h6l-3-6z\"></path></svg>",
+            "text": "Custom Jewellery Consultation"
+          }
+        },
+        "feature_4": {
+          "type": "feature",
+          "settings": {
+            "icon": "<svg viewbox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"></path><path d=\"M3 3v5h5\"></path></svg>",
+            "text": "Gold Exchange & Upgrade"
+          }
+        },
+        "feature_5": {
+          "type": "feature",
+          "settings": {
+            "icon": "<svg viewbox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M22 11.08V12a10 10 0 1 1-5.93-9.14\"></path><polyline points=\"22 4 12 14.01 9 11.01\"></polyline></svg>",
+            "text": "BIS Hallmarked Assurance"
+          }
+        },
+        "feature_6": {
+          "type": "feature",
+          "settings": {
+            "icon": "<svg viewbox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"></rect><line x1=\"2\" y1=\"10\" x2=\"22\" y2=\"10\"></line></svg>",
+            "text": "Easy EMI Options"
+          }
+        }
+      },
+      "block_order": [
+        "feature_1",
+        "feature_2",
+        "feature_3",
+        "feature_4",
+        "feature_5",
+        "feature_6"
+      ],
+      "settings": {
+        "hero_subtitle": "FIND OUR STORE",
+        "hero_title": "We'd Love To Welcome You",
+        "hero_text": "Visit our Store to explore our exclusive collections, experience the finest craftsmanship, and receive personalized assistance from our experts.",
+        "hero_image": "shopify://shop_images/Screenshot_2026-08-07_114410.png",
+        "btn_directions_text": "Get Directions",
+        "btn_directions_link": "https://maps.app.goo.gl/jwhFnGz9Cd8MwkUi9",
+        "btn_call_text": "Call Store",
+        "btn_call_link": "+919660096700",
+        "btn_whatsapp_text": "WhatsApp",
+        "btn_whatsapp_link": "https://wa.me/919660096700",
+        "store_name": "Swastik Jewels",
+        "store_address_label": "Address",
+        "store_address": "2549, Gali No. 6, Block 35M,\nBeadonpura, Karol Bagh,\nNew Delhi, Delhi 110005",
+        "store_hours": "12:00 AM - 08:00 PM",
+        "store_status_text": "",
+        "store_phone_label": "Phone",
+        "store_phone": "+91 96600 96700",
+        "store_email_label": "Email",
+        "store_email": "contact@swastikjewel.in",
+        "map_iframe": "<iframe src=\"https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3501.311038825487!2d77.19130161040479!3d28.650404083168546!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d03d719622805%3A0x646d4d936b614f0c!2sSwastik%20Jewels!5e0!3m2!1sen!2sin!4v1786083321426!5m2!1sen!2sin\" width=\"600\" height=\"450\" style=\"border:0;\" allowfullscreen=\"\" loading=\"lazy\" referrerpolicy=\"strict-origin-when-cross-origin\"></iframe>"
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

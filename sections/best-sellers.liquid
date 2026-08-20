@@ -1,0 +1,856 @@
+{% comment %}
+  Renders the Best Sellers section with premium tabs/screens, interactive card carousels, and responsive layouts.
+{% endcomment %}
+
+<div class="best-sellers section-spacing" style="--bg-color: {{ section.settings.bg_color }};">
+  <div class="best-sellers__container">
+    
+    <!-- Section Header -->
+    <div class="best-sellers__header">
+      <div class="best-sellers__logo-mark">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 3H18L22 9L12 22L2 9L6 3Z" fill="var(--color-accent, #D4AF37)"/>
+          <path d="M6 3L10 9L12 3L14 9L18 3" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 9H22" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M10 9L12 22L14 9" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      
+      {% if section.settings.subheading != blank %}
+        <div class="best-sellers__subheading-wrapper">
+          <span class="best-sellers__divider-line"></span>
+          <span class="best-sellers__subheading">{{ section.settings.subheading | escape }}</span>
+          <span class="best-sellers__divider-line"></span>
+        </div>
+      {% endif %}
+      
+      {% if section.settings.title != blank %}
+        <h2 class="best-sellers__heading serif-font">{{ section.settings.title | escape }}</h2>
+      {% endif %}
+      
+      {% if section.settings.description != blank %}
+        <p class="best-sellers__description">{{ section.settings.description | escape }}</p>
+      {% endif %}
+      
+      <div class="best-sellers__divider-ornament">
+        <span class="ornament-line"></span>
+        <span class="ornament-sparkle">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 3H18L22 9L12 22L2 9L6 3Z" fill="var(--color-accent, #D4AF37)"/>
+            <path d="M6 3L10 9L12 3L14 9L18 3" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 9H22" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 9L12 22L14 9" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="ornament-line"></span>
+      </div>
+    </div>
+
+    <!-- Category Tabs Navigation (3 Screens/Sections) -->
+    <div class="best-sellers__tabs-nav">
+      {% assign has_blocks = false %}
+      {% if section.blocks.size > 0 %}
+        {% assign has_blocks = true %}
+      {% endif %}
+
+      {% if has_blocks %}
+        {% for block in section.blocks %}
+          <button class="best-sellers__tab-btn{% if forloop.first %} active{% endif %}" data-tab-target="tab-{{ block.id }}" {{ block.shopify_attributes }}>
+            <span class="tab-btn-text">{{ block.settings.title | escape }}</span>
+            <span class="tab-btn-indicator"></span>
+          </button>
+        {% endfor %}
+      {% elsif request.design_mode %}
+        <button class="best-sellers__tab-btn active" data-tab-target="tab-placeholder">
+          <span class="tab-btn-text">Add a tab</span>
+          <span class="tab-btn-indicator"></span>
+        </button>
+      {% endif %}
+    </div>
+
+    <!-- Tabs Content Container -->
+    <div class="best-sellers__tabs-content">
+      {% if has_blocks %}
+        {% for block in section.blocks %}
+          {% assign tab_collection = collections[block.settings.collection] %}
+          <div class="best-sellers__tab-panel{% if forloop.first %} active show-active{% endif %}" id="tab-{{ block.id }}">
+            <div class="best-sellers__grid">
+              {% if tab_collection != blank and tab_collection.products_count > 0 %}
+                {% for product in tab_collection.products limit: 4 %}
+                  {% render 'product-card', product: product, badge_text: 'BEST SELLER' %}
+                {% endfor %}
+              {% elsif request.design_mode %}
+                <p style="padding:2rem;color:#888;font-family:'Montserrat',sans-serif;">Assign a collection to this tab to show products.</p>
+              {% endif %}
+            </div>
+            
+            <div class="best-sellers__footer">
+              <a href="{{ tab_collection.url | default: '#' }}" class="btn-view-all">
+                VIEW ALL {{ block.settings.title | upcase }}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 5l7 7-7 7"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+        {% endfor %}
+      {% elsif request.design_mode %}
+        <div class="best-sellers__tab-panel active show-active" id="tab-placeholder">
+          <p style="padding:3rem 2rem;text-align:center;color:#888;font-family:'Montserrat',sans-serif;font-size:1.4rem;">
+            Add a “Tab” block in this section's settings and assign a collection to each tab to display your best sellers.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+{% stylesheet %}
+  .best-sellers {
+    background-color: var(--bg-color, #FFFFFF);
+    padding-top: 8rem;
+    padding-bottom: 8rem;
+  }
+
+  .best-sellers__container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-left: 4.8rem;
+    padding-right: 4.8rem;
+  }
+
+  .best-sellers__footer {
+    text-align: center;
+    margin-top: 4rem;
+  }
+
+  /* Section Header Styling */
+  .best-sellers__header {
+    margin-bottom: 4rem;
+    text-align: center;
+  }
+
+  .best-sellers__logo-mark {
+    margin-bottom: 1.5rem;
+    display: inline-flex;
+    justify-content: center;
+  }
+
+  .best-sellers__subheading-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    width: 100%;
+    margin-bottom: 1.5rem;
+  }
+
+  .best-sellers__divider-line {
+    height: 1px;
+    background-color: var(--color-accent, #D4AF37);
+    width: 60px;
+    opacity: 0.5;
+  }
+
+  .best-sellers__subheading {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--color-accent, #D4AF37);
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+  }
+
+  .best-sellers__heading {
+    font-size: 4.2rem;
+    color: var(--color-primary, #013F3E);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+
+  .best-sellers__description {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-style: normal;
+    color: var(--color-foreground, #1A1A1A);
+    opacity: 0.8;
+    margin-bottom: 2rem;
+  }
+
+  .best-sellers__divider-ornament {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+  }
+  .ornament-line {
+    height: 1px;
+    background-color: var(--color-accent, #D4AF37);
+    width: 40px;
+    opacity: 0.4;
+  }
+  .ornament-sparkle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* Category Tabs Navigation */
+  .best-sellers__tabs-nav {
+    display: flex;
+    justify-content: center;
+    gap: 3.2rem;
+    margin-bottom: 5rem;
+    border-bottom: 1px solid rgba(1, 63, 62, 0.08);
+    padding-bottom: 1.6rem;
+  }
+
+  .best-sellers__tab-btn {
+    background: none;
+    border: none;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: rgba(26, 26, 26, 0.6);
+    cursor: pointer;
+    position: relative;
+    padding: 0.8rem 1.6rem;
+    transition: all 0.3s ease;
+  }
+
+  .best-sellers__tab-btn:hover {
+    color: var(--color-primary, #013F3E);
+  }
+
+  .best-sellers__tab-btn.active {
+    color: var(--color-primary, #013F3E);
+    font-weight: 600;
+  }
+
+  .tab-btn-indicator {
+    position: absolute;
+    bottom: -1.7rem;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--color-accent, #D4AF37);
+    transform: scaleX(0);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .best-sellers__tab-btn.active .tab-btn-indicator {
+    transform: scaleX(1);
+  }
+
+  /* Tab Panel Transitions */
+  .best-sellers__tab-panel {
+    display: none;
+    opacity: 0;
+    transform: translateY(15px);
+  }
+
+  .best-sellers__tab-panel.active {
+    display: block;
+  }
+
+  .best-sellers__tab-panel.show-active {
+    opacity: 1;
+    transform: translateY(0);
+    will-change: opacity, transform;
+    transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Products Grid Styling */
+  .best-sellers__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3.2rem;
+  }
+
+  .best-sellers__card {
+    background: #FFFFFF;
+    border-radius: 12px;
+    border: 1px solid rgba(1, 63, 62, 0.06);
+    overflow: hidden;
+    transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .best-sellers__card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 15px 35px rgba(1, 63, 62, 0.1);
+  }
+
+  /* Card Image Carousel Styling */
+  .best-sellers__image-wrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%; /* 1:1 Aspect Ratio */
+    background-color: #FDFBF7;
+    overflow: hidden;
+  }
+
+  .best-sellers__img-slides {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .best-sellers__img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease, transform 0.5s ease;
+  }
+
+  .best-sellers__img.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .best-sellers__card:hover .best-sellers__img.active {
+    transform: scale(1.05);
+  }
+
+  .best-sellers__card-tag {
+    position: absolute;
+    top: 1.6rem;
+    left: 1.6rem;
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    z-index: 2;
+    letter-spacing: 0.05em;
+  }
+
+  .best-sellers__wishlist-btn {
+    position: absolute;
+    top: 1.6rem;
+    right: 1.6rem;
+    width: 3.6rem;
+    height: 3.6rem;
+    background-color: #FFFFFF;
+    color: #888888;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 0;
+  }
+
+  @keyframes heartPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+
+  .best-sellers__wishlist-btn:hover {
+    color: var(--color-accent, #D4AF37);
+    transform: scale(1.1);
+  }
+
+  .best-sellers__wishlist-btn.active {
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+    border-color: var(--color-primary, #013F3E);
+  }
+
+  .best-sellers__wishlist-btn.active svg {
+    animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    fill: currentColor;
+  }
+
+  .best-sellers__wishlist-btn svg {
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .best-sellers__wishlist-btn.active svg {
+    fill: currentColor;
+    transform: scale(1.1);
+  }
+
+  .best-sellers__dots {
+    position: absolute;
+    bottom: 1.6rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.6rem;
+    z-index: 2;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+    cursor: pointer;
+    padding: 0;
+    outline: none;
+  }
+
+  .dot:hover {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  .dot--active {
+    width: 20px;
+    height: 8px;
+    background-color: var(--color-accent, #D4AF37);
+    border-color: var(--color-accent, #D4AF37);
+    border-radius: 4px;
+  }
+
+  /* Card Content Styling */
+  .best-sellers__card-content {
+    padding: 2.4rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .best-sellers__card-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--color-primary, #013F3E);
+    margin-bottom: 0.6rem;
+    line-height: 1.3;
+  }
+
+  .best-sellers__card-title a {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.3s ease;
+  }
+
+  .best-sellers__card-title a:hover {
+    color: var(--color-accent, #D4AF37);
+  }
+
+  .best-sellers__card-desc {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.25rem;
+    color: #777777;
+    margin-bottom: 1.6rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* Price styling */
+  .best-sellers__price-row {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-bottom: 2.4rem;
+    flex-wrap: wrap;
+  }
+
+  .price-current {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-primary, #013F3E);
+  }
+
+  .price-original {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.4rem;
+    color: #999999;
+    text-decoration: line-through;
+  }
+
+  .price-discount {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    background-color: var(--color-accent, #D4AF37);
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Card Button Group */
+  .best-sellers__button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: auto;
+  }
+
+  .btn-add-cart {
+    flex-grow: 1;
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+    border: 1px solid var(--color-primary, #013F3E);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 1.2rem 1.6rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-add-cart {
+    transition: background-color 0.35s ease, border-color 0.35s ease, transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.35s ease;
+  }
+
+  .btn-add-cart:hover {
+    transform: translateY(-2px) scale(1.02);
+    background-color: #012b2a;
+    border-color: #012b2a;
+    color: #FFFFFF;
+    box-shadow: 0 8px 20px rgba(1, 63, 62, 0.2);
+  }
+
+  .btn-add-cart:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 3px 8px rgba(1, 63, 62, 0.15);
+  }
+
+  .btn-quick-view {
+    width: 4.8rem;
+    height: 4.8rem;
+    background-color: #FFFFFF;
+    color: var(--color-primary, #013F3E);
+    border: 1px solid rgba(1, 63, 62, 0.15);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.35s ease, transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+    padding: 0;
+  }
+
+  .btn-quick-view:hover {
+    background-color: rgba(1, 63, 62, 0.05);
+    color: var(--color-primary, #013F3E);
+    border-color: var(--color-primary, #013F3E);
+    transform: scale(1.05);
+  }
+
+  .btn-quick-view:active {
+    transform: scale(0.95);
+  }
+
+  /* View All Button Styling */
+  .btn-view-all {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    padding: 1.6rem 4rem;
+    border: 1px solid var(--color-primary, #013F3E);
+    color: var(--color-primary, #013F3E);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    border-radius: 4px;
+    transition: background-color 0.35s ease, border-color 0.35s ease, transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.35s ease, color 0.35s ease;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .btn-view-all svg {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-view-all:hover {
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(1, 63, 62, 0.2);
+  }
+
+  .btn-view-all:hover svg {
+    transform: translateX(4px);
+  }
+
+  .btn-view-all:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 3px 8px rgba(1, 63, 62, 0.15);
+  }
+
+  /* Responsive Styling */
+  @media (max-width: 1200px) {
+    .best-sellers__grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2.4rem;
+    }
+    .best-sellers__tabs-nav {
+      gap: 2rem;
+    }
+    .best-sellers__tab-btn {
+      font-size: 1.5rem;
+      padding: 0.6rem 1.2rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .best-sellers {
+      padding-top: 6rem;
+      padding-bottom: 6rem;
+    }
+    .best-sellers__container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+    .best-sellers__heading {
+      font-size: 3.2rem;
+    }
+    .best-sellers__grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.6rem;
+    }
+    .best-sellers__tabs-nav {
+      gap: 1rem;
+      overflow-x: auto;
+      justify-content: flex-start;
+      padding-bottom: 1rem;
+      scrollbar-width: none; /* Firefox */
+    }
+    .best-sellers__tabs-nav::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
+    }
+    .best-sellers__tab-btn {
+      white-space: nowrap;
+      font-size: 1.4rem;
+    }
+    .tab-btn-indicator {
+      bottom: -1.1rem;
+    }
+    .best-sellers__card-content {
+      padding: 1.6rem;
+    }
+    .best-sellers__card-title {
+      font-size: 1.5rem;
+    }
+    .best-sellers__card-desc {
+      font-size: 1.1rem;
+      margin-bottom: 1.2rem;
+    }
+    .best-sellers__price-row {
+      margin-bottom: 1.6rem;
+    }
+    .price-current {
+      font-size: 1.6rem;
+    }
+    .price-original {
+      font-size: 1.2rem;
+    }
+    .price-discount {
+      font-size: 1rem;
+    }
+    .btn-add-cart {
+      font-size: 1rem;
+      padding: 1rem;
+    }
+    .btn-quick-view {
+      width: 4rem;
+      height: 4rem;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  function initBestSellers() {
+    // 1. Tab Switching Controller
+    const tabButtons = document.querySelectorAll('.best-sellers__tab-btn');
+    const tabPanels = document.querySelectorAll('.best-sellers__tab-panel');
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-tab-target');
+
+        // Deactivate active buttons and panels
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabPanels.forEach(panel => {
+          panel.classList.remove('active', 'show-active');
+        });
+
+        // Activate selected
+        btn.classList.add('active');
+        const targetPanel = document.getElementById(targetId);
+        if (targetPanel) {
+          targetPanel.classList.add('active');
+          // Trigger CSS transition
+          setTimeout(() => {
+            targetPanel.classList.add('show-active');
+          }, 30);
+        }
+      });
+    });
+
+    // 2. Wishlist Heart Toggle handled globally in theme-ajax-sync.liquid
+
+    // 3. Card Carousel Dots & Auto-Rotate on Hover
+    const cards = document.querySelectorAll('.best-sellers__card');
+
+    cards.forEach(card => {
+      const slides = card.querySelectorAll('.best-sellers__img');
+      const dots = card.querySelectorAll('.dot');
+      let currentIdx = 0;
+      let intervalId = null;
+
+      function showSlide(index) {
+        if (slides.length <= 1) return;
+        
+        // Wrap index around
+        const idx = (index + slides.length) % slides.length;
+        currentIdx = idx;
+
+        slides.forEach((slide, i) => {
+          if (i === idx) {
+            slide.classList.add('active');
+          } else {
+            slide.classList.remove('active');
+          }
+        });
+
+        dots.forEach((dot, i) => {
+          if (i === idx) {
+            dot.classList.add('dot--active');
+          } else {
+            dot.classList.remove('dot--active');
+          }
+        });
+      }
+
+      // Add dot click events
+      dots.forEach(dot => {
+        dot.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const slideTo = parseInt(dot.getAttribute('data-slide-to') || dot.getAttribute('data-index') || 0);
+          showSlide(slideTo);
+          stopAutoplay();
+        });
+      });
+
+      // Hover autoplay logic
+      function startAutoplay() {
+        if (slides.length <= 1) return;
+        stopAutoplay();
+        intervalId = setInterval(() => {
+          showSlide(currentIdx + 1);
+        }, 1800); // Cycle every 1.8 seconds on hover
+      }
+
+      function stopAutoplay() {
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
+      }
+
+      card.addEventListener('mouseenter', startAutoplay);
+      card.addEventListener('mouseleave', () => {
+        stopAutoplay();
+        showSlide(0); // Reset to first slide on mouse leave
+      });
+    });
+  }
+
+  // Support both page loads and theme customizer reloading
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBestSellers);
+  } else {
+    initBestSellers();
+  }
+  
+  // Customizer event support
+  document.addEventListener('shopify:section:load', (e) => {
+    if (e.target.querySelector('.best-sellers')) {
+      initBestSellers();
+    }
+  });
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Best sellers",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "default": "BEST SELLERS",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "default": "OUR MOST LOVED",
+      "label": "Subheading"
+    },
+    {
+      "type": "text",
+      "id": "description",
+      "default": "Handpicked favorites that our customers can't get enough of.",
+      "label": "Description"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "default": "#FFFFFF",
+      "label": "Background color"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "tab",
+      "name": "Collection Tab",
+      "limit": 3,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Category",
+          "label": "Tab Title"
+        },
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Collection"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Best sellers",
+      "blocks": []
+    }
+  ]
+}
+{% endschema %}

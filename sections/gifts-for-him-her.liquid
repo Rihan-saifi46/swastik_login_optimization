@@ -1,0 +1,297 @@
+{%- liquid
+  assign bg_color = section.settings.bg_color | default: '#F8F5EF'
+  assign text_color = section.settings.text_color | default: '#0a2a26'
+  assign accent_color = section.settings.accent_color | default: '#b38245'
+  assign border_color = section.settings.border_color | default: '#ebe7df'
+  
+  assign image_him = section.settings.image_him
+  assign image_him_mobile = section.settings.image_him_mobile
+  assign image_her = section.settings.image_her
+  assign image_her_mobile = section.settings.image_her_mobile
+  assign link_him = section.settings.link_him | default: '#'
+  assign link_her = section.settings.link_her | default: '#'
+-%}
+
+<div class="gifts-banner" style="--bg-color: {{ bg_color }}; --text-color: {{ text_color }}; --accent-color: {{ accent_color }}; --border-color: {{ border_color }};">
+  <div class="gifts-banner__wrapper">
+    
+    <!-- Left Column (Him Image) -->
+    <a href="{{ link_him }}" class="gifts-banner__side gifts-banner__side--him" aria-label="Gifts for {{ section.settings.title_him | default: 'Him' }}">
+      <div class="gifts-banner__image-container">
+        {%- if image_him != blank -%}
+          <picture class="gifts-banner__picture">
+            {%- if image_him_mobile != blank -%}
+              <source media="(max-width: 767px)" srcset="{{ image_him_mobile | image_url: width: 800, height: 333, crop: 'center' }}">
+            {%- else -%}
+              <source media="(max-width: 767px)" srcset="{{ image_him | image_url: width: 800, height: 333, crop: 'center' }}">
+            {%- endif -%}
+            <source media="(min-width: 768px)" srcset="{{ image_him | image_url: width: 800, height: 600, crop: 'center' }}">
+            <img src="{{ image_him | image_url: width: 800, height: 600, crop: 'center' }}" 
+                 alt="Gifts for Him" 
+                 loading="lazy" 
+                 width="800" 
+                 height="600" 
+                 class="gifts-banner__img">
+          </picture>
+        {%- else -%}
+          <picture class="gifts-banner__picture">
+            {%- if image_him_mobile != blank -%}
+              <source media="(max-width: 767px)" srcset="{{ image_him_mobile | image_url: width: 800, height: 333, crop: 'center' }}">
+            {%- else -%}
+              <source media="(max-width: 767px)" srcset="{{ 'gifts_him.png' | asset_url }}">
+            {%- endif -%}
+            <source media="(min-width: 768px)" srcset="{{ 'gifts_him.png' | asset_url }}">
+            <img src="{{ 'gifts_him.png' | asset_url }}" alt="Gifts for Him" loading="lazy" width="800" height="600" class="gifts-banner__img">
+          </picture>
+        {%- endif -%}
+      </div>
+      <!-- Mobile Only Overlay Markup Removed -->
+    </a>
+
+
+
+    <!-- Right Column (Her Image) -->
+    <a href="{{ link_her }}" class="gifts-banner__side gifts-banner__side--her" aria-label="Gifts for {{ section.settings.title_her | default: 'Her' }}">
+      <div class="gifts-banner__image-container">
+        {%- if image_her != blank -%}
+          <picture class="gifts-banner__picture">
+            {%- if image_her_mobile != blank -%}
+              <source media="(max-width: 767px)" srcset="{{ image_her_mobile | image_url: width: 800, height: 333, crop: 'center' }}">
+            {%- else -%}
+              <source media="(max-width: 767px)" srcset="{{ image_her | image_url: width: 800, height: 333, crop: 'center' }}">
+            {%- endif -%}
+            <source media="(min-width: 768px)" srcset="{{ image_her | image_url: width: 800, height: 600, crop: 'center' }}">
+            <img src="{{ image_her | image_url: width: 800, height: 600, crop: 'center' }}" 
+                 alt="Gifts for Her" 
+                 loading="lazy" 
+                 width="800" 
+                 height="600" 
+                 class="gifts-banner__img">
+          </picture>
+        {%- else -%}
+          <picture class="gifts-banner__picture">
+            {%- if image_her_mobile != blank -%}
+              <source media="(max-width: 767px)" srcset="{{ image_her_mobile | image_url: width: 800, height: 333, crop: 'center' }}">
+            {%- else -%}
+              <source media="(max-width: 767px)" srcset="{{ 'gifts_her.png' | asset_url }}">
+            {%- endif -%}
+            <source media="(min-width: 768px)" srcset="{{ 'gifts_her.png' | asset_url }}">
+            <img src="{{ 'gifts_her.png' | asset_url }}" alt="Gifts for Her" loading="lazy" width="800" height="600" class="gifts-banner__img">
+          </picture>
+        {%- endif -%}
+      </div>
+      <!-- Mobile Only Overlay Markup Removed -->
+    </a>
+
+  </div>
+</div>
+
+{% stylesheet %}
+.gifts-banner {
+  background-color: transparent;
+  padding: 0 48px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 60px 0;
+}
+
+.gifts-banner__wrapper {
+  background-color: var(--bg-color);
+  border-radius: 28px;
+  overflow: hidden;
+  height: 420px;
+  position: relative;
+  border: 1px solid rgba(179, 130, 69, 0.08);
+  box-shadow: 0 15px 45px rgba(10, 42, 38, 0.03);
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+}
+
+.gifts-banner__side {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+  display: block;
+}
+
+.gifts-banner__side--her {
+  /* margin-left: -1px removed to prevent overlap that cuts the image */
+}
+
+.gifts-banner__image-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.gifts-banner__picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.gifts-banner__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.gifts-banner__side--him .gifts-banner__img {
+  object-position: right center;
+}
+
+.gifts-banner__side--her .gifts-banner__img {
+  object-position: left center;
+}
+
+/* Responsiveness */
+@media screen and (max-width: 1024px) {
+  .gifts-banner {
+    padding: 0 24px;
+    margin: 40px 0;
+  }
+  .gifts-banner__wrapper {
+    height: 350px;
+  }
+  .gifts-banner__side {
+    width: 50%;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .gifts-banner {
+    padding: 0 16px;
+    margin: 30px 0;
+  }
+  
+  .gifts-banner__wrapper {
+    display: grid;
+    grid-template-columns: 1fr;
+    height: auto;
+    border-radius: 0;
+    gap: 16px;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+  }
+  
+  .gifts-banner__side {
+    position: relative;
+    flex: none;
+    width: 100%;
+    aspect-ratio: 2.4 / 1;
+    border-radius: 16px;
+    border: none;
+    box-shadow: none;
+    display: block;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .gifts-banner__side--her {
+    margin-left: 0;
+  }
+  
+  .gifts-banner__side--him .gifts-banner__img,
+  .gifts-banner__side--her .gifts-banner__img {
+    object-position: center;
+  }
+}
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Gifts for Him & Her",
+  "class": "section",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Left Block (Him)"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_him",
+      "label": "Image (Him) - Desktop"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_him_mobile",
+      "label": "Image (Him) - Mobile"
+    },
+    {
+      "type": "text",
+      "id": "title_him",
+      "label": "Title (Him)",
+      "default": "Him"
+    },
+    {
+      "type": "url",
+      "id": "link_him",
+      "label": "Link (Him)"
+    },
+    {
+      "type": "header",
+      "content": "Right Block (Her)"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_her",
+      "label": "Image (Her) - Desktop"
+    },
+    {
+      "type": "image_picker",
+      "id": "image_her_mobile",
+      "label": "Image (Her) - Mobile"
+    },
+    {
+      "type": "text",
+      "id": "title_her",
+      "label": "Title (Her)",
+      "default": "Her"
+    },
+    {
+      "type": "url",
+      "id": "link_her",
+      "label": "Link (Her)"
+    },
+    {
+      "type": "header",
+      "content": "Design Styling"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background Color",
+      "default": "#F8F5EF"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#0a2a26"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent Color",
+      "default": "#b38245"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border Color",
+      "default": "#ebe7df"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Gifts for Him & Her"
+    }
+  ]
+}
+{% endschema %}

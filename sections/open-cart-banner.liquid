@@ -1,0 +1,63 @@
+{% schema %}
+{
+  "name": "Open Cart Banner",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Check what's inside your cart!"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Text",
+      "default": "Open Cart Drawer"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Open Cart Banner"
+    }
+  ]
+}
+{% endschema %}
+
+<div class="open-cart-banner">
+  <h2>{{ section.settings.title }}</h2>
+  <button type="button" class="btn open-cart-btn" onclick="if(window.openCartDrawer) window.openCartDrawer(); else console.error('Cart drawer function not found');">
+    {{ section.settings.button_text }}
+  </button>
+</div>
+
+{% stylesheet %}
+  .open-cart-banner {
+    text-align: center;
+    padding: 6rem 2rem;
+    background-color: var(--color-secondary-bg, #FDFBF7);
+    border-radius: 8px;
+    margin: 4rem auto;
+    max-width: 800px;
+  }
+  .open-cart-banner h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3.2rem;
+    color: var(--color-primary, #013F3E);
+    margin-bottom: 2rem;
+  }
+  .open-cart-btn {
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+    padding: 1.2rem 3.2rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .open-cart-btn:hover {
+    background-color: var(--color-accent, #D4AF37);
+  }
+{% endstylesheet %}

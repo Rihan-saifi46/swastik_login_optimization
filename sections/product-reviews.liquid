@@ -1,0 +1,589 @@
+{% schema %}
+{
+  "name": "Product Reviews",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Section Heading",
+      "default": "What people are saying?"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Section Subheading",
+      "default": "Don't just take our word for it—see what our customers have to say about their experience!"
+    },
+    {
+      "type": "text",
+      "id": "whatsapp_number",
+      "label": "WhatsApp Number",
+      "default": "+91 96500 90730"
+    },
+    {
+      "type": "url",
+      "id": "whatsapp_link",
+      "label": "WhatsApp Chat Link"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "review_card",
+      "name": "Review Card",
+      "settings": [
+        {
+          "type": "textarea",
+          "id": "review_text",
+          "label": "Review Text",
+          "default": "Absolutely stunning diamond ring! The craftsmanship is incredible and it sparkles beautifully."
+        },
+        {
+          "type": "text",
+          "id": "customer_name",
+          "label": "Customer Name",
+          "default": "Priya Sharma"
+        },
+        {
+          "type": "text",
+          "id": "customer_location",
+          "label": "Customer Location",
+          "default": "New Delhi, India"
+        },
+        {
+          "type": "range",
+          "id": "rating",
+          "label": "Star Rating",
+          "min": 1,
+          "max": 5,
+          "default": 5
+        },
+        {
+          "type": "text",
+          "id": "time",
+          "label": "Message Time",
+          "default": "10:30 AM"
+        },
+        {
+          "type": "image_picker",
+          "id": "chat_screenshot",
+          "label": "WhatsApp Chat Screenshot (optional)"
+        },
+        {
+          "type": "select",
+          "id": "card_color",
+          "label": "Card Background Color",
+          "options": [
+            { "value": "green", "label": "Light Green" },
+            { "value": "pink", "label": "Light Pink" },
+            { "value": "yellow", "label": "Light Yellow" },
+            { "value": "blue", "label": "Light Blue" },
+            { "value": "peach", "label": "Light Peach" },
+            { "value": "lavender", "label": "Light Lavender" }
+          ],
+          "default": "green"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Reviews",
+      "blocks": [
+        {
+          "type": "review_card",
+          "settings": {
+            "review_text": "The 18K gold necklace is absolutely breathtaking! The quality exceeded my expectations. Every detail is perfect and it sparkles like nothing I've seen before.",
+            "customer_name": "Priya Sharma",
+            "customer_location": "New Delhi, India",
+            "rating": 5,
+            "time": "9:30 AM",
+            "card_color": "green"
+          }
+        },
+        {
+          "type": "review_card",
+          "settings": {
+            "review_text": "Ordered a diamond pendant for my anniversary. The packaging was luxurious and delivery was super fast. My wife absolutely loves it!",
+            "customer_name": "Rajesh Gupta",
+            "customer_location": "Mumbai, India",
+            "rating": 5,
+            "time": "10:12 AM",
+            "card_color": "yellow"
+          }
+        },
+        {
+          "type": "review_card",
+          "settings": {
+            "review_text": "I never knew online jewellery shopping could be this good! The diamond clarity is amazing and the hallmarked gold feels so premium.",
+            "customer_name": "Aisha Khan",
+            "customer_location": "Hyderabad, India",
+            "rating": 5,
+            "time": "11:05 AM",
+            "card_color": "pink"
+          }
+        },
+        {
+          "type": "review_card",
+          "settings": {
+            "review_text": "Been a loyal customer for 2 years now. Every piece I've bought from Swastik Jewels has been exceptional. The craftsmanship speaks for itself!",
+            "customer_name": "Sneha Reddy",
+            "customer_location": "Bangalore, India",
+            "rating": 5,
+            "time": "12:45 PM",
+            "card_color": "blue"
+          }
+        },
+        {
+          "type": "review_card",
+          "settings": {
+            "review_text": "The engagement ring I ordered was absolutely perfect. The diamond quality, the gold finish, everything was exactly as shown. Highly recommend!",
+            "customer_name": "Amit Patel",
+            "customer_location": "Ahmedabad, India",
+            "rating": 5,
+            "time": "1:20 PM",
+            "card_color": "peach"
+          }
+        },
+        {
+          "type": "review_card",
+          "settings": {
+            "review_text": "Bought earrings for my mother's birthday. She was thrilled! The packaging made it feel like a gift from a luxury boutique. Will definitely order again.",
+            "customer_name": "Meera Iyer",
+            "customer_location": "Chennai, India",
+            "rating": 5,
+            "time": "2:10 PM",
+            "card_color": "lavender"
+          }
+        },
+        {
+          "type": "review_card",
+          "settings": {
+            "review_text": "I compared prices with many brands, Swastik Jewels offers the best value for certified diamond jewellery. 100% genuine and beautiful designs!",
+            "customer_name": "Neha Saxena",
+            "customer_location": "Jaipur, India",
+            "rating": 5,
+            "time": "3:15 PM",
+            "card_color": "green"
+          }
+        },
+        {
+          "type": "review_card",
+          "settings": {
+            "review_text": "The buyback policy gave me so much confidence to order online. The bracelet arrived beautifully and fits perfectly. Outstanding service!",
+            "customer_name": "Kavita Joshi",
+            "customer_location": "Pune, India",
+            "rating": 5,
+            "time": "4:00 PM",
+            "card_color": "yellow"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
+
+<div class="wpr-section">
+  <!-- Section Header (Clean, Centered, No WhatsApp Button) -->
+  <div class="wpr-header">
+    <div class="wpr-header-ornament">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="1.75"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      <span style="font-size: 11px; font-weight: 700; letter-spacing: 0.15em; color: #C89234; text-transform: uppercase; margin-left: 6px;">EXCLUSIVE REVIEWS</span>
+    </div>
+    <h2 class="wpr-title">{{ section.settings.heading }}</h2>
+  </div>
+
+  <!-- Minimalistic Single Horizontal Row -->
+  <div class="wpr-track-container">
+    <div class="wpr-track" id="wpr-track-{{ section.id }}">
+      {% for block in section.blocks %}
+        {% if block.settings.chat_screenshot == blank %}
+          <!-- Minimal Compact Text Card -->
+          <div class="wpr-card" {{ block.shopify_attributes }}>
+            <!-- Top Row: Stars & Time -->
+            <div class="wpr-card-top">
+              <div class="wpr-card-stars">
+                {% for i in (1..5) %}
+                  {% if i <= block.settings.rating %}
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="#F5C518"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                  {% else %}
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="#E0E0E0"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              <span class="wpr-card-time">{{ block.settings.time }}</span>
+            </div>
+
+            <!-- Review Text -->
+            <p class="wpr-card-text">"{{ block.settings.review_text }}"</p>
+
+            <!-- Compact Stacked Footer (Prevents multi-line name wrapping!) -->
+            <div class="wpr-card-footer">
+              <span class="wpr-card-name">{{ block.settings.customer_name }}</span>
+              <span class="wpr-card-location">{{ block.settings.customer_location }}</span>
+            </div>
+          </div>
+        {% else %}
+          <!-- Minimal Compact Screenshot Card -->
+          <div class="wpr-card wpr-card--screenshot" {{ block.shopify_attributes }}>
+            <div class="wpr-screenshot-img">
+              <img src="{{ block.settings.chat_screenshot | image_url: width: 400 }}" alt="Review from {{ block.settings.customer_name }}" loading="lazy" width="400" height="400">
+            </div>
+            <div class="wpr-card-footer">
+              <span class="wpr-card-name">{{ block.settings.customer_name }}</span>
+              <span class="wpr-card-location">{{ block.settings.customer_location }}</span>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  /* ===== Minimalistic Single-Line Reviews Section ===== */
+  .wpr-section {
+    padding: 50px 0 60px 0;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    background: #FAFAFA;
+  }
+
+  /* Header */
+  .wpr-header {
+    text-align: center;
+    max-width: 680px;
+    margin: 0 auto 36px auto;
+    padding: 0 20px;
+  }
+
+  .wpr-header-ornament {
+    margin-bottom: 8px;
+    opacity: 0.75;
+  }
+
+  .wpr-title {
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #013F3E;
+    margin: 0 0 10px 0;
+    line-height: 1.15;
+  }
+
+  .wpr-subtitle {
+    font-size: 1rem;
+    color: #555555;
+    margin: 0 0 22px 0;
+    line-height: 1.6;
+  }
+
+  /* ===== Horizontal Track Container ===== */
+  .wpr-track-container {
+    position: relative;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  .wpr-track {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding: 8px 16px 24px 16px;
+    scrollbar-width: none; /* Firefox */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .wpr-track::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  /* ===== Minimalistic Compact Review Card ===== */
+  .wpr-card {
+    flex: 0 0 300px;
+    background: #FFFFFF;
+    border: 1px solid #EDEDED;
+    border-radius: 14px;
+    padding: 18px 20px 16px 20px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: default;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    margin-bottom: 12px;
+  }
+
+  /* Speech Bubble / Thinking Icon Pointer at Card Bottom */
+  .wpr-card::after {
+    content: '';
+    position: absolute;
+    bottom: -9px;
+    left: 28px;
+    width: 0;
+    height: 0;
+    border-left: 9px solid transparent;
+    border-right: 9px solid transparent;
+    border-top: 9px solid #FFFFFF;
+    z-index: 2;
+  }
+
+  .wpr-card::before {
+    content: '';
+    position: absolute;
+    bottom: -11px;
+    left: 27px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #EDEDED;
+    z-index: 1;
+  }
+
+  .wpr-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    border-color: #E0E0E0;
+  }
+
+  .wpr-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .wpr-card-stars {
+    display: flex;
+    gap: 1px;
+  }
+
+  .wpr-card-time {
+    font-size: 11px;
+    color: #999999;
+  }
+
+  .wpr-card-text {
+    font-size: 13.5px;
+    font-style: italic;
+    line-height: 1.5;
+    color: #333333;
+    margin: 0 0 14px 0;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Card Footer (Stacked cleanly without wrapping/splitting) */
+  .wpr-card-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-top: 1px solid #F5F5F5;
+    padding-top: 12px;
+    margin-top: auto;
+  }
+
+  .wpr-card-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111111;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  .wpr-card-location {
+    font-size: 11px;
+    color: #777777;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  /* ===== Screenshot Card ===== */
+  .wpr-card--screenshot {
+    padding: 0;
+    overflow: hidden;
+    flex: 0 0 260px;
+  }
+
+  .wpr-screenshot-img {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .wpr-screenshot-img img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+  }
+
+  .wpr-card--screenshot .wpr-card-footer {
+    padding: 12px 16px 14px 16px;
+    border-top: none;
+    margin-top: 0;
+  }
+
+  /* ===== Mobile Application Guideline Sizing & Layout ===== */
+  @media screen and (max-width: 768px) {
+    .wpr-section {
+      display: block !important;
+      padding: 36px 0 44px 0;
+    }
+
+    .wpr-header {
+      padding: 0 16px;
+      margin-bottom: 24px;
+    }
+
+    .wpr-title {
+      font-size: 2.1rem;
+      margin-bottom: 8px;
+    }
+
+    .wpr-subtitle {
+      font-size: 15px;
+      font-weight: 500;
+      color: #333333;
+      margin: 0;
+      padding: 0 6px;
+      line-height: 1.5;
+    }
+
+    .wpr-track-container {
+      padding: 0;
+    }
+
+    .wpr-track {
+      gap: 12px;
+      padding: 6px 14px 20px 14px;
+    }
+
+    /* Exactly TWO in width and COMPACT in height (not too long!) */
+    .wpr-card {
+      flex: 0 0 calc(50% - 6px);
+      width: calc(50% - 6px);
+      min-width: calc(50% - 6px);
+      max-width: calc(50% - 6px);
+      padding: 12px 12px 10px 12px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .wpr-card--screenshot {
+      flex: 0 0 calc(50% - 6px);
+      width: calc(50% - 6px);
+      min-width: calc(50% - 6px);
+      max-width: calc(50% - 6px);
+    }
+
+    .wpr-screenshot-img {
+      aspect-ratio: 1 / 1;
+    }
+
+    /* Clamp text to 3 lines max so heights are never too long! */
+    .wpr-card-text {
+      font-size: 12.5px;
+      line-height: 1.4;
+      margin: 6px 0 10px 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .wpr-card-name {
+      font-size: 12px;
+    }
+
+    .wpr-card-location {
+      font-size: 10px;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  /* Continuous slow, readable horizontal marquee motion with touch/hover pause and drag support */
+  document.addEventListener('DOMContentLoaded', function() {
+    var tracks = document.querySelectorAll('.wpr-track');
+    tracks.forEach(function(track) {
+      // Duplicate child cards once to create a seamless infinite loop without visual jumping
+      const children = Array.from(track.children);
+      if (children.length > 0) {
+        children.forEach(function(child) {
+          const clone = child.cloneNode(true);
+          clone.setAttribute('aria-hidden', 'true');
+          track.appendChild(clone);
+        });
+      }
+
+      let isDown = false;
+      let startX;
+      let scrollLeft;
+      let isHovered = false;
+      let isTouching = false;
+      let touchTimeout;
+
+      // Pause continuous motion when user hovers or touches so cards are 100% comfortable to read!
+      track.addEventListener('mouseenter', function() { isHovered = true; });
+      track.addEventListener('mouseleave', function() { 
+        isHovered = false; 
+        isDown = false;
+        track.style.cursor = 'default';
+      });
+      track.addEventListener('touchstart', function() { 
+        isTouching = true; 
+        clearTimeout(touchTimeout);
+      }, { passive: true });
+      track.addEventListener('touchend', function() { 
+        clearTimeout(touchTimeout);
+        touchTimeout = setTimeout(function() { isTouching = false; }, 1200); 
+      }, { passive: true });
+
+      // Click and drag support
+      track.addEventListener('mousedown', function(e) {
+        isDown = true;
+        track.style.cursor = 'grabbing';
+        startX = e.pageX - track.offsetLeft;
+        scrollLeft = track.scrollLeft;
+      });
+      track.addEventListener('mouseup', function() {
+        isDown = false;
+        track.style.cursor = 'default';
+      });
+      track.addEventListener('mousemove', function(e) {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - track.offsetLeft;
+        const walk = (x - startX) * 1.5;
+        track.scrollLeft = scrollLeft - walk;
+      });
+
+      // Smooth, slow auto-scroll loop (~25-30px per sec, ultra readable)
+      let speed = 0.45;
+      function autoScroll() {
+        if (!isHovered && !isDown && !isTouching) {
+          track.scrollLeft += speed;
+          // When we reach halfway (the end of original cards), loop back invisibly!
+          if (track.scrollLeft >= track.scrollWidth / 2) {
+            track.scrollLeft = track.scrollLeft - (track.scrollWidth / 2);
+          }
+        }
+        requestAnimationFrame(autoScroll);
+      }
+      requestAnimationFrame(autoScroll);
+    });
+  });
+{% endjavascript %}

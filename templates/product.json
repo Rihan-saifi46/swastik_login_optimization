@@ -1,0 +1,168 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "product",
+      "blocks": {
+        "title": {
+          "type": "title",
+          "settings": {}
+        },
+        "price": {
+          "type": "price",
+          "settings": {}
+        },
+        "discount_code": {
+          "type": "discount_code",
+          "settings": {
+            "code": "GOLDEN10",
+            "discount_percent": 10
+          }
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {}
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "title",
+        "price",
+        "discount_code",
+        "variant_picker",
+        "buy_buttons"
+      ],
+      "settings": {
+        "guide_gold_color": "shopify://shop_images/image_22.png",
+        "guide_gold_purity": "shopify://shop_images/ChatGPT_Image_Aug_5_2026_01_42_07_PM_1.png",
+        "guide_diamond_quality": "shopify://shop_images/Html_Body_6.png",
+        "recommendations_heading": "People Also Bought",
+        "recommendations_fallback_collection": "natural-diamonds"
+      }
+    },
+    "product_reviews": {
+      "type": "product-reviews",
+      "blocks": {
+        "review_1": {
+          "type": "review_card",
+          "settings": {
+            "review_text": "The 18K gold necklace is absolutely breathtaking! The quality exceeded my expectations. Every detail is perfect and it sparkles like nothing I've seen before.",
+            "customer_name": "Priya Sharma",
+            "customer_location": "New Delhi, India",
+            "rating": 5,
+            "time": "9:30 AM",
+            "card_color": "green"
+          }
+        },
+        "review_2": {
+          "type": "review_card",
+          "settings": {
+            "review_text": "Ordered a diamond pendant for my anniversary. The packaging was luxurious and delivery was super fast. My wife absolutely loves it!",
+            "customer_name": "Rajesh Gupta",
+            "customer_location": "Mumbai, India",
+            "rating": 5,
+            "time": "10:12 AM",
+            "card_color": "yellow"
+          }
+        },
+        "review_3": {
+          "type": "review_card",
+          "settings": {
+            "review_text": "I never knew online jewellery shopping could be this good! The diamond clarity is amazing and the hallmarked gold feels so premium.",
+            "customer_name": "Aisha Khan",
+            "customer_location": "Hyderabad, India",
+            "rating": 5,
+            "time": "11:05 AM",
+            "card_color": "pink"
+          }
+        },
+        "review_4": {
+          "type": "review_card",
+          "settings": {
+            "review_text": "Been a loyal customer for 2 years now. Every piece I've bought from Swastik Jewels has been exceptional. The craftsmanship speaks for itself!",
+            "customer_name": "Sneha Reddy",
+            "customer_location": "Bangalore, India",
+            "rating": 5,
+            "time": "12:45 PM",
+            "card_color": "blue"
+          }
+        },
+        "review_5": {
+          "type": "review_card",
+          "settings": {
+            "review_text": "The engagement ring I ordered was absolutely perfect. The diamond quality, the gold finish, everything was exactly as shown. Highly recommend!",
+            "customer_name": "Amit Patel",
+            "customer_location": "Ahmedabad, India",
+            "rating": 5,
+            "time": "1:20 PM",
+            "card_color": "peach"
+          }
+        },
+        "review_6": {
+          "type": "review_card",
+          "settings": {
+            "review_text": "Bought earrings for my mother's birthday. She was thrilled! The packaging made it feel like a gift from a luxury boutique. Will definitely order again.",
+            "customer_name": "Meera Iyer",
+            "customer_location": "Chennai, India",
+            "rating": 5,
+            "time": "2:10 PM",
+            "card_color": "lavender"
+          }
+        },
+        "review_7": {
+          "type": "review_card",
+          "settings": {
+            "review_text": "I compared prices with many brands, Swastik Jewels offers the best value for certified diamond jewellery. 100% genuine and beautiful designs!",
+            "customer_name": "Neha Saxena",
+            "customer_location": "Jaipur, India",
+            "rating": 5,
+            "time": "3:15 PM",
+            "card_color": "green"
+          }
+        },
+        "review_8": {
+          "type": "review_card",
+          "settings": {
+            "review_text": "The buyback policy gave me so much confidence to order online. The bracelet arrived beautifully and fits perfectly. Outstanding service!",
+            "customer_name": "Kavita Joshi",
+            "customer_location": "Pune, India",
+            "rating": 5,
+            "time": "4:00 PM",
+            "card_color": "yellow"
+          }
+        }
+      },
+      "block_order": [
+        "review_1",
+        "review_2",
+        "review_3",
+        "review_4",
+        "review_5",
+        "review_6",
+        "review_7",
+        "review_8"
+      ],
+      "settings": {
+        "heading": "What people are saying?",
+        "subheading": "Don't just take our word for it—see what our customers have to say about their experience!",
+        "whatsapp_number": "+91 96500 90730",
+        "whatsapp_link": ""
+      }
+    }
+  },
+  "order": [
+    "main",
+    "product_reviews"
+  ]
+}

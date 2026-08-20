@@ -1,0 +1,22 @@
+<div class="hello-text-section" style="text-align: center; padding: 100px 20px; min-height: 50vh; display: flex; align-items: center; justify-content: center;">
+  <h1 style="font-size: 3rem; color: #013F3E;">{{ section.settings.text }}</h1>
+</div>
+
+{% schema %}
+{
+  "name": "Hello Text",
+  "settings": [
+    {
+      "type": "text",
+      "id": "text",
+      "label": "Text",
+      "default": "Hello Page"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hello Text"
+    }
+  ]
+}
+{% endschema %}

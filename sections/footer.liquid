@@ -1,0 +1,1153 @@
+{% comment %}
+  Renders the main store footer, featuring brand profile, quick links, customer support links, contact details, social media links, and copyright info.
+  Styled on a dark brand green background with gold/accent headings and elegant hover states.
+{% endcomment %}
+
+<footer class="footer-wrapper" style="{% if section.settings.color_footer_bg != blank %}--footer-bg: {{ section.settings.color_footer_bg }};{% endif %} {% if section.settings.color_footer_text != blank %}--footer-text: {{ section.settings.color_footer_text }};{% endif %} {% if section.settings.color_footer_accent != blank %}--footer-accent-setting: {{ section.settings.color_footer_accent }};{% endif %}">
+  <div class="footer container">
+    <div class="footer__grid">
+      <!-- Col 1: Brand Info & Contact Info -->
+      <div class="footer__col footer__col--brand">
+        <h3 class="footer__logo serif-font">{{ section.settings.brand_name }}</h3>
+        <div class="footer__description">
+          {{ section.settings.brand_description | replace: '\n', '' | replace: '\n', '' }}
+        </div>
+        <ul class="footer__contact-list-inline">
+          {% if section.settings.contact_phone != blank %}
+            <li class="footer__contact-item footer__contact-item--phone">
+              <a href="tel:{{ section.settings.contact_phone | replace: ' ', '' }}" class="footer__contact-link">
+                <div class="footer__contact-icon-wrapper">
+                  <svg class="footer__contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                </div>
+                <div class="footer__contact-text-group">
+                  <span class="footer__contact-label">Call Us</span>
+                  <span class="footer__contact-value">{{ section.settings.contact_phone | escape }}</span>
+                </div>
+                <div class="footer__contact-chevron-right">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </a>
+            </li>
+          {% endif %}
+
+          {% if section.settings.contact_email != blank %}
+            <li class="footer__contact-item footer__contact-item--email">
+              <a href="mailto:{{ section.settings.contact_email }}" class="footer__contact-link">
+                <div class="footer__contact-icon-wrapper">
+                  <svg class="footer__contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                  </svg>
+                </div>
+                <div class="footer__contact-text-group">
+                  <span class="footer__contact-label">Email Us</span>
+                  <span class="footer__contact-value">{{ section.settings.contact_email | escape }}</span>
+                </div>
+                <div class="footer__contact-chevron-right">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </div>
+              </a>
+            </li>
+          {% endif %}
+
+          {% if section.settings.contact_address != blank %}
+            <li class="footer__contact-item footer__contact-item--address">
+              <div class="footer__contact-card">
+                <a href="https://www.google.com/maps/place/Swastik+Jewels/@28.6504041,77.1913016,17z" target="_blank" rel="noopener noreferrer" class="footer__contact-card-top">
+                  <div class="footer__contact-icon-wrapper">
+                    <svg class="footer__contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                  </div>
+                  <div class="footer__contact-text-group">
+                    <span class="footer__contact-label">Our Store</span>
+                    <span class="footer__contact-value">{{ section.settings.contact_address | escape }}</span>
+                  </div>
+                </a>
+                <a href="https://www.google.com/maps/place/Swastik+Jewels/@28.6504041,77.1913016,17z" target="_blank" rel="noopener noreferrer" class="footer__contact-button-directions">
+                  <svg class="footer__btn-icon-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  <span>GET DIRECTIONS</span>
+                  <svg class="footer__btn-icon-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                  </svg>
+                </a>
+              </div>
+            </li>
+          {% endif %}
+        </ul>
+
+        <div class="footer__social-icons">
+          {% if section.settings.social_facebook_link != blank %}
+            <a href="{{ section.settings.social_facebook_link }}" class="footer__social-link" aria-label="Facebook">
+              <svg class="icon icon-facebook" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/>
+              </svg>
+            </a>
+          {% endif %}
+          {% if section.settings.social_instagram_link != blank %}
+            <a href="{{ section.settings.social_instagram_link }}" class="footer__social-link" aria-label="Instagram">
+              <svg class="icon icon-instagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+            </a>
+          {% endif %}
+          {% if section.settings.social_twitter_link != blank %}
+            <a href="{{ section.settings.social_twitter_link }}" class="footer__social-link" aria-label="Twitter">
+              <svg class="icon icon-twitter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+              </svg>
+            </a>
+          {% endif %}
+          {% if section.settings.social_youtube_link != blank %}
+            <a href="{{ section.settings.social_youtube_link }}" class="footer__social-link" aria-label="YouTube">
+              <svg class="icon icon-youtube" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.41 19c1.71.46 8.59.46 8.59.46s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"></path>
+                <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+              </svg>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Col 2: Menu 1 -->
+      <div class="footer__col footer__col--accordion">
+        <button class="footer__heading footer__heading--accordion" type="button" aria-expanded="false">
+          <span>{{ section.settings.menu_title | default: "KNOW YOUR JEWELLERY" }}</span>
+          <div class="footer__accordion-chevron-bg">
+            <svg class="footer__accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </button>
+        <div class="footer__accordion-content">
+          <ul class="footer__links-list">
+            {% if section.settings.menu != blank %}
+              {% for link in section.settings.menu.links %}
+                <li><a href="{{ link.url }}" class="footer__link">{{ link.title }}</a></li>
+              {% endfor %}
+            {% else %}
+              <li><a href="/pages/diamond-guide" class="footer__link">Diamond Guide</a></li>
+              <li><a href="/pages/gold-guide" class="footer__link">Gold Guide</a></li>
+              <li><a href="/pages/ring-size-guide" class="footer__link">Ring Size Guide</a></li>
+              <li><a href="/pages/carat-war" class="footer__link">Carat War</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+
+      <!-- Col 3: Menu 2 -->
+      <div class="footer__col footer__col--accordion">
+        <button class="footer__heading footer__heading--accordion" type="button" aria-expanded="false">
+          <span>{{ section.settings.customer_menu_title | default: "POLICY" }}</span>
+          <div class="footer__accordion-chevron-bg">
+            <svg class="footer__accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </button>
+        <div class="footer__accordion-content">
+          <ul class="footer__links-list">
+            {% if section.settings.customer_menu != blank %}
+              {% for link in section.settings.customer_menu.links %}
+                <li><a href="{{ link.url }}" class="footer__link">{{ link.title }}</a></li>
+              {% endfor %}
+            {% else %}
+              <li><a href="/pages/privacy-policy" class="footer__link">Privacy Policy</a></li>
+              <li><a href="/pages/terms-conditions" class="footer__link">Terms & Conditions</a></li>
+              <li><a href="/pages/return-policy" class="footer__link">Return Policy</a></li>
+              <li><a href="/pages/buyback-policy" class="footer__link">Buyback Policy</a></li>
+              <li><a href="/pages/shipping-policy" class="footer__link">Shipping Policy</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+
+      <!-- Col 4: Menu 3 -->
+      <div class="footer__col footer__col--accordion">
+        <button class="footer__heading footer__heading--accordion" type="button" aria-expanded="false">
+          <span>{{ section.settings.help_menu_title | default: "HELP & SUPPORT" }}</span>
+          <div class="footer__accordion-chevron-bg">
+            <svg class="footer__accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </button>
+        <div class="footer__accordion-content">
+          <ul class="footer__links-list">
+            {% if section.settings.help_menu != blank %}
+              {% for link in section.settings.help_menu.links %}
+                <li><a href="{{ link.url }}" class="footer__link">{{ link.title }}</a></li>
+              {% endfor %}
+            {% else %}
+              <li><a href="/pages/contact" class="footer__link">Contact Us</a></li>
+              <li><a href="/pages/faq" class="footer__link">FAQ's</a></li>
+              <li><a href="/pages/find-store" class="footer__link">Find Store</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+
+
+    </div>
+
+  </div>
+
+  <div class="footer-bottom-wrapper">
+    <div class="footer__bottom container">
+      <div class="footer__bottom-left">
+        <img src="{{ 'logo.png' | asset_url }}" alt="Swastik Logo" class="footer__bottom-logo" width="30" height="30" loading="lazy">
+        <span class="footer__copyright">&copy; 2011 - {{ 'now' | date: '%Y' }} {{ section.settings.brand_name }}. A brand developed and managed by Nitin Gupta | All rights reserved</span>
+      </div>
+      
+      <div class="footer__bottom-center">
+        {% if section.settings.bottom_menu != blank %}
+          {% for link in section.settings.bottom_menu.links %}
+            <a href="{{ link.url }}" class="footer__bottom-link">{{ link.title | upcase }}</a>
+            {% unless forloop.last %}
+              <span class="footer__bottom-divider">|</span>
+            {% endunless %}
+          {% endfor %}
+        {% else %}
+          <a href="/policies/privacy-policy" class="footer__bottom-link">PRIVACY POLICY</a>
+          <span class="footer__bottom-divider">|</span>
+          <a href="/policies/terms-of-service" class="footer__bottom-link">TERMS OF SERVICE</a>
+          <span class="footer__bottom-divider">|</span>
+          <a href="/policies/shipping-policy" class="footer__bottom-link">SHIPPING POLICY</a>
+        {% endif %}
+      </div>
+
+      <div class="footer__bottom-right">
+        <span class="footer__accept-text">WE ACCEPT</span>
+        <div class="footer__payment-icons">
+          {% assign enabled_payment_types = 'visa,master,american_express,rupay,upi' | split: ',' %}
+          {% for type in enabled_payment_types %}
+            {{ type | payment_type_svg_tag: class: 'icon icon--full-color' }}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function() {
+    function initFooterAccordions() {
+      const accordionButtons = document.querySelectorAll('.footer__heading--accordion');
+      accordionButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          if (window.innerWidth > 768) return;
+          const col = this.closest('.footer__col--accordion');
+          const isExpanded = this.getAttribute('aria-expanded') === 'true';
+          
+          this.setAttribute('aria-expanded', !isExpanded);
+          if (col) {
+            col.classList.toggle('is-open', !isExpanded);
+          }
+        });
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initFooterAccordions);
+    } else {
+      initFooterAccordions();
+    }
+  })();
+</script>
+
+{% stylesheet %}
+  .footer-wrapper {
+    background-color: var(--footer-bg, #013F3E);
+    color: var(--footer-text, var(--color-secondary-bg, #FDFBF7));
+    --footer-accent: var(--footer-accent-setting, var(--color-accent, #D4AF37));
+    padding-top: 6.5rem;
+    padding-bottom: 0;
+    border-top: 1px solid color-mix(in srgb, var(--footer-text) 10%, transparent);
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .footer.container {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-left: 4rem;
+    padding-right: 4rem;
+    box-sizing: border-box;
+  }
+
+  .footer__grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr 1fr;
+    gap: 5rem;
+    padding-bottom: 4rem;
+  }
+
+  .footer__col {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* Accordion Desktop Defaults */
+  .footer__heading--accordion {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    width: 100%;
+    display: block;
+    cursor: default;
+  }
+  .footer__accordion-chevron-bg {
+    display: none;
+  }
+  .footer__accordion-chevron {
+    display: none;
+  }
+  .footer__accordion-content {
+    display: block;
+  }
+  .footer__contact-label,
+  .footer__contact-action {
+    display: none;
+  }
+  .footer__contact-icon-wrapper {
+    display: inline;
+  }
+  .footer__contact-text-group {
+    display: inline;
+  }
+
+  /* Typography */
+  .footer__logo {
+    color: var(--footer-accent);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    margin: 0;
+  }
+
+  .footer__heading {
+    color: var(--footer-text);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin: 0;
+    padding-bottom: 1.2rem;
+    position: relative;
+  }
+  .footer__heading::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 28px;
+    height: 1.5px;
+    background-color: var(--footer-accent);
+  }
+
+  .footer__description {
+    font-size: 1.4rem;
+    line-height: 1.7;
+    color: color-mix(in srgb, var(--footer-text) 75%, transparent);
+    margin: 0;
+    max-width: 32rem;
+  }
+
+  /* Navigation Lists */
+  .footer__links-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+    margin-top: 2.2rem;
+  }
+
+  .footer__link {
+    font-size: 1.4rem;
+    color: color-mix(in srgb, var(--footer-text) 85%, transparent);
+    text-decoration: none;
+    transition: color 0.25s ease, transform 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .footer__link::before {
+    content: "";
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-top: 1.5px solid currentColor;
+    border-right: 1.5px solid currentColor;
+    transform: rotate(45deg);
+    margin-right: 1.2rem;
+    opacity: 0.8;
+  }
+
+  .footer__link:hover {
+    color: var(--footer-accent);
+    transform: translateX(4px);
+  }
+
+  /* Social Icons */
+  .footer__social-icons {
+    display: flex;
+    gap: 1.2rem;
+    margin-top: 0.5rem;
+  }
+
+  .footer__social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 50%;
+    background-color: color-mix(in srgb, var(--footer-text) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--footer-text) 10%, transparent);
+    color: color-mix(in srgb, var(--footer-text) 85%, transparent);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    text-decoration: none;
+  }
+
+  .footer__social-link:hover {
+    background-color: color-mix(in srgb, var(--footer-accent) 15%, transparent);
+    border-color: var(--footer-accent);
+    color: var(--footer-accent);
+    transform: translateY(-2px);
+  }
+
+  .footer__social-link svg {
+    width: 1.6rem;
+    height: 1.6rem;
+  }
+
+  /* Inline Contact Info */
+  .footer__contact-chevron-right {
+    display: none;
+  }
+  .footer__contact-list-inline {
+    list-style-type: none !important;
+    padding-left: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    color: color-mix(in srgb, var(--footer-text) 75%, transparent);
+    font-size: 1.4rem;
+  }
+
+  .footer__contact-list-inline li {
+    list-style-type: none !important;
+    line-height: 1.6;
+    padding-left: 0;
+    margin-left: 0;
+  }
+
+  .footer__contact-link {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.25s ease;
+  }
+  
+  .footer__contact-icon {
+    width: 1.8rem;
+    height: 1.8rem;
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+    color: var(--footer-accent);
+    transition: transform 0.25s ease;
+  }
+
+  .footer__contact-link:hover {
+    color: var(--footer-accent);
+  }
+  
+  .footer__contact-link:hover .footer__contact-icon {
+    transform: scale(1.1);
+  }
+
+  .footer__contact-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .footer__contact-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.25s ease;
+  }
+  .footer__contact-card-top:hover {
+    color: var(--footer-accent);
+  }
+  .footer__contact-card-top:hover .footer__contact-icon {
+    transform: scale(1.1);
+  }
+  .footer__contact-button-directions {
+    display: none;
+  }
+  /* Footer Bottom Details */
+  .footer-bottom-wrapper {
+    background-color: #013F3E;
+    color: #FFFFFF;
+    width: 100%;
+    padding: 2.5rem 0;
+  }
+  
+  .footer__bottom.container {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-left: 4rem;
+    padding-right: 4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.25rem;
+    color: #FFFFFF;
+  }
+
+  .footer__bottom-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .footer__bottom-logo {
+    display: none;
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .footer__bottom-center {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .footer__bottom-link {
+    color: #FFFFFF;
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    transition: color 0.25s ease;
+  }
+
+  .footer__bottom-link:hover {
+    color: var(--footer-accent);
+  }
+
+  .footer__bottom-divider {
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  .footer__bottom-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  
+  .footer__accept-text {
+    letter-spacing: 0.05em;
+    color: #FFFFFF;
+  }
+
+  .footer__payment-icons {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+  }
+  
+  .footer__payment-icons svg {
+    height: 24px;
+    width: auto;
+    border-radius: 4px;
+    background: #fff;
+    padding: 2px 4px;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 1100px) {
+    .footer__grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+    }
+    .footer__col:first-child {
+      grid-column: span 2;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .footer__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .footer__col:first-child {
+      grid-column: span 2;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .footer-wrapper {
+      padding-top: 4rem;
+      padding-bottom: 0;
+    }
+    .footer.container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+    .footer__grid {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding-bottom: 2.5rem;
+    }
+
+    /* Brand Column on Mobile */
+    .footer__col--brand {
+      align-items: center;
+      text-align: center;
+      gap: 1.8rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid color-mix(in srgb, var(--footer-text) 12%, transparent);
+      margin-bottom: 1.6rem;
+    }
+    .footer__logo {
+      font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+      font-size: 3rem;
+      font-weight: 600;
+      color: #C29C5A;
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .footer__description {
+      text-align: center;
+      font-size: 1.35rem;
+      line-height: 1.65;
+      color: rgba(1, 63, 62, 0.85);
+      max-width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .footer__contact-list-inline {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+      width: 100%;
+      max-width: 450px;
+      margin-top: 0.5rem;
+    }
+    .footer__contact-item--phone,
+    .footer__contact-item--email,
+    .footer__contact-item--address {
+      width: 100%;
+    }
+
+    .footer__contact-link,
+    .footer__contact-card {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      box-sizing: border-box;
+      background-color: #FFFFFF;
+      border: 1px solid rgba(1, 63, 62, 0.15);
+      border-radius: 12px;
+      text-decoration: none;
+      color: inherit;
+      padding: 1.2rem 1.6rem;
+      gap: 1.2rem;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: none;
+      position: relative;
+    }
+    
+    .footer__contact-item--phone .footer__contact-link,
+    .footer__contact-item--email .footer__contact-link {
+      padding: 1.2rem 1.6rem;
+      flex-direction: row;
+      align-items: center;
+      text-align: left;
+      gap: 1.2rem;
+    }
+
+    .footer__contact-item--address .footer__contact-card {
+      padding: 1.6rem;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 1.2rem;
+    }
+
+    .footer__contact-card-top {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      width: 100%;
+    }
+
+    .footer__contact-button-directions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      box-sizing: border-box;
+      background-color: #FFFFFF;
+      border: 1px solid #C29C5A;
+      border-radius: 8px;
+      padding: 0.9rem 1.4rem;
+      color: #C29C5A;
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-decoration: none;
+      position: relative;
+      transition: all 0.25s ease;
+    }
+
+    .footer__contact-button-directions:active,
+    .footer__contact-link:active {
+      background-color: #FFFFFF;
+      border-color: #C29C5A;
+      transform: scale(0.98);
+    }
+
+    .footer__btn-icon-pin {
+      display: block;
+      width: 1.5rem;
+      height: 1.5rem;
+      margin-right: 0.6rem;
+      color: #C29C5A;
+      flex-shrink: 0;
+    }
+    .footer__btn-icon-arrow {
+      display: block;
+      width: 1.5rem;
+      height: 1.5rem;
+      color: #C29C5A;
+      position: absolute;
+      right: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .footer__contact-icon-wrapper {
+      display: flex;
+      width: 4rem;
+      height: 4rem;
+      border-radius: 50%;
+      background-color: #013F3E;
+      border: none;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background-color 0.3s ease;
+    }
+    .footer__contact-icon {
+      width: 2rem;
+      height: 2rem;
+      margin: 0;
+      color: #FFFFFF;
+    }
+
+    .footer__contact-text-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      width: 100%;
+      text-align: left;
+      align-items: flex-start;
+    }
+    .footer__contact-item--phone .footer__contact-text-group,
+    .footer__contact-item--email .footer__contact-text-group {
+      align-items: flex-start;
+    }
+
+    .footer__contact-label {
+      display: block;
+      font-size: 1.15rem;
+      font-weight: 500;
+      color: rgba(1, 63, 62, 0.7);
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .footer__contact-value {
+      display: block;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #013F3E;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    .footer__contact-action {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 0.1rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #C29C5A;
+      letter-spacing: 0.02em;
+    }
+
+    .footer__contact-chevron-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.8rem;
+      height: 1.8rem;
+      color: #C29C5A;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+    .footer__contact-chevron-right svg {
+      width: 1.6rem;
+      height: 1.6rem;
+    }
+
+    .footer__social-icons {
+      justify-content: center;
+      gap: 1.6rem;
+      margin-top: 1rem;
+    }
+    .footer__social-link {
+      width: 4rem;
+      height: 4rem;
+      border: none;
+      background-color: #013F3E;
+      color: #FFFFFF;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: none;
+    }
+    .footer__social-link:hover {
+      background-color: #013F3E;
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+    .footer__social-link svg {
+      width: 1.8rem;
+      height: 1.8rem;
+    }
+
+    /* Accordion Columns on Mobile */
+    .footer__col--accordion {
+      gap: 0;
+      margin-bottom: 0;
+      border: none;
+      border-bottom: 1px solid rgba(1, 63, 62, 0.15);
+      border-radius: 0;
+      background-color: transparent;
+      overflow: hidden;
+      transition: border-color 0.3s ease;
+    }
+    .footer__col--accordion.is-open {
+      background-color: transparent;
+      border-color: rgba(1, 63, 62, 0.15);
+    }
+
+    .footer__heading--accordion {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 1.4rem 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .footer__heading--accordion span {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #013F3E;
+    }
+    .footer__col--accordion.is-open .footer__heading--accordion span {
+      color: #013F3E;
+    }
+
+    .footer__heading::after {
+      display: none;
+    }
+
+    .footer__accordion-chevron-bg {
+      display: flex;
+      width: 2rem;
+      height: 2rem;
+      background: none !important;
+      border: none !important;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .footer__col--accordion.is-open .footer__accordion-chevron-bg {
+      transform: rotate(180deg);
+      background: none !important;
+    }
+    .footer__accordion-chevron {
+      display: block;
+      width: 1.4rem;
+      height: 1.4rem;
+      color: #C29C5A;
+      stroke-width: 1.5 !important;
+      transition: color 0.3s ease;
+    }
+    .footer__col--accordion.is-open .footer__accordion-chevron {
+      color: #C29C5A;
+    }
+    
+    .footer__accordion-content {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, padding 0.35s ease;
+      padding: 0;
+    }
+    .footer__col--accordion.is-open .footer__accordion-content {
+      max-height: 350px;
+      opacity: 1;
+      padding-top: 0.2rem;
+      padding-bottom: 1.4rem;
+    }
+    .footer__links-list {
+      margin-top: 0;
+      gap: 0.8rem;
+    }
+    .footer__link {
+      font-size: 1.25rem;
+      padding: 0.3rem 0;
+    }
+    .footer__col--accordion .footer__link {
+      color: #013F3E;
+      opacity: 0.85;
+    }
+    .footer__col--accordion .footer__link:hover {
+      color: #C29C5A;
+      opacity: 1;
+    }
+    .footer__link::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 1.5px;
+      background-color: #C29C5A;
+      margin-right: 0.8rem;
+      opacity: 0.9;
+      transition: width 0.25s ease;
+      border: none;
+      transform: none;
+    }
+    .footer__col--accordion .footer__link:hover::before {
+      width: 14px;
+    }
+
+    /* Footer Bottom on Mobile */
+    .footer-bottom-wrapper {
+      padding: 2.5rem 0;
+    }
+    .footer__bottom.container {
+      flex-direction: column;
+      gap: 2rem;
+      text-align: center;
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+    .footer__bottom-left {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: center;
+    }
+    .footer__bottom-logo {
+      display: block;
+      height: 36px;
+    }
+    .footer__copyright {
+      font-size: 1.15rem;
+      line-height: 1.6;
+      opacity: 0.9;
+      text-align: center;
+    }
+    .footer__bottom-center {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .footer__bottom-right {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: center;
+    }
+    .footer__accept-text {
+      font-size: 1.1rem;
+      letter-spacing: 0.08em;
+      color: var(--footer-accent);
+      font-weight: 600;
+    }
+    .footer__payment-icons {
+      justify-content: center;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+    .footer__payment-icons svg {
+      height: 26px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Footer",
+  "settings": [
+    {
+      "type": "text",
+      "id": "brand_name",
+      "label": "Brand Name",
+      "default": "Swastik Jewels"
+    },
+    {
+      "type": "textarea",
+      "id": "brand_description",
+      "label": "Brand Description",
+      "default": "Designed to enhance every moment with elegance."
+    },
+    {
+      "type": "url",
+      "id": "social_facebook_link",
+      "label": "Facebook Link"
+    },
+    {
+      "type": "url",
+      "id": "social_instagram_link",
+      "label": "Instagram Link"
+    },
+    {
+      "type": "url",
+      "id": "social_twitter_link",
+      "label": "Twitter/X Link"
+    },
+    {
+      "type": "url",
+      "id": "social_youtube_link",
+      "label": "YouTube Link"
+    },
+    {
+      "type": "text",
+      "id": "menu_title",
+      "label": "Menu 1 Title",
+      "default": "KNOW YOUR JEWELLERY"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu 1 Link List"
+    },
+    {
+      "type": "text",
+      "id": "customer_menu_title",
+      "label": "Menu 2 Title",
+      "default": "POLICY"
+    },
+    {
+      "type": "link_list",
+      "id": "customer_menu",
+      "label": "Menu 2 Link List"
+    },
+    {
+      "type": "text",
+      "id": "help_menu_title",
+      "label": "Menu 3 Title",
+      "default": "HELP & SUPPORT"
+    },
+    {
+      "type": "link_list",
+      "id": "help_menu",
+      "label": "Menu 3 Link List"
+    },
+    {
+      "type": "header",
+      "content": "Contact Info"
+    },
+    {
+      "type": "text",
+      "id": "contact_address",
+      "label": "Address",
+      "default": "123 Jewelry Street, Mumbai, Maharashtra 400001"
+    },
+    {
+      "type": "text",
+      "id": "contact_phone",
+      "label": "Phone Number",
+      "default": "+91 22 1234 5678"
+    },
+    {
+      "type": "text",
+      "id": "contact_email",
+      "label": "Email Address",
+      "default": "contact@swastikjewels.com"
+    },
+    {
+      "type": "header",
+      "content": "Footer Bottom Links"
+    },
+    {
+      "type": "link_list",
+      "id": "bottom_menu",
+      "label": "Bottom Links Menu",
+      "info": "Create a menu in Navigation (e.g. for Privacy Policy, Terms of Service) and select it here."
+    },
+    {
+      "type": "header",
+      "content": "Footer Colors"
+    },
+    {
+      "type": "color",
+      "id": "color_footer_bg",
+      "label": "Background Color",
+      "default": "#013F3E"
+    },
+    {
+      "type": "color",
+      "id": "color_footer_text",
+      "label": "Text Color",
+      "default": "#FDFBF7"
+    },
+    {
+      "type": "color",
+      "id": "color_footer_accent",
+      "label": "Accent Color",
+      "default": "#D4AF37"
+    }
+  ]
+}
+{% endschema %}

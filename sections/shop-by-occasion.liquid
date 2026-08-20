@@ -1,0 +1,603 @@
+{% comment %}
+  Renders the Shop by Occasion section with premium portrait cards, overlapping SVG badges, and custom separators.
+{% endcomment %}
+
+<div class="shop-by-occasion section-spacing" style="--bg-color: {{ section.settings.bg_color }};">
+  <div class="shop-by-occasion__container">
+    
+    <!-- Section Header -->
+    <div class="shop-by-occasion__header">
+      
+      {% if section.settings.subheading != blank %}
+        <div class="shop-by-occasion__subheading-wrapper">
+          <span class="shop-by-occasion__divider-line"></span>
+          <span class="shop-by-occasion__subheading">{{ section.settings.subheading | escape }}</span>
+          <span class="shop-by-occasion__divider-line"></span>
+        </div>
+      {% endif %}
+      
+      {% if section.settings.title != blank %}
+        <h2 class="shop-by-occasion__heading serif-font">{{ section.settings.title | escape }}</h2>
+      {% endif %}
+      
+      {% if section.settings.description != blank %}
+        <p class="shop-by-occasion__description">{{ section.settings.description | escape }}</p>
+      {% endif %}
+      
+      <div class="shop-by-occasion__divider-ornament">
+        <span class="ornament-line"></span>
+        <span class="ornament-sparkle">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 3H18L22 9L12 22L2 9L6 3Z" fill="var(--color-accent, #D4AF37)"/>
+            <path d="M6 3L10 9L12 3L14 9L18 3" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 9H22" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 9L12 22L14 9" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="ornament-line"></span>
+      </div>
+    </div>
+
+    <!-- Occasions Grid -->
+    <div class="shop-by-occasion__grid">
+      {% for block in section.blocks %}
+        <div class="shop-by-occasion__card" {{ block.shopify_attributes }}>
+          <!-- Image Container -->
+          <div class="shop-by-occasion__image-wrapper">
+            {% if block.settings.image != blank %}
+              {{ block.settings.image | image_url: width: 500, height: 600 | image_tag: class: 'shop-by-occasion__img', loading: 'lazy' }}
+            {% else %}
+              {% assign fallback_image_name = 'fallback-image.png' %}
+              <img src="{{ fallback_image_name | asset_url }}" 
+                   alt="{{ block.settings.title | escape }}" 
+                   class="shop-by-occasion__img"
+                   loading="lazy"
+                   width="400"
+                   height="500"
+                   onerror="this.src='{{ 'logo.png' | asset_url }}'; this.style.opacity='0.2';">
+            {% endif %}
+
+          </div>
+
+          <!-- Card Content -->
+          <div class="shop-by-occasion__card-content">
+            <!-- Floating Overlapping Badge -->
+            <div class="shop-by-occasion__badge" aria-hidden="true">
+              {% case block.settings.icon %}
+                {% when 'wedding' %}
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="8" cy="14" r="5" />
+                    <circle cx="16" cy="14" r="5" />
+                    <path d="M8 9V6M6 7l2-2 2 2" />
+                  </svg>
+                {% when 'daily_wear' %}
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 22C2 22 8 20 12 14C15 9.5 16 5 22 2C22 2 17.5 3 13 6C7 10 2 16 2 22Z" />
+                    <path d="M6 18c2-2 4-2.5 5.5-3M10 14c2-2 3-2.5 4.5-3.5" />
+                  </svg>
+                {% when 'gifts' %}
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="8" width="18" height="14" rx="2" ry="2" />
+                    <line x1="12" y1="8" x2="12" y2="22" />
+                    <line x1="3" y1="13" x2="21" y2="13" />
+                    <path d="M12 8c-2.5-3-5-2-5 .5s2.5 2.5 5-.5c2.5 3 5 2 5-.5s-2.5-2.5-5 .5z" />
+                  </svg>
+                {% when 'festive' %}
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 13h20C22 17.5 18 21 12 21S2 17.5 2 13Z" />
+                    <path d="M12 2C10.5 5.5 10.5 7.5 12 10C13.5 7.5 13.5 5.5 12 2Z" fill="currentColor" opacity="0.8" />
+                  </svg>
+              {% endcase %}
+            </div>
+            <h3 class="shop-by-occasion__card-title serif-font">{{ block.settings.title | escape }}</h3>
+            <p class="shop-by-occasion__card-desc">{{ block.settings.description | escape }}</p>
+            
+            <div class="shop-by-occasion__card-divider">
+              <span class="card-line"></span>
+              <span class="card-sparkle">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 3H18L22 9L12 22L2 9L6 3Z" fill="var(--color-accent, #D4AF37)"/>
+                  <path d="M6 3L10 9L12 3L14 9L18 3" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M2 9H22" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M10 9L12 22L14 9" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="card-line"></span>
+            </div>
+
+            <a href="{{ block.settings.link | default: '#' }}" class="btn-shop-now">
+              SHOP NOW
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <path d="M9 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- View All Collections Button -->
+    <div class="shop-by-occasion__footer">
+      <a href="{{ section.settings.view_all_link | default: '/collections' }}" class="btn-view-all">
+        VIEW ALL COLLECTIONS
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+
+  </div>
+</div>
+
+{% stylesheet %}
+  .shop-by-occasion {
+    background-color: var(--bg-color, #FFFFFF);
+    padding-top: 8rem;
+    padding-bottom: 8rem;
+  }
+
+  .shop-by-occasion__container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-left: 4.8rem;
+    padding-right: 4.8rem;
+  }
+
+  .shop-by-occasion__footer {
+    text-align: center;
+    margin-top: 6rem;
+  }
+
+  /* Section Header Styling */
+  .shop-by-occasion__header {
+    margin-bottom: 6rem;
+    text-align: center;
+  }
+
+  .shop-by-occasion__logo-mark {
+    margin-bottom: 1.5rem;
+    display: inline-flex;
+    justify-content: center;
+  }
+
+  .shop-by-occasion__subheading-wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    width: 100%;
+    margin-bottom: 1.5rem;
+  }
+
+  .shop-by-occasion__divider-line {
+    height: 1px;
+    background-color: var(--color-accent, #D4AF37);
+    width: 60px;
+    opacity: 0.5;
+  }
+
+  .shop-by-occasion__subheading {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--color-accent, #D4AF37);
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+  }
+
+  .shop-by-occasion__heading {
+    font-size: 4.2rem;
+    color: var(--color-primary, #013F3E);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+
+  .shop-by-occasion__description {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.6rem;
+    font-style: italic;
+    color: var(--color-foreground, #1A1A1A);
+    opacity: 0.85;
+    margin-bottom: 2rem;
+  }
+
+  .shop-by-occasion__divider-ornament {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+  }
+  
+  .shop-by-occasion__divider-ornament .ornament-line {
+    height: 1px;
+    background-color: var(--color-accent, #D4AF37);
+    width: 40px;
+    opacity: 0.4;
+  }
+  
+  .shop-by-occasion__divider-ornament .ornament-sparkle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* Grid Layout Styling */
+  .shop-by-occasion__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3.2rem;
+  }
+
+  .shop-by-occasion__card {
+    background: #FFFFFF;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  }
+
+  .shop-by-occasion__card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 15px 35px rgba(1, 63, 62, 0.1);
+  }
+
+  /* Card Image */
+  .shop-by-occasion__image-wrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 110%; /* 4:5 Aspect Ratio portrait feel */
+    overflow: hidden;
+  }
+
+  .shop-by-occasion__img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .shop-by-occasion__card:hover .shop-by-occasion__img {
+    transform: scale(1.06);
+  }
+
+  /* Overlapping Badge */
+  .shop-by-occasion__badge {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 5.6rem;
+    height: 5.6rem;
+    background-color: var(--color-primary, #013F3E);
+    color: var(--color-accent, #D4AF37);
+    border-radius: 50%;
+    border: 4px solid #FDFBF7; /* Overlaps content background cleanly */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+
+  .shop-by-occasion__badge svg {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .shop-by-occasion__card:hover .shop-by-occasion__badge {
+    transform: translate(-50%, -50%) scale(1.1) rotate(15deg);
+    background-color: var(--color-accent, #D4AF37);
+    color: #FFFFFF;
+    border-color: #FFFFFF;
+    box-shadow: 0 6px 16px rgba(1, 63, 62, 0.25);
+  }
+
+  .shop-by-occasion__card:hover .shop-by-occasion__badge svg {
+    transform: scale(1.1);
+  }
+
+  /* Card Content Area */
+  .shop-by-occasion__card-content {
+    position: relative; /* Added to anchor absolute badge positioning */
+    background-color: #FDFBF7; /* Warm light-gold backdrop matches screenshot */
+    padding: 4.8rem 2.4rem 2.8rem 2.4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex-grow: 1;
+    border: 1px solid rgba(1, 63, 62, 0.04);
+    border-top: none;
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+  }
+
+  .shop-by-occasion__card-title {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--color-primary, #013F3E);
+    margin-bottom: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .shop-by-occasion__card-desc {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: #555555;
+    margin: 0 0 1.6rem 0;
+    max-width: 25ch;
+  }
+
+  /* Card Divider */
+  .shop-by-occasion__card-divider {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-bottom: 1.6rem;
+    opacity: 0.4;
+  }
+
+  .shop-by-occasion__card-divider .card-line {
+    height: 1px;
+    background-color: var(--color-accent, #D4AF37);
+    width: 20px;
+  }
+
+  .shop-by-occasion__card-divider .card-sparkle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* Shop Now Button */
+  .btn-shop-now {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+    border: 1px solid var(--color-primary, #013F3E);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    padding: 1rem 2.4rem;
+    border-radius: 4px;
+    transition: background-color 0.35s ease, border-color 0.35s ease, transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.35s ease;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .btn-shop-now svg {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-shop-now:hover {
+    transform: translateY(-2px) scale(1.02);
+    background-color: #012b2a;
+    border-color: #012b2a;
+    color: #FFFFFF;
+    box-shadow: 0 8px 16px rgba(1, 63, 62, 0.2);
+  }
+
+  .btn-shop-now:hover svg {
+    transform: translateX(4px);
+  }
+
+  .btn-shop-now:active {
+    transform: translateY(1px) scale(0.97);
+    box-shadow: 0 3px 8px rgba(1, 63, 62, 0.15);
+  }
+
+  /* View All Collections Button Styling */
+  .btn-view-all {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    padding: 1.6rem 4rem;
+    border: 1px solid var(--color-primary, #013F3E);
+    color: var(--color-primary, #013F3E);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    border-radius: 4px;
+    transition: background-color 0.35s ease, border-color 0.35s ease, transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.35s ease, color 0.35s ease;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .btn-view-all svg {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-view-all:hover {
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(1, 63, 62, 0.2);
+  }
+
+  .btn-view-all:hover svg {
+    transform: translateX(4px);
+  }
+
+  .btn-view-all:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 3px 8px rgba(1, 63, 62, 0.15);
+  }
+
+  /* Responsive Styling */
+  @media (max-width: 1200px) {
+    .shop-by-occasion__grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2.4rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .shop-by-occasion {
+      padding-top: 6rem;
+      padding-bottom: 6rem;
+    }
+    .shop-by-occasion__container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+    .shop-by-occasion__heading {
+      font-size: 3.2rem;
+    }
+    .shop-by-occasion__grid {
+      grid-template-columns: 1fr;
+      gap: 2.4rem;
+    }
+    .shop-by-occasion__card-content {
+      padding: 4.8rem 2rem 2.4rem 2rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Shop by occasion",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "default": "Find the Perfect Piece for Every Moment",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "default": "SHOP BY OCCASION",
+      "label": "Subheading"
+    },
+    {
+      "type": "text",
+      "id": "description",
+      "default": "Handpicked jewelry styles for life's celebrated milestones.",
+      "label": "Description"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "default": "#FFFFFF",
+      "label": "Background color"
+    },
+    {
+      "type": "url",
+      "id": "view_all_link",
+      "label": "View All Link"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "occasion",
+      "name": "Occasion Card",
+      "limit": 4,
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Occasion Title",
+          "label": "Title"
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "default": "Occasion description goes here.",
+          "label": "Description"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Occasion image"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Collection Link"
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "Icon Badge",
+          "default": "wedding",
+          "options": [
+            {
+              "value": "wedding",
+              "label": "Wedding Rings"
+            },
+            {
+              "value": "daily_wear",
+              "label": "Leaf Sprig"
+            },
+            {
+              "value": "gifts",
+              "label": "Gift Box"
+            },
+            {
+              "value": "festive",
+              "label": "Lit Lamp (Diya)"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Shop by occasion",
+      "blocks": [
+        {
+          "type": "occasion",
+          "settings": {
+            "title": "Wedding",
+            "description": "Timeless designs for your most precious moments.",
+            "icon": "wedding"
+          }
+        },
+        {
+          "type": "occasion",
+          "settings": {
+            "title": "Daily Wear",
+            "description": "Elegant & lightweight pieces for everyday you.",
+            "icon": "daily_wear"
+          }
+        },
+        {
+          "type": "occasion",
+          "settings": {
+            "title": "Gifts",
+            "description": "Meaningful pieces for the ones who matter.",
+            "icon": "gifts"
+          }
+        },
+        {
+          "type": "occasion",
+          "settings": {
+            "title": "Festive Collection",
+            "description": "Shine brighter with festive ready designs.",
+            "icon": "festive"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

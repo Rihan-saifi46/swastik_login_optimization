@@ -1,0 +1,401 @@
+{% schema %}
+{
+  "name": "WhatsApp Widget",
+  "settings": [
+    {
+      "type": "text",
+      "id": "whatsapp_number",
+      "label": "WhatsApp Number",
+      "info": "Include country code without '+' (e.g., 918920905268)",
+      "default": "918920905268"
+    }
+  ]
+}
+{% endschema %}
+
+<div class="whatsapp-widget js-whatsapp-widget">
+  <div class="whatsapp-widget__overlay js-whatsapp-close"></div>
+  <div class="whatsapp-widget__menu js-whatsapp-menu">
+    <button class="whatsapp-widget__close-mobile js-whatsapp-close" aria-label="Close">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="whatsapp-widget__menu-header">
+      <h4>How can we help you?</h4>
+      <button class="whatsapp-widget__close js-whatsapp-close" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+    
+    <a href="https://wa.me/{{ section.settings.whatsapp_number }}?text=Hi, I'm interested in your jewellery collection. Can you offer me the best price?" target="_blank" class="whatsapp-widget__option">
+      <div class="whatsapp-widget__option-icon" style="background-color: #f0f7e6; color: #7cb342;">
+        <span style="font-size: 22px; font-weight: 400; font-family: 'Inter', sans-serif;">₹</span>
+      </div>
+      <div class="whatsapp-widget__option-text">
+        <strong>Chat for Best Price</strong>
+        <span>Unlock exclusive offers & much more</span>
+      </div>
+    </a>
+
+    <a href="https://wa.me/{{ section.settings.whatsapp_number }}?text=Hi, I'd like to talk to a personal stylist." target="_blank" class="whatsapp-widget__option">
+      <div class="whatsapp-widget__option-icon" style="background-color: #fdf6e3; color: #d4a373;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.8 9.8 0 0 1-3.25-.56L3 21l1.5-3.5A8.92 8.92 0 0 1 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="whatsapp-widget__option-text">
+        <strong>Connect a Personal Stylist</strong>
+        <span>Style advice tailored just for you</span>
+      </div>
+    </a>
+
+    <a href="{{ routes.root_url }}#video-call" class="whatsapp-widget__option js-video-call-trigger">
+      <div class="whatsapp-widget__option-icon" style="background-color: #fdf0f0; color: #e57373;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 10L19.5 7V17L15 14V17H4V7H15V10Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="whatsapp-widget__option-text">
+        <strong>Shop via Video Call</strong>
+        <span>Explore jewellery live with expert assistance</span>
+      </div>
+    </a>
+  </div>
+
+  <button class="whatsapp-widget__button js-whatsapp-toggle" aria-label="Open WhatsApp Menu">
+    <svg viewBox="0 0 448 512" fill="#fff" xmlns="http://www.w3.org/2000/svg">
+      <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/>
+    </svg>
+  </button>
+</div>
+
+{% stylesheet %}
+  .whatsapp-widget {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s;
+    pointer-events: none;
+  }
+
+  .whatsapp-widget__close-mobile {
+    display: none;
+  }
+  .whatsapp-widget__overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9998;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+    pointer-events: auto;
+  }
+  .whatsapp-widget__overlay.is-active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+
+
+  .whatsapp-widget__button {
+    background-color: #25D366;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    pointer-events: auto;
+  }
+
+  .whatsapp-widget__button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  }
+
+  .whatsapp-widget__button svg {
+    width: 32px;
+    height: 32px;
+    display: block;
+    margin-top: 1px;
+    margin-right: 1px;
+  }
+
+  .whatsapp-widget__menu {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    padding: 24px;
+    margin-bottom: 24px;
+    width: 340px;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: bottom right;
+    pointer-events: auto;
+  }
+
+  .whatsapp-widget__menu::-webkit-scrollbar {
+    width: 6px;
+  }
+  .whatsapp-widget__menu::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .whatsapp-widget__menu::-webkit-scrollbar-thumb {
+    background-color: #e0e0e0;
+    border-radius: 10px;
+  }
+
+  .whatsapp-widget__menu.is-active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .whatsapp-widget__menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .whatsapp-widget__menu-header h4 {
+    margin: 0;
+    font-family: "Georgia", serif;
+    font-size: 18px;
+    color: #1a1a1a;
+  }
+
+  .whatsapp-widget__close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+
+  .whatsapp-widget__close:hover {
+    color: #1a1a1a;
+  }
+
+  .whatsapp-widget__option {
+    display: flex;
+    align-items: center;
+    padding: 16px 14px;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    text-decoration: none;
+    transition: border-color 0.2s, background-color 0.2s;
+  }
+
+  .whatsapp-widget__option:last-child {
+    margin-bottom: 0;
+  }
+
+  .whatsapp-widget__option:hover {
+    border-color: #d0d0d0;
+    background-color: #fafafa;
+  }
+
+  .whatsapp-widget__option-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 14px;
+    flex-shrink: 0;
+  }
+
+  .whatsapp-widget__option-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .whatsapp-widget__option-text strong {
+    font-family: "Inter", sans-serif;
+    font-size: 15px;
+    color: #1a1a1a;
+    font-weight: 600;
+  }
+
+  .whatsapp-widget__option-text span {
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  @media screen and (max-width: 480px) {
+    .whatsapp-widget__menu {
+      width: calc(100vw - 48px);
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .whatsapp-widget__button {
+      display: none !important;
+    }
+    .whatsapp-widget__menu-header {
+      display: none !important;
+    }
+    .whatsapp-widget__close-mobile {
+      display: flex;
+      position: absolute;
+      top: -48px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 36px;
+      background: #ffffff;
+      border: none;
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      cursor: pointer;
+      color: #333;
+      z-index: 10000001;
+    }
+  @media screen and (max-width: 768px) {
+    .whatsapp-widget__button {
+      display: none !important;
+    }
+    .whatsapp-widget__menu-header {
+      display: none !important;
+    }
+    .whatsapp-widget__close-mobile {
+      display: flex;
+      position: absolute;
+      top: -48px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 36px;
+      background: #ffffff;
+      border: none;
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      cursor: pointer;
+      color: #333;
+      z-index: 10000001;
+    }
+    .whatsapp-widget__overlay {
+      display: block;
+      background: rgba(0, 0, 0, 0.45) !important;
+      backdrop-filter: blur(4px) !important;
+      -webkit-backdrop-filter: blur(4px) !important;
+      z-index: 999998 !important;
+    }
+    .whatsapp-widget {
+      bottom: 0;
+      right: 0;
+      width: 100%;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 999999 !important;
+    }
+    .whatsapp-widget__menu {
+      position: fixed !important;
+      bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
+      left: 50% !important;
+      transform: translateX(-50%) translateY(150%) !important;
+      width: calc(100vw - 32px) !important;
+      max-width: 400px !important;
+      padding: 16px !important;
+      border-radius: 20px !important;
+      pointer-events: auto !important;
+      z-index: 9999999 !important;
+      transform-origin: bottom center;
+      margin-bottom: 0 !important;
+      overflow-y: visible !important;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2) !important;
+    }
+    .whatsapp-widget__menu.is-active {
+      transform: translateX(-50%) translateY(0) !important;
+    }
+    .whatsapp-widget__option {
+      margin-bottom: 10px !important;
+      padding: 12px 14px !important;
+      border-color: #f0f0f0 !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.02) !important;
+    }
+    .whatsapp-widget__option:last-child {
+      margin-bottom: 0 !important;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtns = document.querySelectorAll('.js-whatsapp-toggle');
+    const closeBtns = document.querySelectorAll('.js-whatsapp-close');
+    const menu = document.querySelector('.js-whatsapp-menu');
+    const overlay = document.querySelector('.whatsapp-widget__overlay');
+    const videoCallTriggers = document.querySelectorAll('.js-video-call-trigger');
+
+    function closeWhatsappMenu() {
+      if (menu) menu.classList.remove('is-active');
+      if (overlay) overlay.classList.remove('is-active');
+      document.body.classList.remove('whatsapp-menu-open');
+    }
+
+    if (toggleBtns.length > 0 && menu) {
+      toggleBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const isActive = menu.classList.toggle('is-active');
+          if (overlay) overlay.classList.toggle('is-active', isActive);
+          document.body.classList.toggle('whatsapp-menu-open', isActive);
+        });
+      });
+
+      if (closeBtns.length > 0) {
+        closeBtns.forEach(btn => {
+          btn.addEventListener('click', closeWhatsappMenu);
+        });
+      }
+
+      // Close when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.js-whatsapp-widget') && !e.target.closest('.js-whatsapp-toggle')) {
+          closeWhatsappMenu();
+        }
+      });
+    }
+
+    // Handle "Shop via Video Call" option
+    videoCallTriggers.forEach(trigger => {
+      trigger.addEventListener('click', (e) => {
+        const videoCallModals = document.querySelectorAll('.js-video-call-modal');
+        if (videoCallModals.length > 0) {
+          e.preventDefault(); // Stop navigation if modal exists on this page
+          closeWhatsappMenu();
+          videoCallModals.forEach(modal => modal.classList.add('is-open'));
+          document.body.style.overflow = 'hidden';
+        }
+      });
+    });
+  });
+{% endjavascript %}

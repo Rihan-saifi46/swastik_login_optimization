@@ -1,0 +1,121 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "faq",
+      "blocks": {
+        "category-1": {
+          "type": "category",
+          "settings": {
+            "title": "1. Product & Quality"
+          }
+        },
+        "q1": {
+          "type": "question",
+          "settings": {
+            "title": "Are your gold products hallmarked?",
+            "answer": "<p><strong>Yes, authenticity is our priority.</strong> All our gold jewellery is BIS Hallmarked to certify the purity of the gold, whether you choose <strong>9K, 14K, or 18K</strong>. You can find the hallmark details in the <strong>Product Details</strong> section of every product.</p>"
+          }
+        },
+        "q2": {
+          "type": "question",
+          "settings": {
+            "title": "What types of diamonds do you sell?",
+            "answer": "<p><strong>We offer both Natural Diamonds and Lab-Grown Diamonds (made to order)</strong>, available in their respective collections. Every diamond is carefully selected and <strong>IGI</strong> certified for its <strong>Cut, Color, Clarity, and Carat</strong>. You can also customize your diamond by selecting your preferred <strong>color and clarity combination</strong>—such as <strong>F-G / SI-I, G-H / VS-SI, or I-J / SI-I</strong>—directly on the product page to match your style and budget.</p>"
+          }
+        },
+        "q3": {
+          "type": "question",
+          "settings": {
+            "title": "Can I customize the gold color or purity?",
+            "answer": "<p><strong>Yes!</strong> For most of our jewellery, you can customize your order by selecting your preferred <strong>gold color</strong>—<strong>Yellow Gold, Rose Gold, or White Gold</strong>—and <strong>gold purity</strong> directly on the product page before adding it to your cart.</p>"
+          }
+        },
+        "q4": {
+          "type": "question",
+          "settings": {
+            "title": "Are the prices inclusive of taxes?",
+            "answer": "<p><strong>Yes.</strong> The final price displayed on the product page is <strong>inclusive of all taxes</strong>, including the standard <strong>3% GST</strong> on jewellery. We also provide a <strong>transparent price breakdown</strong>—including <strong>Gold Value, Diamond Value, Making Charges, and GST</strong>—so you know exactly what you're paying for.</p>"
+          }
+        },
+        "category-2": {
+          "type": "category",
+          "settings": {
+            "title": "2. Returns, Exchanges & Buyback"
+          }
+        },
+        "q5": {
+          "type": "question",
+          "settings": {
+            "title": "What is your return policy?",
+            "answer": "<p><strong>Yes.</strong> We offer a hassle-free <strong>14-day return policy</strong>. If you're not completely satisfied with your purchase, you can return it in its <strong>original, unworn condition</strong>, along with all <strong>certificates, tags, and original packaging</strong>, within 14 days of delivery.</p>"
+          }
+        },
+        "q6": {
+          "type": "question",
+          "settings": {
+            "title": "Do you have a Buyback or Lifetime Exchange policy?",
+            "answer": "<p><strong>Yes.</strong> We offer a <strong>lifetime exchange and buyback</strong> on our jewellery. The value is calculated based on the <strong>current market value of the gold and diamonds</strong> at the time of exchange or buyback. For complete details, including applicable deductions, please visit our <strong>Buyback Policy</strong> page or contact our <strong>Delhi store</strong>.</p>"
+          }
+        },
+        "category-3": {
+          "type": "category",
+          "settings": {
+            "title": "3. Payments & Orders"
+          }
+        },
+        "q7": {
+          "type": "question",
+          "settings": {
+            "title": "What payment methods do you accept?",
+            "answer": "<p><strong>Yes.</strong> We accept all major secure payment methods, including <strong>UPI, RuPay, Visa, Mastercard, and American Express</strong>, ensuring a safe and seamless checkout experience.</p>"
+          }
+        },
+        "q8": {
+          "type": "question",
+          "settings": {
+            "title": "Can I save an item to buy it later?",
+            "answer": "<p><strong>Yes!</strong> Simply click the <strong>Heart</strong> icon on any product to add it to your <strong>Wishlist</strong>. Your wishlist is automatically saved on the <strong>current browser and device</strong> you're using, making it easy to revisit your favorite pieces later.</p>"
+          }
+        },
+        "q9": {
+          "type": "question",
+          "settings": {
+            "title": "Where is your physical store located?",
+            "answer": "<p><strong>Yes!</strong> Our flagship store is located in <strong>Delhi</strong>. You can find our exact store location, get directions via <strong>Google Maps</strong>, and view our contact details by visiting the <strong>Find Store</strong> page or checking the <strong>website footer</strong>.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "category-1",
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "category-2",
+        "q5",
+        "q6",
+        "category-3",
+        "q7",
+        "q8",
+        "q9"
+      ],
+      "settings": {
+        "show_banner": true,
+        "subtitle": "FAQs",
+        "title": "Questions & Answers"
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

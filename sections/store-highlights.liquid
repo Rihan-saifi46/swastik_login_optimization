@@ -1,0 +1,585 @@
+{%- liquid
+  assign bg_color = section.settings.bg_color | default: '#fdfbf7'
+  assign border_color = section.settings.border_color | default: '#ebe7df'
+  assign icon_color = section.settings.icon_color | default: '#b38245'
+  assign text_color = section.settings.text_color | default: '#0a2a26'
+  assign desc_color = section.settings.desc_color | default: '#555555'
+-%}
+
+<div class="store-highlights" id="StoreHighlights-{{ section.id }}" data-autoplay="{{ section.settings.autoplay | default: true }}" data-autoplay-speed="{{ section.settings.autoplay_speed | default: 4 }}" style="--bg-color: {{ bg_color }}; --border-color: {{ border_color }}; --icon-color: {{ icon_color }}; --text-color: {{ text_color }}; --desc-color: {{ desc_color }};">
+  <div class="store-highlights__container">
+    <div class="store-highlights__grid">
+      {%- for block in section.blocks -%}
+        <div class="store-highlights__item" {{ block.shopify_attributes }}>
+          <div class="store-highlights__icon">
+            {%- case block.settings.icon -%}
+              {%- when 'hallmark' -%}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 3L3 19h18L12 3z" />
+                  <path d="M12 8c0 0-2.5 3-2.5 5.5s1.5 3.5 2.5 3.5 2.5-1 2.5-3.5S12 8 12 8z" />
+                  <path d="M12 10.5v6.5" />
+                  <path d="M10 14h4" />
+                </svg>
+              {%- when 'diamond' -%}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M2.7 8.5L12 21.5L21.3 8.5H2.7Z" />
+                  <path d="M6.3 3.5H17.7L21.3 8.5H2.7L6.3 3.5Z" />
+                  <path d="M6.3 3.5L2.7 8.5L12 21.5L21.3 8.5L17.7 3.5H6.3Z" />
+                  <path d="M12 3.5V21.5" />
+                  <path d="M6.3 3.5L9.5 8.5L12 21.5" />
+                  <path d="M17.7 3.5L14.5 8.5L12 21.5" />
+                </svg>
+              {%- when 'shipping' -%}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20" />
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+              {%- when 'insurance' -%}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="M9 11l2 2 4-4" />
+                </svg>
+              {%- when 'exchange' -%}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                  <path d="M21 3v5h-5" />
+                  <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+                  <path d="M3 21v-5h5" />
+                </svg>
+              {%- when 'support' -%}
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 11a9 9 0 0 1 18 0" />
+                  <rect x="2" y="11" width="3" height="6" rx="1.5" />
+                  <rect x="19" y="11" width="3" height="6" rx="1.5" />
+                  <path d="M20 17c0 2-2 3-4 3h-2" />
+                  <circle cx="13" cy="20" r="1" />
+                </svg>
+            {%- endcase -%}
+          </div>
+          <div class="store-highlights__content">
+            {%- if block.settings.title != blank -%}
+              <h3 class="store-highlights__title">{{ block.settings.title | escape }}</h3>
+            {%- endif -%}
+          </div>
+        </div>
+      {%- endfor -%}
+    </div>
+    <div class="store-highlights__dots">
+      {%- for block in section.blocks -%}
+        <button class="store-highlights__dot{% if forloop.first %} store-highlights__dot--active{% endif %}" aria-label="Go to slide {{ forloop.index }}" data-slide="{{ forloop.index0 }}" type="button"></button>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+.store-highlights {
+  background-color: var(--bg-color);
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 3.5rem 0;
+}
+
+.store-highlights__container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding-left: 4.8rem;
+  padding-right: 4.8rem;
+}
+
+.store-highlights__grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  width: 100%;
+}
+
+.store-highlights__item {
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  padding: 0 2.5rem;
+  box-sizing: border-box;
+}
+
+.store-highlights__item:not(:last-child) {
+  border-right: 1px solid var(--border-color);
+}
+
+.store-highlights__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--icon-color);
+  flex-shrink: 0;
+  width: 4rem;
+  height: 4rem;
+  transition: transform 0.3s ease;
+}
+
+.store-highlights__item:hover .store-highlights__icon {
+  transform: scale(1.1);
+}
+
+.store-highlights__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.store-highlights__title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+
+.store-highlights__description {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.1rem;
+  color: var(--desc-color);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.store-highlights__dots {
+  display: none;
+}
+
+@media screen and (max-width: 1200px) {
+  .store-highlights__container {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+  .store-highlights__item {
+    padding: 0 1.5rem;
+    gap: 1.2rem;
+  }
+  .store-highlights__title {
+    font-size: 1.2rem;
+  }
+  .store-highlights__description {
+    font-size: 1.1rem;
+  }
+}
+
+@media screen and (max-width: 991px) {
+  .store-highlights {
+    padding: 3rem 0;
+  }
+  .store-highlights__container {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .store-highlights__grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    padding-left: calc((100% - 280px) / 2);
+    padding-right: calc((100% - 280px) / 2);
+    scrollbar-width: none;
+    gap: 1.6rem;
+  }
+  .store-highlights__grid::-webkit-scrollbar {
+    display: none;
+  }
+  .store-highlights__item {
+    flex: 0 0 280px;
+    padding: 2.4rem 2rem;
+    scroll-snap-align: center;
+    justify-content: flex-start;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(10, 42, 38, 0.08);
+    box-shadow: 0 4px 16px rgba(10, 42, 38, 0.02);
+    box-sizing: border-box;
+  }
+  .store-highlights__item:not(:last-child) {
+    border-right: none;
+  }
+  .store-highlights__icon {
+    width: 3.2rem;
+    height: 3.2rem;
+  }
+  .store-highlights__dots {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 2.4rem;
+  }
+  .store-highlights__dot {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background-color: var(--icon-color);
+    opacity: 0.25;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  .store-highlights__dot--active {
+    opacity: 1;
+    transform: scale(1.4);
+  }
+}
+{% endstylesheet %}
+
+{% javascript %}
+class StoreHighlights {
+  constructor(element) {
+    this.section = element;
+    this.grid = element.querySelector('.store-highlights__grid');
+    this.items = Array.from(element.querySelectorAll('.store-highlights__item'));
+    this.dots = Array.from(element.querySelectorAll('.store-highlights__dot'));
+    if (!this.grid || this.items.length === 0 || this.dots.length === 0) return;
+    this.currentIndex = 0;
+    this.autoplayTimer = null;
+    this.jumpTimeout = null;
+    this.isTransitioning = false;
+    this.isInfiniteSetup = false;
+    this.autoplay = element.getAttribute('data-autoplay') === 'true';
+    this.autoplaySpeed = parseInt(element.getAttribute('data-autoplay-speed'), 10) * 1000 || 4000;
+    this.init();
+  }
+
+  init() {
+    if (window.innerWidth <= 991) {
+      this.setupInfiniteScroll();
+    }
+
+    this.grid.addEventListener('scroll', () => {
+      this.handleScroll();
+      this.resetAutoplay();
+    });
+
+    this.dots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        this.scrollToIndex(index);
+        this.resetAutoplay();
+      });
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 991 && !this.isInfiniteSetup) {
+        this.setupInfiniteScroll();
+      }
+      this.handleScroll();
+      this.resetAutoplay();
+    });
+
+    this.grid.addEventListener('touchstart', () => this.stopAutoplay(), { passive: true });
+    this.grid.addEventListener('mousedown', () => this.stopAutoplay());
+    this.grid.addEventListener('touchend', () => this.startAutoplay());
+    this.grid.addEventListener('mouseup', () => this.startAutoplay());
+
+    this.handleScroll();
+    this.startAutoplay();
+  }
+
+  setupInfiniteScroll() {
+    if (this.isInfiniteSetup || this.items.length === 0) return;
+    this.isInfiniteSetup = true;
+
+    // Clone last item and prepend
+    const lastClone = this.items[this.items.length - 1].cloneNode(true);
+    lastClone.classList.add('store-highlights__item--clone', 'clone-start');
+    lastClone.setAttribute('aria-hidden', 'true');
+    this.grid.insertBefore(lastClone, this.items[0]);
+
+    // Clone first item and append
+    const firstClone = this.items[0].cloneNode(true);
+    firstClone.classList.add('store-highlights__item--clone', 'clone-end');
+    firstClone.setAttribute('aria-hidden', 'true');
+    this.grid.appendChild(firstClone);
+
+    // Jump to the first real item immediately
+    setTimeout(() => {
+      this.scrollToIndex(0, false);
+    }, 50);
+  }
+
+  handleScroll() {
+    if (window.innerWidth > 991) return;
+    
+    const itemWidth = this.items[0].offsetWidth;
+    const gap = 16; 
+    const itemFullWidth = itemWidth + gap;
+    const scrollLeft = this.grid.scrollLeft;
+    
+    // Calculate current snapped child index
+    const currentSnap = Math.round(scrollLeft / itemFullWidth);
+    
+    // Determine real visual index (subtract 1 for prepended clone)
+    let visualIndex = currentSnap - 1;
+    if (visualIndex < 0) visualIndex = this.items.length - 1;
+    if (visualIndex >= this.items.length) visualIndex = 0;
+    
+    this.currentIndex = visualIndex;
+    this.updateDotsVisually(visualIndex);
+    
+    if (this.isTransitioning) return;
+
+    // Handle jump for infinite scroll
+    clearTimeout(this.jumpTimeout);
+    this.jumpTimeout = setTimeout(() => {
+      const snapAfterScroll = Math.round(this.grid.scrollLeft / itemFullWidth);
+      if (snapAfterScroll === 0) {
+        this.scrollToIndex(this.items.length - 1, false);
+      } else if (snapAfterScroll === this.items.length + 1) {
+        this.scrollToIndex(0, false);
+      }
+    }, 150);
+  }
+
+  updateDotsVisually(index) {
+    this.dots.forEach((dot, i) => {
+      if (i === index) {
+        dot.classList.add('store-highlights__dot--active');
+        dot.setAttribute('aria-selected', 'true');
+      } else {
+        dot.classList.remove('store-highlights__dot--active');
+        dot.setAttribute('aria-selected', 'false');
+      }
+    });
+  }
+
+  scrollToIndex(index, smooth = true) {
+    if (window.innerWidth > 991) return;
+    const itemWidth = this.items[0].offsetWidth;
+    const gap = 16;
+    // Add 1 to target index to account for the prepended clone
+    const targetChildIndex = this.isInfiniteSetup ? index + 1 : index;
+    const targetScroll = targetChildIndex * (itemWidth + gap);
+    
+    if (!smooth) {
+      this.isTransitioning = true;
+      this.grid.style.scrollBehavior = 'auto';
+      this.grid.style.scrollSnapType = 'none';
+      this.grid.scrollLeft = targetScroll;
+      // Force reflow
+      void this.grid.offsetWidth;
+      this.grid.style.scrollBehavior = 'smooth';
+      this.grid.style.scrollSnapType = 'x mandatory';
+      
+      setTimeout(() => {
+        this.isTransitioning = false;
+      }, 50);
+    } else {
+      this.grid.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth'
+      });
+    }
+  }
+
+  startAutoplay() {
+    if (!this.autoplay || window.innerWidth > 991) return;
+    this.stopAutoplay();
+    this.autoplayTimer = setInterval(() => {
+      const itemWidth = this.items[0].offsetWidth;
+      const gap = 16;
+      const currentSnap = Math.round(this.grid.scrollLeft / (itemWidth + gap));
+      const nextSnap = currentSnap + 1;
+      
+      this.grid.scrollTo({
+        left: nextSnap * (itemWidth + gap),
+        behavior: 'smooth'
+      });
+    }, this.autoplaySpeed);
+  }
+
+  stopAutoplay() {
+    if (this.autoplayTimer) {
+      clearInterval(this.autoplayTimer);
+      this.autoplayTimer = null;
+    }
+  }
+
+  resetAutoplay() {
+    if (window.innerWidth <= 991) {
+      this.stopAutoplay();
+      this.startAutoplay();
+    }
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const initStoreHighlights = () => {
+    document.querySelectorAll('.store-highlights').forEach(section => {
+      if (!section.dataset.initialized) {
+        new StoreHighlights(section);
+        section.dataset.initialized = 'true';
+      }
+    });
+  };
+  initStoreHighlights();
+  document.addEventListener('shopify:section:load', (event) => {
+    const section = event.target.querySelector('.store-highlights');
+    if (section) {
+      new StoreHighlights(section);
+      section.dataset.initialized = 'true';
+    }
+  });
+});
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "t:sections.store_highlights.name",
+  "class": "section",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "t:sections.store_highlights.settings.bg_color",
+      "default": "#fdfbf7"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "t:sections.store_highlights.settings.border_color",
+      "default": "#ebe7df"
+    },
+    {
+      "type": "color",
+      "id": "icon_color",
+      "label": "t:sections.store_highlights.settings.icon_color",
+      "default": "#b38245"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:sections.store_highlights.settings.text_color",
+      "default": "#0a2a26"
+    },
+    {
+      "type": "color",
+      "id": "desc_color",
+      "label": "t:sections.store_highlights.settings.desc_color",
+      "default": "#555555"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "t:sections.store_highlights.settings.autoplay",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "autoplay_speed",
+      "min": 2,
+      "max": 10,
+      "step": 1,
+      "unit": "s",
+      "label": "t:sections.store_highlights.settings.autoplay_speed",
+      "default": 4
+    }
+  ],
+  "blocks": [
+    {
+      "type": "highlight",
+      "name": "t:sections.store_highlights.blocks.highlight.name",
+      "settings": [
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "t:sections.store_highlights.blocks.highlight.settings.icon",
+          "default": "hallmark",
+          "options": [
+            {
+              "value": "hallmark",
+              "label": "BIS Hallmark"
+            },
+            {
+              "value": "diamond",
+              "label": "Diamond"
+            },
+            {
+              "value": "shipping",
+              "label": "Shipping"
+            },
+            {
+              "value": "insurance",
+              "label": "Insurance"
+            },
+            {
+              "value": "exchange",
+              "label": "Exchange"
+            },
+            {
+              "value": "support",
+              "label": "Support"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "t:sections.store_highlights.blocks.highlight.settings.title",
+          "default": "Feature"
+        },
+        {
+          "type": "text",
+          "id": "description",
+          "label": "t:sections.store_highlights.blocks.highlight.settings.description",
+          "default": "Feature description goes here."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.store_highlights.name",
+      "blocks": [
+        {
+          "type": "highlight",
+          "settings": {
+            "icon": "hallmark",
+            "title": "BIS HALLMARKED",
+            "description": "100% certified gold you can trust."
+          }
+        },
+        {
+          "type": "highlight",
+          "settings": {
+            "icon": "diamond",
+            "title": "IGI CERTIFIED",
+            "description": "100% IGI certified diamonds you can trust."
+          }
+        },
+        {
+          "type": "highlight",
+          "settings": {
+            "icon": "insurance",
+            "title": "FREE INSURANCE",
+            "description": "100% safe & transit insured delivery."
+          }
+        },
+        {
+          "type": "highlight",
+          "settings": {
+            "icon": "exchange",
+            "title": "LIFETIME EXCHANGE",
+            "description": "Our promise of trust, forever."
+          }
+        },
+        {
+          "type": "highlight",
+          "settings": {
+            "icon": "support",
+            "title": "EXPERT SUPPORT",
+            "description": "Here for you at every step of the way."
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

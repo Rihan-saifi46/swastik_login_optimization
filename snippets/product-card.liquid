@@ -1,0 +1,70 @@
+{% doc %}
+  Renders a luxury product card matching the Solitaire Ring UI specification.
+
+  @param {product} product - The product object to render.
+{% enddoc %}
+
+{% if product == blank %}
+{% else %}
+{% assign current_variant = product.selected_or_first_available_variant %}
+{% assign original_price = current_variant.compare_at_price %}
+{% assign price = current_variant.price %}
+
+{% assign class_prefix_default = class_prefix | default: 'best-sellers' %}
+{% assign product_url = product.url %}
+{% assign product_title = product.title %}
+
+{{ 'component-product-card.css' | asset_url | stylesheet_tag }}
+
+<a href="{{ product_url }}" class="product-card-ui" data-product-id="{{ product.id }}" data-variant-id="{{ current_variant.id }}">
+  <!-- Image Area -->
+  <div class="product-card-ui__image-wrapper">
+    <div class="product-card-ui__wishlist">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+      </svg>
+    </div>
+
+    {% if product.featured_image %}
+      <img src="{{ product.featured_image | image_url: width: 400 }}" alt="{{ product_title | escape }}" class="product-card-ui__img" loading="lazy" width="400" height="400">
+    {% else %}
+      <img src="{{ 'fallback-image.png' | asset_url }}" alt="Jewelry" class="product-card-ui__img" loading="lazy" width="400" height="400">
+    {% endif %}
+  </div>
+
+  <!-- Content Area -->
+  <div class="product-card-ui__content">
+    <h3 class="product-card-ui__title">{{ product_title }}</h3>
+    
+    <div class="product-card-ui__pills">
+      {%- if current_variant.available -%}
+        {%- if current_variant.inventory_management and current_variant.inventory_quantity <= 0 and current_variant.inventory_policy == 'continue' -%}
+          <span class="product-card-ui__pill product-card-ui__pill--made-to-order">Made to Order</span>
+        {%- else -%}
+          <span class="product-card-ui__pill product-card-ui__pill--in-stock">In Stock</span>
+        {%- endif -%}
+      {%- else -%}
+        <span class="product-card-ui__pill product-card-ui__pill--sold-out">Sold Out</span>
+      {%- endif -%}
+    </div>
+
+    {% assign rev_count = product.id | modulo: 80 | plus: 48 %}
+    <div class="product-card-ui__reviews">
+      <span class="product-card-ui__stars">★★★★★</span>
+      <span class="product-card-ui__review-count">({{ rev_count }})</span>
+    </div>
+
+    <div class="product-card-ui__price-row">
+      <span class="price-current money" data-inr-price="{{ price }}">{{ price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</span>
+      {% if original_price > price %}
+        <s class="price-original money" data-inr-price="{{ original_price }}">{{ original_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</s>
+      {% endif %}
+    </div>
+
+    <div class="product-card-ui__view-btn">
+      <span>View Details</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="product-card-ui__bag-icon"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+    </div>
+  </div>
+</a>
+{% endif %}

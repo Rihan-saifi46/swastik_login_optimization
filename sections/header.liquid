@@ -1,0 +1,2325 @@
+{% comment %}
+  Renders the main store header, styled on a dark brand green background with gold logo and white navigation menus.
+{% endcomment %}
+
+<div class="header-section-wrapper">
+  {% if section.settings.show_announcement %}
+    <div class="announcement-bar">
+      <div class="announcement-bar__marquee">
+        <div class="announcement-bar__track">
+          <!-- Item 1: Location -->
+          <div class="announcement-bar__item">
+            <svg class="announcement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <span class="announcement-bar__text">{{ section.settings.announcement_left_text | escape }}</span>
+          </div>
+          
+          <!-- Item 2: Brand Statement -->
+          <div class="announcement-bar__item">
+            <span class="announcement-bar__text">{{ section.settings.announcement_center_text | escape }}</span>
+          </div>
+          
+          <!-- Item 3: Shipping -->
+          <div class="announcement-bar__item">
+            <svg class="announcement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="M9 11l2 2 4-4" />
+            </svg>
+            <span class="announcement-bar__text">{{ section.settings.announcement_right_text | escape }}</span>
+          </div>
+          
+          <!-- Duplicates for mobile looping -->
+          <div class="announcement-bar__item announcement-bar__item--duplicate">
+            <svg class="announcement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            <span class="announcement-bar__text">{{ section.settings.announcement_left_text | escape }}</span>
+          </div>
+          
+          <div class="announcement-bar__item announcement-bar__item--duplicate">
+            <span class="announcement-bar__text">{{ section.settings.announcement_center_text | escape }}</span>
+          </div>
+          
+          <div class="announcement-bar__item announcement-bar__item--duplicate">
+            <svg class="announcement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="M9 11l2 2 4-4" />
+            </svg>
+            <span class="announcement-bar__text">{{ section.settings.announcement_right_text | escape }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <header class="header">
+    <!-- Left: Hamburger button for mobile menu -->
+    <button type="button" class="header__hamburger" aria-label="Open menu" aria-controls="MobileNavDrawer" aria-expanded="false">
+      <div class="header__hamburger-lines">
+        <span class="line line-1"></span>
+        <span class="line line-2"></span>
+        <span class="line line-3"></span>
+      </div>
+    </button>
+
+    <!-- Left: Brand Logo -->
+    <div class="header__logo">
+      <a href="{{ routes.root_url }}" class="header__logo-link">
+        <img src="{{ 'Swastik_logo.png' | asset_url }}" 
+             alt="Swastik Jewels" 
+             class="header__logo-img" 
+             width="65"
+             height="65"
+             style="max-width: {{ section.settings.logo_width }}px; height: auto; object-fit: contain;">
+        <div class="header__logo-text-wrapper">
+          <span class="header__logo-title">Swastik</span>
+          <span class="header__logo-subtitle">JEWELS</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Center: Navigation Menu -->
+    <nav class="header__nav" role="navigation">
+      <ul class="header__menu-list">
+        <li class="header__menu-item">
+          <a href="{{ routes.root_url }}" class="header__menu-link {% if request.page_type == 'index' %}header__menu-link--active{% endif %}">
+            Home
+          </a>
+        </li>
+        {% if section.settings.menu != blank %}
+          {% for link in section.settings.menu.links %}
+            {%- assign downcase_title = link.title | downcase -%}
+            {%- assign show_dropdown = false -%}
+            {%- if link.links != blank -%}
+              {%- if downcase_title != 'our story' -%}
+                {%- assign show_dropdown = true -%}
+              {%- endif -%}
+            {%- endif -%}
+            <li class="header__menu-item {% if show_dropdown %}header__menu-item--has-dropdown{% endif %}">
+              <a href="{{ link.url }}" class="header__menu-link {% if link.active %}header__menu-link--active{% endif %}">
+                {{ link.title }}
+                {% if show_dropdown %}
+                  <svg class="icon icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                {% endif %}
+              </a>
+              {% if show_dropdown %}
+                <ul class="header__dropdown-menu">
+                  {% for childlink in link.links %}
+                    <li>
+                      <a href="{{ childlink.url }}">{{ childlink.title }}</a>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </li>
+          {% endfor %}
+        {% else %}
+          <!-- Specific Fallback Menu (Updated Categories) -->
+          <li class="header__menu-item header__menu-item--has-dropdown">
+            <a href="{{ routes.collections_url }}/all" class="header__menu-link">
+              Jewellery
+              <svg class="icon icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </a>
+            <ul class="header__dropdown-menu">
+              <li><a href="{{ routes.collections_url }}/eternal-promises">Rings</a></li>
+              <li><a href="{{ routes.collections_url }}/everyday-sparkle">Earrings</a></li>
+              <li><a href="{{ routes.collections_url }}/close-to-heart">Necklaces & Pendants</a></li>
+              <li><a href="{{ routes.collections_url }}/forever-classics">Bangles & Bracelets</a></li>
+            </ul>
+          </li>
+          <li class="header__menu-item header__menu-item--has-dropdown">
+            <a href="{{ routes.collections_url }}/natural-diamonds" class="header__menu-link">
+              Natural Diamonds
+              <svg class="icon icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </a>
+            <ul class="header__dropdown-menu">
+              <li><a href="{{ routes.collections_url }}/eternal-promises">Rings</a></li>
+              <li><a href="{{ routes.collections_url }}/everyday-sparkle">Earrings</a></li>
+              <li><a href="{{ routes.collections_url }}/close-to-heart">Necklaces & Pendants</a></li>
+              <li><a href="{{ routes.collections_url }}/forever-classics">Bangles & Bracelets</a></li>
+            </ul>
+          </li>
+          <li class="header__menu-item header__menu-item--has-dropdown">
+            <a href="{{ routes.collections_url }}/lab-grown" class="header__menu-link">
+              Lab Grown Diamonds
+              <svg class="icon icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </a>
+            <ul class="header__dropdown-menu">
+              <li><a href="{{ routes.collections_url }}/lab-grown">Rings</a></li>
+              <li><a href="{{ routes.collections_url }}/lab-grown">Earrings</a></li>
+              <li><a href="{{ routes.collections_url }}/lab-grown">Necklaces & Pendants</a></li>
+              <li><a href="{{ routes.collections_url }}/lab-grown">Bangles & Bracelets</a></li>
+            </ul>
+          </li>
+          <li class="header__menu-item header__menu-item--has-dropdown">
+            <a href="{{ routes.collections_url }}/all" class="header__menu-link">
+              Gifts
+              <svg class="icon icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </a>
+            <ul class="header__dropdown-menu">
+              <li><a href="{{ routes.collections_url }}/gifts-for-her">Gifts for Her</a></li>
+              <li><a href="{{ routes.collections_url }}/gifts-for-him">Gifts for Him</a></li>
+              <li><a href="{{ routes.collections_url }}/all">Anniversary Gifts</a></li>
+              <li><a href="{{ routes.collections_url }}/all">Wedding Gifts</a></li>
+              <li><a href="{{ routes.collections_url }}/all">Gifts Under ₹15,000</a></li>
+            </ul>
+          </li>
+          <li class="header__menu-item">
+            <a href="/pages/contact-us" class="header__menu-link">
+              Contact Us
+            </a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+
+    <!-- Right: Gold Rate Pill, Wishlist, Cart, Profile Actions -->
+    <div class="header__icons">
+      <!-- Currency Selector -->
+      <div class="header__localization">
+        {%- form 'localization', id: 'HeaderLanguageForm', class: 'localization-form' -%}
+          <!-- Hidden input that holds the selected country code -->
+          <input type="hidden" name="country_code" id="HeaderCountryCode" value="{{ localization.country.iso_code }}">
+          
+          <div class="custom-currency-selector" id="CustomCurrencySelector">
+            <button type="button" class="custom-currency-selector__trigger" id="CurrencySelectorTrigger" aria-expanded="false" aria-haspopup="listbox">
+              <span class="custom-currency-selector__trigger-text">{{ localization.country.currency.iso_code }}</span>
+              <svg class="icon icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </button>
+            
+            <ul class="custom-currency-selector__list" id="CurrencySelectorList" role="listbox" aria-label="Currency select" tabindex="-1">
+              {%- assign custom_currencies = "INR:IN,USD:US,EUR:FR,GBP:GB,CAD:CA,AUD:AU" | split: "," -%}
+              {%- for item in custom_currencies -%}
+                {%- assign parts = item | split: ":" -%}
+                {%- assign curr_code = parts[0] -%}
+                {%- assign country_iso = parts[1] -%}
+                
+                {%- assign is_active = false -%}
+                {%- if localization.country.iso_code == country_iso -%}
+                  {%- assign is_active = true -%}
+                {%- elsif localization.country.currency.iso_code == 'EUR' and curr_code == 'EUR' -%}
+                  {%- assign is_active = true -%}
+                {%- elsif localization.country.currency.iso_code == 'USD' and curr_code == 'USD' -%}
+                  {%- assign is_active = true -%}
+                {%- elsif localization.country.currency.iso_code == 'GBP' and curr_code == 'GBP' -%}
+                  {%- assign is_active = true -%}
+                {%- elsif localization.country.currency.iso_code == 'CAD' and curr_code == 'CAD' -%}
+                  {%- assign is_active = true -%}
+                {%- elsif localization.country.currency.iso_code == 'AUD' and curr_code == 'AUD' -%}
+                  {%- assign is_active = true -%}
+                {%- endif -%}
+
+                {%- assign submit_iso = country_iso -%}
+                {%- for av_country in localization.available_countries -%}
+                  {%- if av_country.currency.iso_code == curr_code -%}
+                    {%- assign submit_iso = av_country.iso_code -%}
+                    {%- break -%}
+                  {%- endif -%}
+                {%- endfor -%}
+
+                <li class="custom-currency-selector__item{% if is_active %} custom-currency-selector__item--active{% endif %}" 
+                    role="option" 
+                    data-value="{{ submit_iso }}"
+                    aria-selected="{% if is_active %}true{% else %}false{% endif %}">
+                  {%- if curr_code == 'EUR' -%}
+                    <img src="https://flagcdn.com/w40/eu.png" 
+                         alt="EUR flag" 
+                         class="custom-currency-selector__flag"
+                         loading="lazy"
+                         width="20"
+                         height="15">
+                  {%- else -%}
+                    <img src="https://flagcdn.com/w40/{{ country_iso | downcase }}.png" 
+                         alt="{{ curr_code }} flag" 
+                         class="custom-currency-selector__flag"
+                         loading="lazy"
+                         width="20"
+                         height="15">
+                  {%- endif -%}
+                  <span class="custom-currency-selector__code">{{ curr_code }}</span>
+                </li>
+              {%- endfor -%}
+            </ul>
+          </div>
+        {%- endform -%}
+      </div>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          const selector = document.getElementById('CustomCurrencySelector');
+          if (!selector) return;
+          
+          const trigger = selector.querySelector('#CurrencySelectorTrigger');
+          const hiddenInput = document.getElementById('HeaderCountryCode');
+          const form = document.getElementById('HeaderLanguageForm');
+          
+          // Toggle dropdown
+          trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = selector.classList.toggle('open');
+            trigger.setAttribute('aria-expanded', isOpen);
+          });
+          
+          // Close dropdown on click outside
+          document.addEventListener('click', (e) => {
+            if (!selector.contains(e.target)) {
+              selector.classList.remove('open');
+              trigger.setAttribute('aria-expanded', 'false');
+            }
+          });
+          
+          // Select option
+          selector.querySelectorAll('.custom-currency-selector__item').forEach(item => {
+            item.addEventListener('click', () => {
+              const countryCode = item.getAttribute('data-value');
+              if (hiddenInput && form) {
+                hiddenInput.value = countryCode;
+                form.submit();
+              }
+            });
+          });
+        });
+      </script>
+
+      <!-- Gold price badge -->
+      <div class="header__gold-price">
+        <div class="gold-price__icon-wrapper">
+          <svg class="icon icon-gold" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M 4.5 15 L 11.5 15 L 13 19 L 3 19 Z" />
+            <path d="M 12.5 15 L 19.5 15 L 21 19 L 11 19 Z" />
+            <path d="M 8.5 10 L 15.5 10 L 17 14 L 7 14 Z" />
+            <path d="M20 7 L20.5 9 L22.5 9.5 L20.5 10 L20 12 L19.5 10 L17.5 9.5 L19.5 9 Z" />
+            <circle cx="21.5" cy="7.5" r="0.8" />
+          </svg>
+        </div>
+        <div class="gold-price__separator"></div>
+        <div class="gold-price__text-container">
+          <span class="gold-price__label">GOLD RATE</span>
+          <span class="gold-price__value">
+            {%- if shop.metafields.custom.daily_gold_rate.value != blank -%}
+              ₹{{ shop.metafields.custom.daily_gold_rate.value }}/g
+            {%- else -%}
+              {{ section.settings.gold_price }}
+            {%- endif -%}
+          </span>
+        </div>
+      </div>
+
+      <!-- Wishlist Link & Count -->
+      <a href="javascript:void(0)" onclick="if(window.openWishlistDrawer) window.openWishlistDrawer(); return false;" class="header__icon-link header__wishlist-trigger" aria-label="Wishlist">
+        <svg class="icon icon-wishlist" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+        </svg>
+        {% assign wishlist_count = 0 %}
+        <span class="header__badge" id="wishlist-count-badge" style="display: none;">0</span>
+      </a>
+
+      <!-- Cart Link & Count -->
+      <a href="javascript:void(0)" onclick="if(window.openCartDrawer) window.openCartDrawer(); return false;" class="header__icon-link header__cart-trigger" aria-label="Cart">
+        <svg class="icon icon-cart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007Z" />
+        </svg>
+        {% assign cart_count = cart.item_count | default: 0 %}
+        <span class="header__badge" id="cart-count-badge" {% if cart_count == 0 %}style="display: none;"{% endif %}>{{ cart_count }}</span>
+      </a>
+
+      <!-- Vertical Divider Line -->
+      <span class="header__icon-divider"></span>
+
+      <!-- Profile Link -->
+      <a href="{{ routes.account_url }}" class="header__icon-link header__profile-trigger" aria-label="Account">
+        <svg class="icon icon-profile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Drawer (Bespoke Swastik Jewels Design) -->
+  <div class="mobile-menu-drawer" id="MobileNavDrawer" aria-hidden="true">
+    <div class="mobile-menu-drawer__overlay" id="MobileNavOverlay"></div>
+    <div class="mobile-menu-drawer__content">
+      <!-- Drawer Header -->
+      <div class="mobile-menu-drawer__header">
+        <div class="mobile-menu-drawer__logo">
+          <a href="{{ routes.root_url }}" class="header__logo-link">
+            <img src="{{ 'Swastik_logo.png' | asset_url }}" alt="Swastik Jewels" class="header__logo-img" width="34" height="34" style="max-height: 2.8rem; width: auto; object-fit: contain;">
+            <div class="header__logo-text-wrapper" style="align-items: flex-start;">
+              <span class="header__logo-title" style="font-size: 1.85rem; color: #111111; -webkit-text-fill-color: initial; background: none; -webkit-text-stroke: 0; font-weight: 700;">Swastik</span>
+              <span class="header__logo-subtitle" style="font-size: 0.62rem; letter-spacing: 0.45em; color: #888888; margin-top: -0.1rem;">JEWELS • SINCE 2011</span>
+            </div>
+          </a>
+        </div>
+        <button type="button" class="mobile-menu-drawer__close" id="MobileNavClose" aria-label="Close menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width: 22px; height: 22px;">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Drawer Nav Items (Dynamic Desktop & Detailed Swastik Categories) -->
+      <nav class="mobile-menu-drawer__nav">
+        <ul class="mobile-menu-list">
+          <li class="mobile-menu-item">
+            <a href="{{ routes.root_url }}" class="mobile-menu-link">
+              <span class="mobile-menu-title">HOME</span>
+            </a>
+          </li>
+          {%- assign menu_links = section.settings.menu.links -%}
+          {%- if menu_links != blank -%}
+            {%- for link in menu_links -%}
+              {%- assign has_sub = false -%}
+              {%- if link.links != blank -%}
+                {%- assign downcase_t = link.title | downcase -%}
+                {%- if downcase_t != 'our story' -%}
+                  {%- assign has_sub = true -%}
+                {%- endif -%}
+              {%- endif -%}
+
+              <li class="mobile-menu-item{% if has_sub %} mobile-menu-item--has-sub{% endif %}">
+                {%- if has_sub -%}
+                  <button type="button" class="mobile-menu-trigger" aria-expanded="false">
+                    <span class="mobile-menu-title">{{ link.title | upcase }}</span>
+                    <svg class="mobile-menu-arrow" viewBox="0 0 24 24" fill="none" stroke="#222222" stroke-width="1.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
+                    </svg>
+                  </button>
+                  <ul class="mobile-submenu" style="display: none;">
+                    {%- for child in link.links -%}
+                      <li>
+                        <a href="{{ child.url }}">{{ child.title }}</a>
+                      </li>
+                    {%- endfor -%}
+                  </ul>
+                {%- else -%}
+                  <a href="{{ link.url }}" class="mobile-menu-link">
+                    <span class="mobile-menu-title">{{ link.title | upcase }}</span>
+                  </a>
+                {%- endif -%}
+              </li>
+            {%- endfor -%}
+          {%- else -%}
+            <!-- Specific Mobile Fallback Menu (Updated Categories) -->
+            <li class="mobile-menu-item mobile-menu-item--has-sub">
+              <button type="button" class="mobile-menu-trigger" aria-expanded="false">
+                <span class="mobile-menu-title">JEWELLERY</span>
+                <svg class="mobile-menu-arrow" viewBox="0 0 24 24" fill="none" stroke="#222222" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+              </button>
+              <ul class="mobile-submenu" style="display: none;">
+                <li><a href="{{ routes.collections_url }}/eternal-promises">Rings</a></li>
+                <li><a href="{{ routes.collections_url }}/everyday-sparkle">Earrings</a></li>
+                <li><a href="{{ routes.collections_url }}/close-to-heart">Necklaces & Pendants</a></li>
+                <li><a href="{{ routes.collections_url }}/forever-classics">Bangles & Bracelets</a></li>
+              </ul>
+            </li>
+
+            <li class="mobile-menu-item mobile-menu-item--has-sub">
+              <button type="button" class="mobile-menu-trigger" aria-expanded="false">
+                <span class="mobile-menu-title">NATURAL DIAMONDS</span>
+                <svg class="mobile-menu-arrow" viewBox="0 0 24 24" fill="none" stroke="#222222" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+              </button>
+              <ul class="mobile-submenu" style="display: none;">
+                <li><a href="{{ routes.collections_url }}/eternal-promises">Rings</a></li>
+                <li><a href="{{ routes.collections_url }}/everyday-sparkle">Earrings</a></li>
+                <li><a href="{{ routes.collections_url }}/close-to-heart">Necklaces & Pendants</a></li>
+                <li><a href="{{ routes.collections_url }}/forever-classics">Bangles & Bracelets</a></li>
+              </ul>
+            </li>
+
+            <li class="mobile-menu-item mobile-menu-item--has-sub">
+              <button type="button" class="mobile-menu-trigger" aria-expanded="false">
+                <span class="mobile-menu-title">LAB GROWN DIAMONDS</span>
+                <svg class="mobile-menu-arrow" viewBox="0 0 24 24" fill="none" stroke="#222222" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+              </button>
+              <ul class="mobile-submenu" style="display: none;">
+                <li><a href="{{ routes.collections_url }}/lab-grown">Rings</a></li>
+                <li><a href="{{ routes.collections_url }}/lab-grown">Earrings</a></li>
+                <li><a href="{{ routes.collections_url }}/lab-grown">Necklaces & Pendants</a></li>
+                <li><a href="{{ routes.collections_url }}/lab-grown">Bangles & Bracelets</a></li>
+              </ul>
+            </li>
+
+            <li class="mobile-menu-item mobile-menu-item--has-sub">
+              <button type="button" class="mobile-menu-trigger" aria-expanded="false">
+                <span class="mobile-menu-title">GIFTS</span>
+                <svg class="mobile-menu-arrow" viewBox="0 0 24 24" fill="none" stroke="#222222" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
+              </button>
+              <ul class="mobile-submenu" style="display: none;">
+                <li><a href="{{ routes.collections_url }}/gifts-for-her">Gifts for Her</a></li>
+                <li><a href="{{ routes.collections_url }}/gifts-for-him">Gifts for Him</a></li>
+                <li><a href="{{ routes.collections_url }}/all">Anniversary Gifts</a></li>
+                <li><a href="{{ routes.collections_url }}/all">Wedding Gifts</a></li>
+                <li><a href="{{ routes.collections_url }}/all">Gifts Under ₹15,000</a></li>
+              </ul>
+            </li>
+
+            <li class="mobile-menu-item">
+              <a href="/pages/contact-us" class="mobile-menu-link">
+                <span class="mobile-menu-title">CONTACT US</span>
+              </a>
+            </li>
+          {%- endif -%}
+        </ul>
+
+        <!-- Secondary / Utility Navigation (The Bottom Ones - Clean 2-Column Grid) -->
+        {% comment %}
+        <div class="mobile-menu-utility-section">
+          <div class="mobile-utility-divider">CLIENT SERVICES & HERITAGE</div>
+          <div class="mobile-utility-grid">
+            <a href="/pages/stores" class="mobile-utility-link">Stores & Experience</a>
+            <a href="/pages/expert-consultation" class="mobile-utility-link">VIP Consultation</a>
+            <a href="/pages/contact-us?subject=NRI+Assistance" class="mobile-utility-link">NRI & International</a>
+            <a href="/pages/franchise-enquiry" class="mobile-utility-link">Franchise Enquiry</a>
+            <a href="/pages/about-us" class="mobile-utility-link">Our Story & Heritage</a>
+            <a href="/pages/faq" class="mobile-utility-link">Customer Support</a>
+          </div>
+        </div>
+        {% endcomment %}
+      </nav>
+
+      <!-- Bespoke Drawer Footer -->
+      <div class="mobile-menu-drawer__footer">
+        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 0.8rem;">
+          {%- form 'localization', id: 'MobileLanguageForm', class: 'localization-form' -%}
+            <!-- Hidden input that holds the selected country code -->
+            <input type="hidden" name="country_code" id="MobileCountryCode" value="{{ localization.country.iso_code }}">
+            
+            <div class="mobile-currency-selector" id="MobileCurrencySelector">
+              <button type="button" class="mobile-currency-selector__trigger" id="MobileCurrencySelectorTrigger" aria-expanded="false" aria-haspopup="listbox">
+                <span class="mobile-currency-selector__trigger-text">
+                  {%- assign current_curr = localization.country.currency.iso_code -%}
+                  {{ current_curr }} ({% if current_curr == 'INR' %}₹{% elsif current_curr == 'USD' %}${% elsif current_curr == 'EUR' %}€{% elsif curr_code == 'EUR' %}€{% elsif current_curr == 'GBP' %}£{% elsif current_curr == 'CAD' %}C${% elsif current_curr == 'AUD' %}A${% endif %})
+                </span>
+                <svg class="icon icon-chevron-down mobile-currency-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+              
+              <ul class="mobile-currency-selector__list" id="MobileCurrencySelectorList" role="listbox" tabindex="-1">
+                {%- assign custom_currencies = "INR:IN,USD:US,EUR:FR,GBP:GB,CAD:CA,AUD:AU" | split: "," -%}
+                {%- for item in custom_currencies -%}
+                  {%- assign parts = item | split: ":" -%}
+                  {%- assign curr_code = parts[0] -%}
+                  {%- assign country_iso = parts[1] -%}
+                  
+                  {%- assign is_active = false -%}
+                  {%- if localization.country.iso_code == country_iso -%}
+                    {%- assign is_active = true -%}
+                  {%- elsif localization.country.currency.iso_code == 'EUR' and curr_code == 'EUR' -%}
+                    {%- assign is_active = true -%}
+                  {%- elsif localization.country.currency.iso_code == 'USD' and curr_code == 'USD' -%}
+                    {%- assign is_active = true -%}
+                  {%- elsif localization.country.currency.iso_code == 'GBP' and curr_code == 'GBP' -%}
+                    {%- assign is_active = true -%}
+                  {%- elsif localization.country.currency.iso_code == 'CAD' and curr_code == 'CAD' -%}
+                    {%- assign is_active = true -%}
+                  {%- elsif localization.country.currency.iso_code == 'AUD' and curr_code == 'AUD' -%}
+                    {%- assign is_active = true -%}
+                  {%- endif -%}
+
+                  {%- assign submit_iso = country_iso -%}
+                  {%- for av_country in localization.available_countries -%}
+                    {%- if av_country.currency.iso_code == curr_code -%}
+                      {%- assign submit_iso = av_country.iso_code -%}
+                      {%- break -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+
+                  <li class="mobile-currency-selector__item{% if is_active %} mobile-currency-selector__item--active{% endif %}" 
+                      role="option" 
+                      data-value="{{ submit_iso }}"
+                      aria-selected="{% if is_active %}true{% else %}false{% endif %}">
+                    {{ curr_code }} ({% if curr_code == 'INR' %}₹{% elsif curr_code == 'USD' %}${% elsif curr_code == 'EUR' %}€{% elsif curr_code == 'GBP' %}£{% elsif curr_code == 'CAD' %}C${% elsif curr_code == 'AUD' %}A${% endif %})
+                  </li>
+                {%- endfor -%}
+              </ul>
+            </div>
+          {%- endform -%}
+        </div>
+
+        <div class="mobile-drawer-actions">
+          <div class="mobile-drawer-gold-rate-pill">
+            <div class="gold-price__icon-wrapper">
+              <svg class="icon icon-gold" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M 4.5 15 L 11.5 15 L 13 19 L 3 19 Z" />
+                <path d="M 12.5 15 L 19.5 15 L 21 19 L 11 19 Z" />
+                <path d="M 8.5 10 L 15.5 10 L 17 14 L 7 14 Z" />
+                <path d="M20 7 L20.5 9 L22.5 9.5 L20.5 10 L20 12 L19.5 10 L17.5 9.5 L19.5 9 Z" />
+                <circle cx="21.5" cy="7.5" r="0.8" />
+              </svg>
+            </div>
+            <div class="gold-price__separator"></div>
+            <div class="gold-price__text-container">
+              <span class="gold-price__label">GOLD RATE</span>
+              <span class="gold-price__value">
+                {%- if shop.metafields.custom.daily_gold_rate.value != blank -%}
+                  ₹{{ shop.metafields.custom.daily_gold_rate.value }}/g
+                {%- else -%}
+                  {{ section.settings.gold_price }}
+                {%- endif -%}
+              </span>
+            </div>
+          </div>
+          <a href="javascript:void(0)" class="mobile-btn mobile-btn--consultation js-open-video-call-modal">
+            BOOK CALL
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Fixed Mobile Bottom Navigation -->
+  <div class="mobile-bottom-nav">
+    <a href="{{ routes.root_url }}" class="mobile-bottom-nav__item {% if request.page_type == 'index' or request.path == routes.root_url %}active{% endif %}" aria-label="Home">
+      <div class="mobile-bottom-nav__icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1V9.5z"/>
+        </svg>
+      </div>
+      <span>Home</span>
+    </a>
+
+    <a href="{{ routes.search_url }}" class="mobile-bottom-nav__item js-mobile-categories-toggle js-mobile-search-toggle {% if request.page_type == 'search' %}active{% endif %}" aria-label="Search">
+      <div class="mobile-bottom-nav__icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </div>
+      <span>Search</span>
+    </a>
+
+    <a href="https://wa.me/918920905268?text=Hi%2C%20I%20would%20like%20to%20inquire%20about%20jewellery." target="_blank" class="mobile-bottom-nav__item mobile-bottom-nav__item--chat js-whatsapp-toggle" aria-label="Chat">
+      <div class="chat-icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="#FFFFFF">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+          <path d="M12 2C6.486 2 2 6.486 2 12c0 1.846.505 3.58 1.405 5.066L2 22l5.067-1.353A9.957 9.957 0 0 0 12 22c5.514 0 10-4.486 10-10S17.514 2 12 2zm0 18c-1.6 0-3.12-.416-4.44-1.16l-.318-.182-3.3.88.88-3.23-.2-.317A7.95 7.95 0 0 1 4 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z"/>
+        </svg>
+      </div>
+      <span>Chat</span>
+    </a>
+
+    <a href="javascript:void(0)" class="mobile-bottom-nav__item js-mobile-wishlist-trigger" aria-label="Wishlist">
+      <div class="mobile-bottom-nav__icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+        <span class="mobile-bottom-nav__badge" id="mobile-wishlist-badge" style="display: none;">0</span>
+      </div>
+      <span>Wishlist</span>
+    </a>
+
+    <a href="javascript:void(0)" class="mobile-bottom-nav__item js-mobile-cart-trigger" aria-label="Bag">
+      <div class="mobile-bottom-nav__icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <path d="M16 10a4 4 0 0 1-8 0"></path>
+        </svg>
+        {% assign cart_count = cart.item_count | default: 0 %}
+        <span class="mobile-bottom-nav__badge" id="mobile-cart-badge" {% if cart_count == 0 %}style="display: none;"{% endif %}>{{ cart_count }}</span>
+      </div>
+      <span>Bag</span>
+    </a>
+  </div>
+
+  {% render 'mobile-categories' %}
+</div>
+
+{% style %}
+  #shopify-section-{{ section.id }} {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+  }
+  @media (max-width: 1150px) {
+    #shopify-section-{{ section.id }} {
+      z-index: 99999 !important;
+    }
+  }
+  {% if section.settings.show_announcement %}
+  #shopify-section-{{ section.id }} {
+    top: -3.6rem;
+  }
+  @media (max-width: 1150px) {
+    #shopify-section-{{ section.id }} {
+      top: -3.0rem;
+      z-index: 99999 !important;
+    }
+  }
+  {% endif %}
+{% endstyle %}
+
+{% stylesheet %}
+  .header-section-wrapper {
+    background-color: #FAF8F2;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border-bottom: 1px solid rgba(0, 46, 40, 0.08);
+  }
+
+  /* Announcement Bar */
+  .announcement-bar {
+    background-color: #013F3E;
+    color: #FFFFFF;
+    height: 3.6rem;
+    padding: 0 4.0rem;
+    border-bottom: 1px solid rgba(0, 46, 40, 0.06);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+  }
+  .announcement-bar__marquee {
+    width: 100%;
+    overflow: hidden;
+  }
+  .announcement-bar__track {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+  .announcement-bar__item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .announcement-bar__item--duplicate {
+    display: none !important;
+  }
+  .announcement-bar__item:nth-child(1) {
+    justify-content: flex-start;
+    flex: 1 1 33.33%;
+  }
+  .announcement-bar__item:nth-child(2) {
+    justify-content: center;
+    flex: 1 1 33.33%;
+  }
+  .announcement-bar__item:nth-child(3) {
+    justify-content: flex-end;
+    flex: 1 1 33.33%;
+  }
+  .announcement-bar__text {
+    margin: 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.35rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    font-variant-numeric: lining-nums;
+    -moz-font-feature-settings: "lnum";
+    -webkit-font-feature-settings: "lnum";
+    font-feature-settings: "lnum";
+  }
+  .announcement-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--color-accent, #D4AF37);
+    display: inline-block;
+  }
+
+  /* Header Container */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+    min-height: 5.6rem;
+    width: 100%;
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 4rem;
+    padding-right: 4rem;
+    box-sizing: border-box;
+    gap: 1rem;
+  }
+
+  .header__hamburger {
+    display: none;
+  }
+
+  /* Brand Logo & Name */
+  .header__logo {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .header__logo-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    text-decoration: none;
+  }
+  .header__logo-img {
+    display: block;
+    max-height: 4.4rem;
+    width: auto;
+    object-fit: contain;
+    background: transparent;
+    flex-shrink: 0;
+  }
+  .header__logo-text-wrapper {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    background: transparent;
+    margin-top: -1px;
+  }
+  .header__logo-title, .header__logo-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    background: linear-gradient(to bottom, #B58E2E 0%, #D7B453 35%, #D7B453 60%, #9A6A1A 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    white-space: nowrap;
+    line-height: 1;
+    margin: 0;
+  }
+  .header__logo-title {
+    font-size: 3.4rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    -webkit-text-stroke: 0.5px rgba(107, 76, 10, 0.5);
+  }
+  .header__logo-subtitle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.75em;
+    text-transform: uppercase;
+    margin-top: -0.1rem;
+    text-align: center;
+    -webkit-text-stroke: 0.2px rgba(107, 76, 10, 0.5);
+    padding-left: 0.75em;
+  }
+
+  /* Nav menu - Centered */
+  .header__nav {
+    display: flex;
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+  .header__menu-list {
+    list-style: none;
+    display: flex;
+    gap: 2.2rem;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+  }
+  .header__menu-item {
+    position: relative;
+    padding: 1rem 0;
+  }
+  .header__menu-link {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-primary, #002E28);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    /* gap: 0.6rem; */
+    transition: color 0.25s ease;
+    white-space: nowrap;
+  }
+  .header__menu-link svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    color: var(--color-accent, #D4AF37);
+    transition: transform 0.25s ease;
+    stroke-width: 2.5px;
+  }
+  .header__menu-link:hover {
+    color: var(--color-accent, #D4AF37);
+  }
+  .header__menu-item:hover .header__menu-link svg {
+    transform: rotate(180deg);
+  }
+
+  /* Hover Dropdowns */
+  .header__dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background-color: #FAF8F2;
+    border: 1px solid rgba(0, 46, 40, 0.1);
+    border-radius: 4px;
+    padding: 1rem 0;
+    min-width: 18rem;
+    list-style: none;
+    margin: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+    z-index: 110;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+  .header__menu-item:hover .header__dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+  .header__dropdown-menu li {
+    padding: 0;
+  }
+  .header__dropdown-menu a {
+    display: block;
+    padding: 0.8rem 2.2rem;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--color-primary, #002E28);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: all 0.2s ease;
+  }
+  .header__dropdown-menu a:hover {
+    color: var(--color-accent, #D4AF37);
+    background-color: rgba(0, 46, 40, 0.03);
+    padding-left: 2.6rem;
+  }
+
+  /* Icons - Right Aligned */
+  .header__icons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2.0rem;
+    flex-shrink: 0;
+  }
+  .header__icon-divider {
+    display: inline-block;
+    width: 1px;
+    height: 1.8rem;
+    background-color: var(--color-accent, #D4AF37);
+    opacity: 0.4;
+    margin: 0 -0.4rem;
+    flex-shrink: 0;
+  }
+
+  /* Custom Currency Selector */
+  .header__localization {
+    position: relative;
+    display: flex;
+    align-items: center;
+    z-index: 100;
+  }
+  .custom-currency-selector {
+    position: relative;
+    display: inline-block;
+  }
+  .custom-currency-selector__trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: transparent;
+    border: none;
+    color: var(--color-primary, #002E28);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.4rem 0.8rem;
+    text-transform: uppercase;
+    transition: color 0.2s ease;
+  }
+  .custom-currency-selector__trigger:hover {
+    color: var(--color-accent, #D4AF37);
+  }
+  .custom-currency-selector__trigger .icon-chevron-down {
+    width: 1rem;
+    height: 1rem;
+    color: #8C8C8C; /* Clean grey chevron as in Image 2 */
+    transition: transform 0.3s ease;
+    position: static; /* Reset positioning from default chevron */
+  }
+  .custom-currency-selector.open .custom-currency-selector__trigger .icon-chevron-down {
+    transform: rotate(180deg);
+  }
+  .custom-currency-selector__list {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    padding: 0.5rem 0;
+    list-style: none;
+    min-width: 100px;
+    display: none;
+    z-index: 1000;
+  }
+  .custom-currency-selector.open .custom-currency-selector__list {
+    display: block;
+  }
+  .custom-currency-selector__item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem 1.6rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .custom-currency-selector__item:hover {
+    background-color: #F8F6F2; /* Soft premium background on hover */
+  }
+  .custom-currency-selector__item--active {
+    background-color: #F4EFE6;
+  }
+  .custom-currency-selector__flag {
+    width: 2rem;
+    height: 1.4rem;
+    object-fit: cover;
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .custom-currency-selector__code {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: #333333;
+  }
+  .custom-currency-selector__item--active .custom-currency-selector__code {
+    font-weight: 600;
+    color: var(--color-primary, #002E28);
+  }
+
+  /* Gold Price Badge */
+  .header__gold-price {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(139, 101, 8, 0.25);
+    background: linear-gradient(135deg, #f5e3be 0%, #d8b066 100%);
+    padding: 0.4rem 1.4rem;
+    border-radius: 50px;
+    font-family: 'Montserrat', sans-serif;
+    color: #5a4216;
+    cursor: default;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 
+                0 2px 4px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+    gap: 0;
+  }
+  .header__gold-price::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 20%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.6) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-25deg);
+    animation: gold-shimmer 6s infinite ease-in-out;
+  }
+  @keyframes gold-shimmer {
+    0% { left: -50%; }
+    30% { left: 150%; }
+    100% { left: 150%; }
+  }
+  .header__gold-price:hover {
+    transform: translateY(-1px);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 
+                0 4px 10px rgba(139, 101, 8, 0.15);
+    border-color: rgba(139, 101, 8, 0.4);
+  }
+  .gold-price__icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .gold-price__icon-wrapper svg {
+    width: 28px;
+    height: 24px;
+    display: block;
+    color: #5a4216;
+  }
+  .gold-price__separator {
+    width: 1px;
+    height: 24px;
+    background-color: rgba(90, 66, 22, 0.25);
+    margin: 0 12px;
+  }
+  .gold-price__text-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    line-height: 1.1;
+  }
+  .gold-price__label {
+    font-size: 8px;
+    font-weight: 700;
+    color: #5a4216;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+  .gold-price__value {
+    font-size: 14px;
+    font-weight: 800;
+    color: #2d1f0b;
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  /* Icons styling */
+  .header__icon-link {
+    display: block;
+    color: var(--color-primary, #002E28);
+    position: relative;
+    transition: color 0.25s ease, transform 0.25s ease;
+    text-decoration: none;
+  }
+  .header__icon-link:hover {
+    color: var(--color-accent, #D4AF37);
+    transform: scale(1.05);
+  }
+  .header__icon-link svg {
+    width: 2.2rem;
+    height: 2.2rem;
+    display: block;
+    stroke-width: 1.5px;
+  }
+
+  /* Circle badges */
+  .header__badge {
+    position: absolute;
+    top: -0.6rem;
+    right: -0.8rem;
+    background-color: var(--color-accent, #D4AF37);
+    color: var(--color-primary, #002E28);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    padding: 0 0.4rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  }
+
+  @media (max-width: 1366px) {
+    .header {
+      padding-left: 3rem;
+      padding-right: 3rem;
+    }
+    .header__menu-list {
+      gap: 1.6rem;
+    }
+    .header__menu-link {
+      font-size: 1.1rem;
+      letter-spacing: 0.06em;
+    }
+    .header__icons {
+      gap: 2rem;
+    }
+  }
+
+  @media (max-width: 1200px) {
+    .header {
+      padding-left: 2rem;
+      padding-right: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+    .header__logo {
+      flex: 0 1 auto;
+    }
+    .header__nav {
+      flex: 1 1 auto;
+    }
+    .header__icons {
+      flex: 0 1 auto;
+      gap: 1.6rem;
+    }
+    .header__menu-list {
+      gap: 1rem;
+    }
+    .header__menu-link {
+      font-size: 1rem;
+      letter-spacing: 0.04em;
+    }
+    .header__logo-link {
+      gap: 0.8rem;
+    }
+    .header__logo-img {
+      max-height: 4.2rem;
+    }
+    .header__logo-title {
+      font-size: 3.0rem;
+    }
+    .header__logo-subtitle {
+      font-size: 1.0rem;
+      letter-spacing: 0.7em;
+      margin-top: 0.2rem;
+      padding-left: 0.7em;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .header__menu-list {
+      gap: 1.2rem;
+    }
+    .header__menu-link {
+      font-size: 1.15rem;
+      letter-spacing: 0.05em;
+      gap: 0.3rem;
+    }
+    .header__icons {
+      gap: 1.2rem;
+    }
+    .header__gold-price {
+      padding: 0.35rem 1rem;
+    }
+    .gold-price__icon-wrapper svg {
+      width: 24px;
+      height: 20px;
+    }
+    .gold-price__separator {
+      height: 20px;
+      margin: 0 8px;
+    }
+    .gold-price__label {
+      font-size: 7px;
+    }
+    .gold-price__value {
+      font-size: 12px;
+    }
+  }
+
+  @media (max-width: 1150px) {
+    .announcement-bar {
+      height: 3.4rem;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    .announcement-bar__marquee {
+      width: 100%;
+      overflow: hidden;
+    }
+    .announcement-bar__track {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
+      align-items: center;
+      width: max-content;
+      animation: marquee 25s linear infinite;
+    }
+    .announcement-bar:hover .announcement-bar__track,
+    .announcement-bar:active .announcement-bar__track {
+      animation-play-state: paused;
+    }
+    .announcement-bar__item {
+      position: relative;
+      flex: 0 0 auto;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      gap: 0.8rem;
+      padding: 0.2rem 3rem;
+      box-sizing: border-box;
+    }
+    .announcement-bar__item--duplicate {
+      display: flex !important;
+    }
+    .announcement-bar__item:nth-child(1),
+    .announcement-bar__item:nth-child(2),
+    .announcement-bar__item:nth-child(3),
+    .announcement-bar__item--duplicate {
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+    .announcement-bar__text {
+      font-size: 1.2rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+    .announcement-icon {
+      width: 1.4rem;
+      height: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 480px) {
+      .announcement-bar__text {
+        font-size: 1.15rem;
+        letter-spacing: 0.06em;
+      }
+      .announcement-bar__item {
+        padding: 0.2rem 2rem;
+      }
+    }
+
+    @keyframes marquee {
+      0% {
+        transform: translate3d(0, 0, 0);
+      }
+      100% {
+        transform: translate3d(-50%, 0, 0);
+      }
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      padding-top: 0.6rem;
+      padding-bottom: 0.6rem;
+      min-height: 5.4rem;
+      padding-left: 1.2rem;
+      padding-right: 1.2rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .header__hamburger {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      color: var(--color-primary, #002E28);
+      cursor: pointer;
+      padding: 0.8rem;
+      min-width: 44px;
+      min-height: 44px;
+      box-sizing: border-box;
+      justify-self: start;
+      position: relative;
+      z-index: 20;
+      border-radius: 8px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .header__hamburger svg {
+      width: 2.4rem;
+      height: 2.4rem;
+      stroke-width: 2px;
+    }
+    .header__hamburger:hover,
+    .header__hamburger:active {
+      color: var(--color-accent, #D4AF37);
+      background-color: rgba(0, 46, 40, 0.04);
+    }
+    .header__logo {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .header__logo-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      gap: 0.5rem;
+    }
+    .header__logo-img {
+      max-height: 3.4rem;
+      width: auto;
+      display: block;
+      flex-shrink: 0;
+    }
+    .header__logo-text-wrapper {
+      margin-top: 0;
+    }
+    .header__logo-title {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .header__logo-subtitle {
+      font-size: 0.85rem;
+      letter-spacing: 0.45em;
+      margin-top: 0.05rem;
+      padding-left: 0.45em;
+    }
+    .header__nav {
+      display: none;
+    }
+    .header__gold-price {
+      display: none;
+    }
+    .header__icons {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      z-index: 10;
+    }
+    .header__icon-divider {
+      display: inline-block;
+      width: 1px;
+      height: 1.4rem;
+      background-color: var(--color-accent, #D4AF37);
+      opacity: 0.45;
+      margin: 0 0.1rem;
+      flex-shrink: 0;
+    }
+    .header__icon-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      min-height: 40px;
+      padding: 0.4rem;
+      box-sizing: border-box;
+      color: var(--color-primary, #002E28);
+      border-radius: 8px;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .header__icon-link:hover,
+    .header__icon-link:active {
+      color: var(--color-accent, #D4AF37);
+      background-color: rgba(0, 46, 40, 0.04);
+    }
+    .header__icon-link svg {
+      width: 2.4rem;
+      height: 2.4rem;
+      stroke-width: 1.8px;
+    }
+    .header__badge {
+      min-width: 1.4rem;
+      height: 1.4rem;
+      padding: 0 0.3rem;
+      font-size: 0.85rem;
+      top: -0.2rem;
+      right: -0.2rem;
+    }
+  }
+
+  /* Premium 3-Line Hamburger Menu Button */
+  .header__hamburger-lines {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 22px;
+    height: 14px;
+  }
+
+  .header__hamburger-lines .line {
+    display: block;
+    height: 1.5px;
+    width: 100%;
+    border-radius: 2px;
+    background-color: var(--color-primary, #002E28);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .header__hamburger:hover .line,
+  .header__hamburger:active .line {
+    background-color: var(--color-accent, #D4AF37);
+  }
+
+  .header__hamburger[aria-expanded="true"] .line-1 {
+    transform: translateY(7px) rotate(45deg);
+    background-color: var(--color-accent, #D4AF37);
+  }
+
+  .header__hamburger[aria-expanded="true"] .line-2 {
+    opacity: 0;
+  }
+
+  .header__hamburger[aria-expanded="true"] .line-3 {
+    transform: translateY(-7px) rotate(-45deg);
+    background-color: var(--color-accent, #D4AF37);
+  }
+
+  /* Mobile Drawer styling - 80% Luxury Side Sheet */
+  .mobile-menu-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000000 !important;
+    visibility: hidden;
+    transition: visibility 0.35s ease;
+  }
+  
+  .mobile-menu-drawer--open {
+    visibility: visible;
+  }
+
+  .mobile-menu-drawer__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(1, 39, 38, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+
+  .mobile-menu-drawer--open .mobile-menu-drawer__overlay,
+  .mobile-menu-drawer.active .mobile-menu-drawer__overlay {
+    opacity: 1;
+  }
+
+  .mobile-menu-drawer__content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 85%;
+    max-width: 380px;
+    height: 100%;
+    background-color: #FFFFFF;
+    color: #111111;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.15);
+    transform: translateX(-100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  .mobile-menu-drawer--open .mobile-menu-drawer__content,
+  .mobile-menu-drawer.active .mobile-menu-drawer__content {
+    transform: translateX(0);
+  }
+
+  /* Drawer Header */
+  .mobile-menu-drawer__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.6rem 2.0rem;
+    border-bottom: 1px solid #EEEEEE;
+  }
+
+  .mobile-menu-drawer__logo {
+    display: flex;
+    align-items: center;
+  }
+
+  .mobile-menu-drawer__close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Navigation Links (Dynamic Desktop Menu) */
+  .mobile-menu-drawer__nav {
+    flex: 1 1 auto;
+    padding: 0;
+  }
+  .mobile-menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .mobile-menu-item {
+    border-bottom: 1px solid #EEEEEE;
+  }
+  .mobile-menu-link,
+  .mobile-menu-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 1.35rem 1.6rem;
+    background: none;
+    border: none;
+    text-decoration: none;
+    color: #013F3E;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.14rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .mobile-menu-link:active,
+  .mobile-menu-trigger:active {
+    background-color: #F8F8F8;
+    color: #D4AF37;
+  }
+  .mobile-menu-arrow {
+    width: 18px;
+    height: 18px;
+    stroke: #666666;
+    transition: transform 0.25s ease, stroke 0.15s ease;
+  }
+  .mobile-menu-trigger[aria-expanded="true"] .mobile-menu-arrow {
+    transform: rotate(90deg);
+    stroke: #D4AF37;
+  }
+
+  /* Submenu */
+  .mobile-submenu {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem 0 1.0rem 2.2rem;
+    background-color: #FAF9F6;
+    border-top: 1px solid #EFEFEF;
+  }
+  .mobile-submenu a {
+    display: block;
+    padding: 0.8rem 0;
+    color: #013F3E;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .mobile-submenu a:hover,
+  .mobile-submenu a:active {
+    color: #D4AF37;
+    padding-left: 0.4rem;
+  }
+
+  /* Secondary / Utility Navigation Styling (Clean 2-Column Grid) */
+  .mobile-menu-utility-section {
+    background-color: #FBF9F5;
+    border-top: 1px solid rgba(1, 63, 62, 0.08);
+    margin-top: 1.0rem;
+  }
+  .mobile-utility-divider {
+    padding: 1.3rem 1.6rem 0.9rem;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: #013F3E;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+  .mobile-utility-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.9rem 1rem;
+    padding: 0 1.6rem 1.6rem;
+  }
+  .mobile-utility-link {
+    text-decoration: none;
+    color: #2D3D3A;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    transition: color 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mobile-utility-link:hover,
+  .mobile-utility-link:active {
+    color: #D4AF37;
+  }
+
+  /* Drawer Footer */
+  .mobile-menu-drawer__footer {
+    padding: 1.3rem 1.6rem 1.6rem;
+    border-top: 1px solid #EEEEEE;
+    background-color: #FFFFFF;
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .mobile-currency-selector {
+    position: relative;
+    display: inline-block;
+  }
+  .mobile-currency-selector__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: transparent;
+    border: none;
+    color: #555555;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.4rem 1.6rem 0.4rem 0.8rem;
+    text-transform: uppercase;
+    transition: color 0.2s ease;
+  }
+  .mobile-currency-selector__trigger:hover {
+    color: var(--color-accent, #D4AF37);
+  }
+  .mobile-currency-chevron {
+    position: absolute;
+    right: 0.2rem;
+    top: 52%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 10px;
+    stroke-width: 3px;
+    color: #888888;
+    pointer-events: none;
+    transition: transform 0.3s ease;
+  }
+  .mobile-currency-selector.open .mobile-currency-chevron {
+    transform: rotate(180deg);
+  }
+  .mobile-currency-selector__list {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 0.6rem;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.08);
+    padding: 0.4rem 0;
+    list-style: none;
+    min-width: 120px;
+    display: none;
+    z-index: 1000;
+  }
+  .mobile-currency-selector.open .mobile-currency-selector__list {
+    display: block;
+  }
+  .mobile-currency-selector__item {
+    padding: 0.6rem 1.2rem;
+    cursor: pointer;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #444444;
+    text-align: center;
+    transition: background 0.2s ease, color 0.2s ease;
+    white-space: nowrap;
+  }
+  .mobile-currency-selector__item:hover,
+  .mobile-currency-selector__item:active {
+    background-color: #F8F6F2;
+    color: var(--color-accent, #D4AF37);
+  }
+  .mobile-currency-selector__item--active {
+    background-color: #F4EFE6;
+    color: var(--color-primary, #002E28);
+    font-weight: 700;
+  }
+
+  .mobile-drawer-actions {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 0.8rem;
+    width: 100%;
+  }
+  .mobile-drawer-gold-rate-pill {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    height: 46px;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #f5e3be 0%, #d8b066 100%);
+    border: 1px solid rgba(139, 101, 8, 0.25);
+    padding: 0 1.2rem;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), 
+                0 2px 4px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+  }
+  .mobile-drawer-gold-rate-pill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 20%;
+    height: 100%;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.6) 50%, rgba(255, 255, 255, 0) 100%);
+    transform: skewX(-25deg);
+    animation: gold-shimmer 6s infinite ease-in-out;
+  }
+  .live-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: #2ec866;
+    border-radius: 50%;
+    animation: pulse-live 1.8s infinite ease-in-out;
+  }
+  @keyframes pulse-live {
+    0% { transform: scale(0.85); opacity: 0.6; }
+    50% { transform: scale(1.25); opacity: 1; }
+    100% { transform: scale(0.85); opacity: 0.6; }
+  }
+  .mobile-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 46px;
+    border-radius: 23px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    text-align: center;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+  }
+  .mobile-btn--login,
+  .mobile-btn--consultation {
+    background-color: #013F3E;
+    color: #FFFFFF;
+    border: 1px solid #013F3E;
+    box-shadow: 0 2px 8px rgba(1, 63, 62, 0.2);
+  }
+  .mobile-btn--login:active,
+  .mobile-btn--consultation:active {
+    background-color: #002E28;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Body scroll lock */
+  body.body-lock {
+    overflow: hidden;
+  }
+  
+  @media (max-width: 480px) {
+    .header {
+      padding-left: 1.0rem;
+      padding-right: 1.0rem;
+      padding-top: 0.4rem;
+      padding-bottom: 0.4rem;
+      min-height: 4.8rem;
+      gap: 0.4rem;
+    }
+    .header__logo-link {
+      gap: 0.4rem;
+    }
+    .header__logo-title {
+      font-size: 2.1rem;
+      font-weight: 700;
+    }
+    .header__logo-subtitle {
+      font-size: 0.75rem;
+      letter-spacing: 0.4em;
+    }
+    .header__logo-img {
+      max-height: 2.8rem;
+    }
+    .header__icons {
+      gap: 0.5rem;
+    }
+    .header__hamburger {
+      padding: 0.4rem;
+      min-width: 38px;
+      min-height: 38px;
+    }
+    .header__icon-link {
+      min-width: 38px;
+      min-height: 38px;
+      padding: 0.4rem;
+    }
+    .header__icon-link svg {
+      width: 2.0rem;
+      height: 2.0rem;
+      stroke-width: 1.6px;
+    }
+    .header__badge {
+      min-width: 1.2rem;
+      height: 1.2rem;
+      padding: 0 0.25rem;
+      font-size: 0.75rem;
+      top: -0.2rem;
+      right: -0.2rem;
+    }
+    .custom-currency-selector__trigger {
+      font-size: 1.1rem;
+      font-weight: 500;
+      padding: 0.3rem 0.3rem;
+      gap: 0.2rem;
+    }
+    .custom-currency-selector__trigger .icon-chevron-down {
+      width: 1.0rem;
+      height: 1.0rem;
+    }
+  }
+
+  /* Force refresh for Shopify theme watcher */
+  /* Fixed Mobile Bottom Navigation */
+  .mobile-bottom-nav {
+    display: none !important;
+  }
+
+  @media (max-width: 1150px) {
+    .header__wishlist-trigger,
+    .header__cart-trigger {
+      display: none !important;
+    }
+
+    .mobile-bottom-nav {
+      display: flex !important;
+      justify-content: space-around !important;
+      align-items: center !important;
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      height: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+      background-color: var(--color-background, #FFFFFF) !important;
+      box-shadow: 0 -4px 20px rgba(1, 39, 38, 0.08) !important;
+      z-index: 99999 !important;
+      padding: 0 6px env(safe-area-inset-bottom, 0px) !important;
+      box-sizing: border-box !important;
+      border-top-left-radius: 18px !important;
+      border-top-right-radius: 18px !important;
+      border-top: 1px solid rgba(212, 175, 55, 0.3) !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      pointer-events: auto !important;
+      font-family: 'Montserrat', var(--font-primary--family), sans-serif !important;
+      transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    body.body-lock .mobile-bottom-nav,
+    body.drawer-open .mobile-bottom-nav {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      transform: translateY(100%) !important;
+    }
+    
+    .mobile-bottom-nav__item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: #4B5855;
+      font-family: 'Montserrat', var(--font-primary--family), sans-serif;
+      font-size: 0.72rem;
+      font-weight: 500;
+      line-height: 1.1;
+      gap: 4px;
+      flex: 1;
+      height: 100%;
+      background: none;
+      border: none;
+      padding: 0;
+      outline: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.2s ease, transform 0.15s ease;
+    }
+
+    .mobile-bottom-nav__icon-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-bottom-nav__item * {
+      pointer-events: none !important;
+    }
+
+    .mobile-bottom-nav__item:active {
+      transform: scale(0.94);
+    }
+    
+    .mobile-bottom-nav__item.active {
+      color: var(--color-primary, #012726);
+      font-weight: 600;
+    }
+    .mobile-bottom-nav__item.active svg {
+      stroke: var(--color-primary, #012726);
+    }
+    
+    .mobile-bottom-nav__item svg {
+      width: 24px;
+      height: 24px;
+      stroke: currentColor;
+      stroke-width: 1.5;
+      fill: none;
+      display: block;
+    }
+    
+    .mobile-bottom-nav__item--chat {
+      position: relative;
+      overflow: visible !important;
+      transform: translateY(-10px);
+    }
+    
+    .chat-icon-wrapper {
+      background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+      border-radius: 50%;
+      width: 52px;
+      height: 52px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(37, 211, 102, 0.45);
+      border: 4px solid #FFFFFF;
+      margin-bottom: 4px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    body.whatsapp-menu-open .chat-icon-wrapper {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      transform: scale(0.8) !important;
+    }
+
+    .mobile-bottom-nav__item--chat:active .chat-icon-wrapper {
+      transform: scale(0.92);
+    }
+    
+    .chat-icon-wrapper svg {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      stroke: none;
+      fill: #FFFFFF;
+    }
+
+    .mobile-bottom-nav__item--chat span {
+      position: relative;
+      text-align: center;
+      white-space: nowrap;
+      font-weight: 600;
+      color: var(--color-primary, #012726);
+      font-size: 0.72rem;
+      font-family: 'Montserrat', var(--font-primary--family), sans-serif;
+    }
+    
+    .mobile-bottom-nav__badge {
+      position: absolute;
+      top: -4px;
+      right: -8px;
+      background-color: var(--color-accent, #D4AF37);
+      color: var(--color-primary, #012726);
+      font-family: 'Montserrat', var(--font-primary--family), sans-serif;
+      font-size: 0.65rem;
+      font-weight: 700;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25);
+    }
+    
+    /* Pad body so fixed bottom nav doesn't overlap content */
+    body {
+      padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  function initMobileMenu() {
+    const hamburger = document.querySelector('.header__hamburger');
+    const drawer = document.getElementById('MobileNavDrawer');
+    const closeBtn = document.getElementById('MobileNavClose');
+    const overlay = document.getElementById('MobileNavOverlay');
+    const body = document.body;
+
+    if (!hamburger || !drawer) return;
+    if (hamburger.dataset.menuInitialized === 'true') return;
+    hamburger.dataset.menuInitialized = 'true';
+
+    hamburger.addEventListener('click', function() {
+      const expanded = hamburger.getAttribute('aria-expanded') === 'true';
+      hamburger.setAttribute('aria-expanded', !expanded);
+      drawer.classList.add('mobile-menu-drawer--open');
+      drawer.setAttribute('aria-hidden', 'false');
+      body.classList.add('body-lock');
+      body.classList.add('drawer-open');
+    });
+
+    function closeDrawer() {
+      hamburger.setAttribute('aria-expanded', 'false');
+      drawer.classList.remove('mobile-menu-drawer--open');
+      drawer.setAttribute('aria-hidden', 'true');
+      body.classList.remove('body-lock');
+      body.classList.remove('drawer-open');
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+    if (overlay) overlay.addEventListener('click', closeDrawer);
+
+    // Main Tabs (Women, Men, Kids)
+    const mainTabs = document.querySelectorAll('.mobile-main-tab');
+    const mainContents = document.querySelectorAll('.mobile-main-content');
+    
+    mainTabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        mainTabs.forEach(t => t.classList.remove('active'));
+        mainContents.forEach(c => c.classList.remove('active'));
+        
+        this.classList.add('active');
+        const targetId = 'maintab-' + this.getAttribute('data-maintab');
+        const targetContent = document.getElementById(targetId);
+        if (targetContent) targetContent.classList.add('active');
+      });
+    });
+
+    // Submenu Triggers (Dynamic Links)
+    const menuTriggers = document.querySelectorAll('.mobile-menu-trigger');
+    menuTriggers.forEach(trig => {
+      trig.addEventListener('click', function(e) {
+        e.preventDefault();
+        const expanded = this.getAttribute('aria-expanded') === 'true';
+        this.setAttribute('aria-expanded', !expanded);
+        const sub = this.nextElementSibling;
+        if (sub) {
+          sub.style.display = expanded ? 'none' : 'block';
+        }
+      });
+    });
+
+    // Wishlist bottom bar trigger
+    const wishlistTriggers = document.querySelectorAll('.js-mobile-wishlist-trigger');
+    wishlistTriggers.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (typeof window.openWishlistDrawer === 'function') {
+          window.openWishlistDrawer();
+        } else {
+          const drawer = document.getElementById('WishlistDrawer');
+          if (drawer) {
+            drawer.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+          }
+        }
+      });
+    });
+
+    // Cart/Bag bottom bar trigger
+    const cartTriggers = document.querySelectorAll('.js-mobile-cart-trigger');
+    cartTriggers.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (typeof window.openCartDrawer === 'function') {
+          window.openCartDrawer();
+        } else {
+          const drawer = document.getElementById('CartDrawer');
+          if (drawer) {
+            drawer.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+          }
+        }
+      });
+    });
+
+    // Mobile Custom Currency Selector
+    const mobileCurrencySelector = document.getElementById('MobileCurrencySelector');
+    if (mobileCurrencySelector) {
+      const trigger = mobileCurrencySelector.querySelector('#MobileCurrencySelectorTrigger');
+      const list = mobileCurrencySelector.querySelector('#MobileCurrencySelectorList');
+      const hiddenInput = document.getElementById('MobileCountryCode');
+      const form = document.getElementById('MobileLanguageForm');
+
+      if (trigger && list && hiddenInput && form) {
+        if (trigger.dataset.listenerInitialized !== 'true') {
+          trigger.dataset.listenerInitialized = 'true';
+          
+          trigger.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isOpen = mobileCurrencySelector.classList.toggle('open');
+            trigger.setAttribute('aria-expanded', isOpen);
+          });
+
+          // Close mobile currency selector on click outside
+          document.addEventListener('click', function(e) {
+            if (!mobileCurrencySelector.contains(e.target)) {
+              mobileCurrencySelector.classList.remove('open');
+              trigger.setAttribute('aria-expanded', 'false');
+            }
+          });
+
+          // Handle click on items
+          mobileCurrencySelector.querySelectorAll('.mobile-currency-selector__item').forEach(item => {
+            item.addEventListener('click', function() {
+              const countryCode = this.getAttribute('data-value');
+              hiddenInput.value = countryCode;
+              form.submit();
+            });
+          });
+        }
+      }
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMobileMenu);
+  } else {
+    initMobileMenu();
+  }
+  document.addEventListener('shopify:section:load', initMobileMenu);
+{% endjavascript %}
+
+<script>
+  window.updateGlobalCartCount = function(count) {
+    const badge = document.getElementById('cart-count-badge');
+    const mobileBadge = document.getElementById('mobile-cart-badge');
+    if (badge) {
+      badge.textContent = count;
+      if (count > 0) {
+        badge.style.display = 'flex';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+    if (mobileBadge) {
+      mobileBadge.textContent = count;
+      if (count > 0) {
+        mobileBadge.style.display = 'flex';
+      } else {
+        mobileBadge.style.display = 'none';
+      }
+    }
+  };
+</script>
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo_image",
+      "label": "Logo image"
+    },
+    {
+      "type": "range",
+      "id": "logo_width",
+      "min": 50,
+      "max": 350,
+      "step": 5,
+      "default": 200,
+      "unit": "px",
+      "label": "Custom logo width"
+    },
+    {
+      "type": "text",
+      "id": "gold_price",
+      "default": "Gold 14500/1g",
+      "label": "Gold Rate Label"
+    },
+    {
+      "type": "range",
+      "id": "wishlist_count",
+      "min": 0,
+      "max": 10,
+      "default": 2,
+      "label": "Mock Wishlist Count"
+    },
+    {
+      "type": "checkbox",
+      "id": "mock_cart_count",
+      "default": true,
+      "label": "Use mock cart count of 3 if empty"
+    },
+    {
+      "type": "header",
+      "content": "Announcement Bar"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_announcement",
+      "default": true,
+      "label": "Show announcement bar"
+    },
+    {
+      "type": "text",
+      "id": "announcement_left_text",
+      "default": "DELHI • SINCE 1997",
+      "label": "Left text"
+    },
+    {
+      "type": "text",
+      "id": "announcement_center_text",
+      "default": "MADE FOR MOMENTS THAT MATTER.",
+      "label": "Center text"
+    },
+    {
+      "type": "text",
+      "id": "announcement_right_text",
+      "default": "FREE INSURANCE",
+      "label": "Right text"
+    },
+    {
+      "type": "header",
+      "content": "Navigation"
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu"
+    }
+  ]
+}
+{% endschema %}

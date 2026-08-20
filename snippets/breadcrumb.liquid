@@ -1,0 +1,175 @@
+{% doc %}
+  Renders responsive breadcrumb navigation for products, collections, and pages.
+
+  @param {object} [product] - The product object
+  @param {object} [collection] - The collection object
+
+  @example
+  {% render 'breadcrumb', product: product, collection: collection %}
+{% enddoc %}
+
+<nav class="pp-breadcrumb-nav" aria-label="Breadcrumb">
+  <div class="pp-breadcrumb-container">
+    <ol class="pp-breadcrumb-list">
+      <li class="pp-breadcrumb-item">
+        <a href="{{ routes.root_url }}" class="pp-breadcrumb-link" title="Home">Home</a>
+      </li>
+
+      {%- if collection -%}
+        <li class="pp-breadcrumb-item{% if template.name == 'collection' %} is-active{% endif %}"{% if template.name == 'collection' %} aria-current="page"{% endif %}>
+          <span class="pp-breadcrumb-separator" aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+          {%- if template.name == 'collection' -%}
+            <span class="pp-breadcrumb-current" title="{{ collection.title | escape }}">{{ collection.title }}</span>
+          {%- else -%}
+            <a href="{{ collection.url }}" class="pp-breadcrumb-link">{{ collection.title }}</a>
+          {%- endif -%}
+        </li>
+      {%- elsif product and product.collections.first -%}
+        <li class="pp-breadcrumb-item">
+          <span class="pp-breadcrumb-separator" aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+          <a href="{{ product.collections.first.url }}" class="pp-breadcrumb-link">{{ product.collections.first.title }}</a>
+        </li>
+      {%- elsif product and product.type != blank -%}
+        <li class="pp-breadcrumb-item">
+          <span class="pp-breadcrumb-separator" aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+          <a href="{{ routes.all_products_collection_url }}?filter.p.product_type={{ product.type | url_encode }}" class="pp-breadcrumb-link">{{ product.type }}</a>
+        </li>
+      {%- else -%}
+        <li class="pp-breadcrumb-item">
+          <span class="pp-breadcrumb-separator" aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+          <a href="{{ routes.all_products_collection_url }}" class="pp-breadcrumb-link">Jewellery</a>
+        </li>
+      {%- endif -%}
+
+      {%- if product -%}
+        <li class="pp-breadcrumb-item is-active" aria-current="page">
+          <span class="pp-breadcrumb-separator" aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+          <span class="pp-breadcrumb-current" title="{{ product.title | escape }}">{{ product.title }}</span>
+        </li>
+      {%- endif -%}
+    </ol>
+  </div>
+</nav>
+
+{% stylesheet %}
+  .pp-breadcrumb-nav {
+    width: 100%;
+    margin-top: 16px;
+    margin-bottom: 24px;
+    font-family: 'Inter', -apple-system, sans-serif;
+  }
+  .pp-breadcrumb-container {
+    max-width: var(--breadcrumb-max-width, 1240px);
+    margin: 0 auto;
+    padding: var(--breadcrumb-padding, 0 20px);
+  }
+  .pp-breadcrumb-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap !important;
+    white-space: normal !important;
+    overflow-x: visible !important;
+    gap: 6px 10px !important;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #666666;
+  }
+  .pp-breadcrumb-item {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: nowrap !important;
+  }
+  .pp-breadcrumb-link {
+    color: #666666;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s ease;
+  }
+  .pp-breadcrumb-link:hover {
+    color: #013F3E;
+    text-decoration: underline;
+  }
+  .pp-breadcrumb-separator {
+    display: inline-flex;
+    align-items: center;
+    color: #CCCCCC;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+  .pp-breadcrumb-current {
+    color: #013F3E;
+    font-weight: 600;
+    word-break: break-word;
+  }
+
+  @media screen and (max-width: 900px) {
+    .pp-breadcrumb-container {
+      padding: var(--breadcrumb-padding-mobile, 0 20px) !important;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .pp-breadcrumb-list {
+      font-size: 11.5px !important;
+      gap: 6px !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      white-space: nowrap !important;
+      padding: 4px 0 !important;
+      width: 100% !important;
+      display: flex !important;
+      align-items: center !important;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .pp-breadcrumb-list::-webkit-scrollbar { display: none; }
+    .pp-breadcrumb-item {
+      display: inline-flex !important;
+      align-items: center !important;
+      flex-shrink: 0 !important;
+      white-space: nowrap !important;
+      flex-wrap: nowrap !important;
+    }
+    .pp-breadcrumb-link {
+      font-size: 11.5px !important;
+      max-width: 110px !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      display: inline-block !important;
+      vertical-align: middle !important;
+    }
+    .pp-breadcrumb-current {
+      font-size: 11.5px !important;
+      max-width: 135px !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+      display: inline-block !important;
+      vertical-align: middle !important;
+    }
+    .pp-breadcrumb-separator {
+      margin-right: 6px !important;
+      margin-left: 2px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      flex-shrink: 0 !important;
+    }
+  }
+{% endstylesheet %}

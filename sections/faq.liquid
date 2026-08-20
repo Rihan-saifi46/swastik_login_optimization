@@ -1,0 +1,263 @@
+{%- if section.settings.show_banner -%}
+<div class="page-header">
+  <div class="page-width container">
+    <h1 class="page-title">{{ page.title | default: section.settings.title }}</h1>
+    <nav class="page-breadcrumb" aria-label="Breadcrumb">
+      <a href="{{ routes.root_url }}">Home</a>
+      <span aria-hidden="true">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+      </span>
+      <span>{{ page.title | default: section.settings.title }}</span>
+    </nav>
+  </div>
+</div>
+{%- endif -%}
+
+<div class="faq-section">
+  <div class="faq-container">
+
+    <div class="faq-list">
+      {%- for block in section.blocks -%}
+        {%- case block.type -%}
+          {%- when 'category' -%}
+            <h3 class="faq-category-title" {{ block.shopify_attributes }}>
+              {{ block.settings.title }}
+            </h3>
+          {%- when 'question' -%}
+            <div class="faq-item" {{ block.shopify_attributes }}>
+              <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-{{ block.id }}">
+                <span class="faq-question-text">{{ block.settings.title }}</span>
+                <span class="faq-icon">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 0V14M0 7H14" stroke="currentColor" stroke-width="1.5"/>
+                  </svg>
+                </span>
+              </button>
+              <div class="faq-answer" id="faq-answer-{{ block.id }}">
+                <div class="faq-answer-inner">
+                  {{ block.settings.answer }}
+                </div>
+              </div>
+            </div>
+        {%- endcase -%}
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .page-header {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(245, 238, 235, 0.7) 0%, rgba(230, 240, 245, 0.5) 100%);
+    padding: 6rem 2rem;
+    text-align: center;
+  }
+  .page-width {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .page-title {
+    margin-bottom: 1.5rem;
+    font-size: 4.2rem;
+    color: var(--color-primary, #013F3E);
+    font-family: var(--font-heading-family, serif);
+  }
+  .page-breadcrumb {
+    font-size: 1.3rem;
+    color: var(--color-foreground, #1A1A1A);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    opacity: 0.8;
+  }
+  .page-breadcrumb a {
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+  .page-breadcrumb a:hover {
+    opacity: 0.7;
+  }
+  
+  .faq-section {
+    padding: 60px 20px;
+    background: #ffffff;
+  }
+  .faq-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .faq-subtitle {
+    color: #e53935;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .faq-title {
+    font-size: 36px;
+    font-weight: 600;
+    margin-bottom: 40px;
+    color: #111111;
+  }
+  .faq-category-title {
+    font-size: 2.8rem;
+    font-weight: 500;
+    margin-top: 5rem;
+    margin-bottom: 2.5rem;
+    color: var(--color-primary, #013F3E);
+    font-family: var(--font-heading-family, serif);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    padding-bottom: 1rem;
+  }
+  .faq-category-title:first-child {
+    margin-top: 0;
+  }
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.6rem;
+  }
+  .faq-item {
+    background-color: #ffffff;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .faq-item:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    border-color: rgba(0,0,0,0.15);
+  }
+  .faq-question {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2.2rem 2.4rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: #111111;
+    font-family: inherit;
+    transition: color 0.2s ease;
+  }
+  .faq-question:hover {
+    color: var(--color-primary, #013F3E);
+  }
+  .faq-icon {
+    flex-shrink: 0;
+    margin-left: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+  }
+  .faq-question[aria-expanded="true"] .faq-icon {
+    transform: rotate(45deg);
+  }
+  .faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+  .faq-question[aria-expanded="true"] + .faq-answer {
+    max-height: 1000px; /* arbitrary large value */
+  }
+  .faq-answer-inner {
+    padding: 0 2.4rem 2.4rem;
+    font-size: 1.5rem;
+    line-height: 1.6;
+    color: #555555;
+    border-top: 1px solid transparent;
+  }
+  .faq-question[aria-expanded="true"] + .faq-answer .faq-answer-inner {
+    border-top-color: rgba(0,0,0,0.05);
+    padding-top: 2rem;
+  }
+  .faq-answer-inner p {
+    margin: 0 0 10px 0;
+  }
+  .faq-answer-inner p:last-child {
+    margin-bottom: 0;
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  document.addEventListener('DOMContentLoaded', function() {
+    const questions = document.querySelectorAll('.faq-question');
+    questions.forEach(question => {
+      question.addEventListener('click', function() {
+        const expanded = this.getAttribute('aria-expanded') === 'true';
+        this.setAttribute('aria-expanded', !expanded);
+      });
+    });
+  });
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "FAQ",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_banner",
+      "label": "Show top banner (Page Title & Breadcrumbs)",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "FAQs"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Questions & Answers"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "Category Heading",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Heading",
+          "default": "Category"
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "name": "Question",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Question",
+          "default": "What is your question?"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>Provide the answer to the question here.</p>"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "FAQ",
+      "category": "Text"
+    }
+  ]
+}
+{% endschema %}

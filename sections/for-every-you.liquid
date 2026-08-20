@@ -1,0 +1,566 @@
+{%- liquid
+  assign bg_color = section.settings.bg_color | default: '#ffffff'
+  assign text_color = section.settings.text_color | default: '#0a2a26'
+-%}
+
+<div class="for-every-you" id="ForEveryYou-{{ section.id }}" style="--bg-color: {{ bg_color }}; --text-color: {{ text_color }};">
+  <div class="for-every-you__header">
+    {%- if section.settings.heading != blank -%}
+      <h2 class="for-every-you__heading">{{ section.settings.heading | escape }}</h2>
+    {%- endif -%}
+    {%- if section.settings.subheading != blank -%}
+      <p class="for-every-you__subheading">{{ section.settings.subheading | escape }}</p>
+    {%- endif -%}
+  </div>
+
+  <div class="for-every-you__slider-wrapper">
+    <button class="for-every-you__nav for-every-you__nav--prev" aria-label="Previous slide">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+
+    <div class="for-every-you__track">
+      {%- assign total_index = 0 -%}
+      {%- for i in (1..3) -%}
+        {%- for block in section.blocks -%}
+          <div class="for-every-you__slide" {% if i == 2 %}{{ block.shopify_attributes }}{% endif %} data-index="{{ total_index }}" data-real-index="{{ forloop.index0 }}">
+            <div class="for-every-you__image-wrapper">
+              {%- if block.settings.image != blank -%}
+                <picture class="for-every-you__picture">
+                  {%- if block.settings.image_mobile != blank -%}
+                    <source media="(max-width: 767px)" srcset="{{ block.settings.image_mobile | image_url: width: 600 }}">
+                  {%- else -%}
+                    <source media="(max-width: 767px)" srcset="{{ block.settings.image | image_url: width: 600 }}">
+                  {%- endif -%}
+                  <source media="(min-width: 768px)" srcset="{{ block.settings.image | image_url: width: 800 }}">
+                  <img src="{{ block.settings.image | image_url: width: 800 }}" 
+                       alt="{{ block.settings.image.alt | default: 'Slide Image' | escape }}" 
+                       class="for-every-you__image" 
+                       loading="lazy"
+                       width="{{ block.settings.image.width }}"
+                       height="{{ block.settings.image.height }}">
+                </picture>
+              {%- else -%}
+                {{ 'collection-1' | placeholder_svg_tag: 'for-every-you__image placeholder-svg' }}
+              {%- endif -%}
+
+              {%- if block.settings.link != blank -%}
+                <a href="{{ block.settings.link }}" class="for-every-you__full-link" aria-label="Explore {{ block.settings.title | escape }}"></a>
+              {%- endif -%}
+
+              {%- if block.settings.title != blank -%}
+                <div class="for-every-you__card-text">
+                  <h3 class="for-every-you__card-title">{{ block.settings.title | escape }}</h3>
+                </div>
+              {%- endif -%}
+            </div>
+
+          </div>
+          {%- assign total_index = total_index | plus: 1 -%}
+        {%- endfor -%}
+      {%- endfor -%}
+    </div>
+
+    <button class="for-every-you__nav for-every-you__nav--next" aria-label="Next slide">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+</div>
+
+{% stylesheet %}
+.for-every-you {
+  padding: 60px 0;
+  background-color: var(--bg-color);
+  overflow: hidden;
+}
+
+.for-every-you__header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.for-every-you__heading {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 3.2rem;
+  color: var(--color-primary, #013F3E);
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.for-every-you__subheading {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.6rem;
+  color: var(--text-color);
+  opacity: 0.8;
+  margin: 16px auto 0;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+.for-every-you__slider-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.for-every-you__track {
+  position: relative;
+  width: 100%;
+  height: 520px;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  overflow: hidden;
+  user-select: none;
+  touch-action: pan-y;
+}
+
+.for-every-you__slide {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 400px;
+  height: 480px;
+  will-change: transform, opacity, z-index;
+  pointer-events: auto;
+}
+
+.for-every-you__image-wrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 120%; /* ~5:6 Aspect Ratio */
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  background: #f4f4f4;
+}
+
+.for-every-you__picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.for-every-you__image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.for-every-you__card-text {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  z-index: 10;
+  padding: 0 20px;
+}
+
+.for-every-you__card-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: #0A2A26;
+  margin: 0;
+  text-transform: uppercase;
+  display: inline-block;
+  padding-bottom: 8px;
+  position: relative;
+}
+
+.for-every-you__card-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background-color: #1A1A1A;
+}
+
+.for-every-you__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  background: #fff;
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  color: #000;
+  transition: background 0.3s ease, transform 0.3s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.for-every-you__nav svg {
+  pointer-events: none;
+}
+
+.for-every-you__nav:hover {
+  background: #f8f8f8;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.for-every-you__nav--prev {
+  left: 40px;
+}
+
+.for-every-you__nav--next {
+  right: 40px;
+}
+
+.for-every-you__full-link {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: block;
+}
+
+@media screen and (max-width: 991px) {
+  .for-every-you__slide {
+    width: 320px;
+    height: 384px;
+  }
+  .for-every-you__track {
+    height: 420px;
+  }
+  .for-every-you__nav--prev {
+    left: 20px;
+  }
+  .for-every-you__nav--next {
+    right: 20px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .for-every-you {
+    padding: 40px 0;
+  }
+  .for-every-you__heading {
+    font-size: 2.6rem;
+  }
+  .for-every-you__subheading {
+    font-size: 1.4rem;
+  }
+  .for-every-you__slide {
+    width: 260px;
+    height: 312px;
+  }
+  .for-every-you__track {
+    height: 350px;
+  }
+  .for-every-you__nav {
+    width: 40px;
+    height: 40px;
+  }
+  .for-every-you__nav--prev {
+    left: 10px;
+  }
+  .for-every-you__nav--next {
+    right: 10px;
+  }
+
+}
+{% endstylesheet %}
+
+{% javascript %}
+class ForEveryYouCarousel {
+  constructor(element) {
+    this.section = element;
+    this.section.carousel = this;
+    this.track = element.querySelector('.for-every-you__track');
+    this.slides = Array.from(element.querySelectorAll('.for-every-you__slide'));
+    this.prevBtn = element.querySelector('.for-every-you__nav--prev');
+    this.nextBtn = element.querySelector('.for-every-you__nav--next');
+    
+    if (!this.track || this.slides.length === 0) return;
+    
+    this.N = this.slides.length;
+    this.targetProgress = 0;
+    this.currentProgress = 0;
+    
+    this.isDragging = false;
+    this.startX = 0;
+    this.startY = 0;
+    this.startProgress = 0;
+    
+    this.init();
+  }
+
+  init() {
+    if (this.prevBtn) {
+      this.prevBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.targetProgress -= 1;
+      });
+    }
+    if (this.nextBtn) {
+      this.nextBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.targetProgress += 1;
+      });
+    }
+
+    // Drag events
+    this.track.addEventListener('mousedown', this.onDragStart.bind(this));
+    window.addEventListener('mousemove', this.onDragMove.bind(this));
+    window.addEventListener('mouseup', this.onDragEnd.bind(this));
+    
+    this.track.addEventListener('touchstart', this.onDragStart.bind(this), {passive: true});
+    window.addEventListener('touchmove', this.onDragMove.bind(this), {passive: false});
+    window.addEventListener('touchend', this.onDragEnd.bind(this));
+
+    this.track.addEventListener('click', (e) => {
+      if (this.hasDragged) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+
+    this.animate();
+  }
+  
+  onDragStart(e) {
+    if (e.type === 'touchstart') {
+      this.startX = e.touches[0].clientX;
+      this.startY = e.touches[0].clientY;
+      this.isScrolling = undefined;
+    } else {
+      this.startX = e.clientX;
+      e.preventDefault(); 
+    }
+    this.isDragging = true;
+    this.hasDragged = false;
+    this.startProgress = this.targetProgress;
+    this.track.style.cursor = 'grabbing';
+  }
+  
+  onDragMove(e) {
+    if (!this.isDragging) return;
+    let currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    let currentY = e.type === 'touchmove' ? e.touches[0].clientY : 0;
+    
+    let deltaX = currentX - this.startX;
+    
+    if (Math.abs(deltaX) > 5) {
+      this.hasDragged = true;
+    }
+    
+    if (e.type === 'touchmove') {
+      let deltaY = currentY - this.startY;
+      if (typeof this.isScrolling === 'undefined') {
+        this.isScrolling = Math.abs(deltaY) > Math.abs(deltaX);
+      }
+      if (this.isScrolling) {
+        this.isDragging = false;
+        return; 
+      }
+      if (e.cancelable) e.preventDefault(); 
+    }
+    
+    let slideWidth = this.slides[0].clientWidth || 300;
+    this.targetProgress = this.startProgress - (deltaX / slideWidth) * 1.5;
+  }
+  
+  onDragEnd() {
+    if (!this.isDragging) return;
+    this.isDragging = false;
+    this.track.style.cursor = '';
+    this.targetProgress = Math.round(this.targetProgress);
+  }
+
+  animate() {
+    this.currentProgress += (this.targetProgress - this.currentProgress) * 0.1;
+    this.render();
+    requestAnimationFrame(this.animate.bind(this));
+  }
+  
+  render() {
+    const N = this.N;
+    const isMobile = window.innerWidth <= 768;
+    const baseOffset = isMobile ? 180 : 260;
+    const extraOffset = isMobile ? 130 : 200;
+    
+    this.slides.forEach((slide, i) => {
+      let diff = ((i - this.currentProgress) % N + N) % N;
+      if (diff > N / 2) diff -= N;
+      
+      let sign = Math.sign(diff);
+      let absDiff = Math.abs(diff);
+      
+      let translateX = 0;
+      let rotateY = 0;
+      let scale = 1;
+      let opacity = 1;
+      
+      if (absDiff <= 1) {
+        translateX = sign * absDiff * baseOffset;
+        scale = 1.05 - absDiff * 0.2; 
+        rotateY = sign * absDiff * -25;
+        opacity = 1 - absDiff * 0.2; 
+      } else if (absDiff <= 2) {
+        let excess = absDiff - 1;
+        translateX = sign * (baseOffset + excess * extraOffset);
+        scale = 0.85 - excess * 0.15; 
+        rotateY = sign * (-25 - excess * 15);
+        opacity = 0.8 - excess * 0.4; 
+      } else {
+        let excess = absDiff - 2;
+        translateX = sign * (baseOffset + extraOffset + excess * extraOffset);
+        scale = 0.70 - excess * 0.15; 
+        rotateY = sign * (-40 - excess * 15);
+        opacity = 0.4 - excess * 0.8; 
+      }
+      
+      if (opacity <= 0) {
+        slide.style.opacity = 0;
+        slide.style.pointerEvents = 'none';
+        slide.style.zIndex = -1;
+        return;
+      }
+      
+      let zIndex = Math.round(100 - absDiff * 10);
+      
+      slide.style.transform = `translateX(${translateX}px) scale(${scale}) rotateY(${rotateY}deg)`;
+      slide.style.zIndex = zIndex;
+      slide.style.opacity = opacity;
+      
+      if (absDiff < 0.5) {
+        slide.classList.add('is-active');
+      } else {
+        slide.classList.remove('is-active');
+      }
+      slide.style.pointerEvents = 'auto';
+    });
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.for-every-you').forEach(section => {
+    new ForEveryYouCarousel(section);
+  });
+});
+document.addEventListener('shopify:section:load', (event) => {
+  const section = event.target.querySelector('.for-every-you');
+  if (section) {
+    new ForEveryYouCarousel(section);
+  }
+});
+
+document.addEventListener('shopify:block:select', (event) => {
+  const slide = event.target;
+  if (!slide.classList.contains('for-every-you__slide')) return;
+  
+  const section = slide.closest('.for-every-you');
+  if (!section || !section.carousel) return;
+  
+  const targetIndex = parseInt(slide.getAttribute('data-index'), 10);
+  if (!isNaN(targetIndex)) {
+    const N = section.carousel.N;
+    let currentMod = section.carousel.targetProgress % N;
+    if (currentMod < 0) currentMod += N;
+    
+    let diff = targetIndex - currentMod;
+    if (diff > N / 2) diff -= N;
+    if (diff < -N / 2) diff += N;
+    
+    section.carousel.targetProgress += diff;
+  }
+});
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "For Every You",
+  "class": "section",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "FOR EVERY YOU"
+    },
+    {
+      "type": "textarea",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Jewelry designed to match every facet of your life."
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#0a2a26"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "slide",
+      "name": "Slide",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image (Desktop)"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_mobile",
+          "label": "Image (Mobile)"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title/Occasion",
+          "info": "Optional title below image"
+        },
+        {
+          "type": "text",
+          "id": "subtitle",
+          "label": "Subtitle",
+          "info": "Short description for the occasion"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "For Every You",
+      "blocks": [
+        { "type": "slide" },
+        { "type": "slide" },
+        { "type": "slide" },
+        { "type": "slide" },
+        { "type": "slide" }
+      ]
+    }
+  ]
+}
+{% endschema %}

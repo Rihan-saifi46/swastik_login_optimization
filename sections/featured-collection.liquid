@@ -1,0 +1,331 @@
+{% comment %}
+  Renders a grid of products from a selected collection, with customizable columns on desktop and mobile.
+  Provides fallback placeholders to ensure a high-end look even when no collection is set.
+{% endcomment %}
+
+<div class="featured-collection" 
+     style="
+       --desktop-columns: {{ section.settings.columns_desktop }};
+       --mobile-columns: {{ section.settings.columns_mobile }};
+     ">
+  <div class="container">
+    
+    <!-- Header Area -->
+    <div class="featured-collection__header text-center">
+      {% if section.settings.subheading != blank %}
+        <span class="featured-collection__subheading">{{ section.settings.subheading | escape }}</span>
+      {% endif %}
+      {% if section.settings.title != blank %}
+        <h2 class="featured-collection__title serif-font">{{ section.settings.title | escape }}</h2>
+      {% endif %}
+      <div class="featured-collection__divider"></div>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="featured-collection__grid">
+      {% assign selected_collection = collections[section.settings.collection] %}
+      
+      {% if selected_collection != blank and selected_collection.products_count > 0 %}
+        {% for product in selected_collection.products limit: section.settings.products_to_show %}
+          <div class="product-card hover-lift fade-in">
+            <a href="{{ product.url | within: selected_collection }}" class="product-card__link">
+              <div class="product-card__image-wrapper">
+                {% if product.featured_image != blank %}
+                  {{ product.featured_image | image_url: width: 600, height: 600, crop: 'center' | image_tag: class: 'product-card__img', loading: 'lazy' }}
+                {% else %}
+                  {{ 'product-1' | placeholder_svg_tag: 'product-card__placeholder' }}
+                {% endif %}
+                
+                {% if product.compare_at_price > product.price %}
+                  <span class="product-card__badge">Sale</span>
+                {% endif %}
+              </div>
+              
+              <div class="product-card__details">
+                <h3 class="product-card__title">{{ product.title }}</h3>
+                <div class="product-card__price-wrapper">
+                  {% if product.compare_at_price > product.price %}
+                    <span class="product-card__price product-card__price--sale">{{ product.price | money }}</span>
+                    <span class="product-card__price product-card__price--compare">{{ product.compare_at_price | money }}</span>
+                  {% else %}
+                    <span class="product-card__price">{{ product.price | money }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </a>
+          </div>
+        {% endfor %}
+      {% elsif request.design_mode %}
+        <p style="grid-column:1/-1;padding:3rem 2rem;text-align:center;color:#888;font-family:'Montserrat',sans-serif;font-size:1.4rem;">
+          Choose a collection in this section's settings to display products.
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- View All Button -->
+    {% if section.settings.show_view_all and selected_collection != blank and selected_collection.all_products_count > section.settings.products_to_show %}
+      <div class="featured-collection__footer text-center">
+        <a href="{{ selected_collection.url }}" class="btn btn-primary">
+          View all masterpieces
+        </a>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% stylesheet %}
+  .featured-collection {
+    padding-top: 10rem;
+    padding-bottom: 10rem;
+    background-color: var(--color-background, #FFFFFF);
+  }
+
+  .featured-collection__header {
+    margin-bottom: 6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .text-center {
+    text-align: center;
+  }
+
+  .featured-collection__subheading {
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--color-accent, #D4AF37);
+    margin-bottom: 1.5rem;
+  }
+
+  .featured-collection__title {
+    font-size: 3.8rem;
+    color: var(--color-primary, #013F3E);
+  }
+
+  .featured-collection__divider {
+    width: 6rem;
+    height: 1px;
+    background-color: var(--color-accent, #D4AF37);
+    margin-top: 2rem;
+  }
+
+  /* Grid Layout */
+  .featured-collection__grid {
+    display: grid;
+    grid-template-columns: repeat(var(--desktop-columns, 4), 1fr);
+    gap: 3rem;
+  }
+
+  /* Product Card styling */
+  .product-card {
+    background-color: var(--color-secondary-bg, #FDFBF7);
+    border: 1px solid rgba(1, 63, 62, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  }
+
+  .product-card__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .product-card__image-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1/1;
+    overflow: hidden;
+    background-color: rgba(212, 175, 55, 0.02);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .product-card__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .product-card:hover .product-card__img {
+    transform: scale(1.05);
+  }
+
+  .product-card__placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: rgba(1, 63, 62, 0.03);
+    color: rgba(1, 63, 62, 0.2);
+    transition: transform 0.6s ease;
+  }
+  .product-card:hover .product-card__placeholder {
+    transform: scale(1.03);
+  }
+
+  .product-card__badge {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    background-color: var(--color-accent, #D4AF37);
+    color: #FFFFFF;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.4rem 1rem;
+    border-radius: 2px;
+    z-index: 5;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .product-card__details {
+    padding: 2.2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex-grow: 1;
+    background-color: var(--color-secondary-bg, #FDFBF7);
+  }
+
+  .product-card__title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--color-foreground, #1A1A1A);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    transition: color 0.3s ease;
+  }
+
+  .product-card:hover .product-card__title {
+    color: var(--color-primary, #013F3E);
+  }
+
+  .product-card__price-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: auto;
+  }
+
+  .product-card__price {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--color-primary, #013F3E);
+  }
+  .product-card__price--sale {
+    color: var(--color-accent, #D4AF37);
+  }
+  .product-card__price--compare {
+    text-decoration: line-through;
+    color: rgba(26, 26, 26, 0.4);
+    font-size: 1.2rem;
+    font-weight: 400;
+  }
+
+  .featured-collection__footer {
+    margin-top: 6rem;
+  }
+
+  @media (max-width: 1024px) {
+    .featured-collection__grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .featured-collection {
+      padding-top: 6rem;
+      padding-bottom: 6rem;
+    }
+    .featured-collection__title {
+      font-size: 2.8rem;
+    }
+    .featured-collection__grid {
+      grid-template-columns: repeat(var(--mobile-columns, 2), 1fr);
+      gap: 1.5rem;
+    }
+    .product-card__details {
+      padding: 1.5rem;
+      gap: 0.8rem;
+    }
+    .product-card__title {
+      font-size: 1.4rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Featured collection",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "default": "Curated Masterpieces",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "default": "Swastik Jewels Treasures",
+      "label": "Subheading"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "min": 2,
+      "max": 12,
+      "step": 1,
+      "default": 4,
+      "label": "Products to show"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "min": 3,
+      "max": 5,
+      "step": 1,
+      "default": 4,
+      "label": "Number of columns on desktop"
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "label": "Columns on mobile",
+      "options": [
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" }
+      ],
+      "default": "2"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_all",
+      "default": true,
+      "label": "Show 'View all' button"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Featured collection"
+    }
+  ]
+}
+{% endschema %}

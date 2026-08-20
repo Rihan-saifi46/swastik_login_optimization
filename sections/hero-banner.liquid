@@ -1,0 +1,671 @@
+{% comment %}
+  Renders a customizable, premium hero banner slideshow with desktop/mobile picture support,
+  Gen Z-oriented copy, custom fade transitions, Ken Burns zoom effects, and modern dots navigation.
+{% endcomment %}
+{%- assign first_slide = section.blocks | where: "type", "slide" | first -%}
+{%- assign desktop_aspect_ratio = 1.7778 -%} 
+{%- assign mobile_aspect_ratio = 0.5625 -%} 
+
+{%- if first_slide and first_slide.settings.image_desktop != blank -%}
+  {%- assign desktop_aspect_ratio = first_slide.settings.image_desktop.aspect_ratio -%}
+{%- endif -%}
+
+{%- if first_slide and first_slide.settings.image_mobile != blank -%}
+  {%- assign mobile_aspect_ratio = first_slide.settings.image_mobile.aspect_ratio -%}
+{%- elsif first_slide and first_slide.settings.image_desktop != blank -%}
+  {%- assign mobile_aspect_ratio = first_slide.settings.image_desktop.aspect_ratio -%}
+{%- endif -%}
+
+{%- style -%}
+  {% if section.settings.hero_size == 'adapt' %}
+    #Slideshow-{{ section.id }} {
+      height: auto;
+      aspect-ratio: {{ desktop_aspect_ratio }};
+      max-height: 75vh;
+    }
+    @media screen and (max-width: 767px) {
+      #Slideshow-{{ section.id }} {
+        height: auto !important;
+        aspect-ratio: {{ mobile_aspect_ratio }} !important;
+        max-height: 65vh !important;
+      }
+    }
+  {% else %}
+    #Slideshow-{{ section.id }} {
+      height: {{ section.settings.hero_height }}px;
+    }
+    @media screen and (max-width: 767px) {
+      #Slideshow-{{ section.id }} {
+        height: 694px !important;
+      }
+    }
+  {% endif %}
+{%- endstyle -%}
+
+<div class="hero-banner hero-banner--slideshow" 
+     id="Slideshow-{{ section.id }}" 
+     data-autoplay="{{ section.settings.autoplay }}"
+     data-autoplay-speed="{{ section.settings.autoplay_speed }}"
+     style="
+       --overlay-opacity: {{ section.settings.overlay_opacity | divided_by: 100.0 }};
+     ">
+  
+  <div class="slideshow__slides">
+    {% for block in section.blocks %}
+      {% if block.type == 'slide' %}
+        <div class="slideshow__slide {% if forloop.first %}is-active{% endif %} hero-banner--{{ block.settings.alignment }}" 
+             id="Slide-{{ block.id }}" 
+             {{ block.shopify_attributes }}>
+          
+          <picture class="slideshow__bg-image">
+            {% if block.settings.image_desktop != blank %}
+              {% if block.settings.image_mobile != blank %}
+                <source media="(max-width: 767px)" srcset="{{ block.settings.image_mobile | image_url: width: 780 }}">
+              {% else %}
+                <source media="(max-width: 767px)" srcset="{{ block.settings.image_desktop | image_url: width: 780 }}">
+              {% endif %}
+              <source media="(min-width: 768px)" srcset="{{ block.settings.image_desktop | image_url: width: 2880 }}">
+              <img src="{{ block.settings.image_desktop | image_url: width: 1440 }}" 
+                   alt="{{ block.settings.title | default: 'Swastik Jewels' }}" 
+                   class="slideshow__img" 
+                   loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
+                   width="1440"
+                   height="700">
+            {% else %}
+              {% comment %} Fallback to the generated asset images if no merchant image is uploaded {% endcomment %}
+              {%- assign slide_index = forloop.index -%}
+              {%- if slide_index > 3 -%}
+                {%- assign slide_index = 3 -%}
+              {%- endif -%}
+              {%- if slide_index == 1 -%}
+                {%- assign desktop_fallback_name = 'Slideshow_Desktop_1_New.png' -%}
+                {%- assign mobile_fallback_name = 'Slideshow_Mobile_1.png' -%}
+              {%- else -%}
+                {%- assign desktop_fallback_name = 'hero_slide_' | append: slide_index | append: '_desktop.png' -%}
+                {%- assign mobile_fallback_name = 'hero_slide_' | append: slide_index | append: '_mobile.png' -%}
+              {%- endif -%}
+              
+              <source media="(max-width: 767px)" srcset="{{ mobile_fallback_name | asset_url }}">
+              <source media="(min-width: 768px)" srcset="{{ desktop_fallback_name | asset_url }}">
+              <img src="{{ desktop_fallback_name | asset_url }}" 
+                   alt="{{ block.settings.title | default: 'Swastik Jewels' }}" 
+                   class="slideshow__img" 
+                   loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
+                   width="1440"
+                   height="700">
+            {% endif %}
+          </picture>
+
+          <div class="hero-banner__overlay"></div>
+
+          <div class="hero-banner__content fade-in">
+            <div class="hero-banner__text-box">
+              {% if block.settings.subheading != blank %}
+                <span class="hero-banner__subheading">{{ block.settings.subheading | escape }}</span>
+              {% endif %}
+              
+              {% if block.settings.title != blank %}
+                <h1 class="hero-banner__title serif-font">{{ block.settings.title | escape }}</h1>
+              {% endif %}
+
+              {% if block.settings.description != blank %}
+                <p class="hero-banner__description">{{ block.settings.description | escape }}</p>
+              {% endif %}
+
+              <div class="hero-banner__buttons">
+                {% if block.settings.button_1_label != blank and block.settings.button_1_link != blank %}
+                  <a href="{{ block.settings.button_1_link }}" class="btn btn-primary btn-white">
+                    {{ block.settings.button_1_label | escape }}
+                  </a>
+                {% endif %}
+                
+                {% if block.settings.button_2_label != blank and block.settings.button_2_link != blank %}
+                  <a href="{{ block.settings.button_2_link }}" class="btn btn-secondary hero-banner__btn-secondary">
+                    {{ block.settings.button_2_label | escape }}
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    {% else %}
+      {% comment %} Fallback slide when no blocks have been added yet {% endcomment %}
+      <div class="slideshow__slide is-active hero-banner--left">
+        <picture class="slideshow__bg-image">
+          <source media="(max-width: 767px)" srcset="{{ 'Slideshow_Mobile_1.png' | asset_url }}">
+          <source media="(min-width: 768px)" srcset="{{ 'Slideshow_Desktop_1_New.png' | asset_url }}">
+          <img src="{{ 'Slideshow_Desktop_1_New.png' | asset_url }}" alt="Swastik Jewels" class="slideshow__img" loading="eager" width="1440" height="700">
+        </picture>
+        <div class="hero-banner__overlay"></div>
+        <div class="hero-banner__content fade-in">
+          <div class="hero-banner__text-box">
+            <span class="hero-banner__subheading">OWN YOUR GLOW</span>
+            <h1 class="hero-banner__title serif-font">Diamonds That Speak Your Code</h1>
+            <p class="hero-banner__description">Ethically crafted, stackable fine jewelry designed for your daily edit. Because you don’t need an excuse to shine.</p>
+            <div class="hero-banner__buttons">
+              <a href="{{ routes.all_products_collection_url }}" class="btn btn-primary btn-white">Shop Daily Ice</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% if section.blocks.size > 1 %}
+    <div class="slideshow__controls">
+      <div class="slideshow__dots">
+        {% for block in section.blocks %}
+          {% if block.type == 'slide' %}
+            <button type="button" class="slideshow__dot {% if forloop.first %}is-active{% endif %}" data-index="{{ forloop.index0 }}" aria-label="Go to slide {{ forloop.index }}" aria-controls="Slide-{{ block.id }}">
+              <span class="slideshow__dot-inner"></span>
+            </button>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    initSlideshow();
+  });
+
+  // Re-initialize when section is loaded in Shopify theme editor
+  document.addEventListener('shopify:section:load', function(event) {
+    if (event.target.querySelector('.hero-banner--slideshow')) {
+      initSlideshow();
+    }
+  });
+
+  function initSlideshow() {
+    const slideshows = document.querySelectorAll('.hero-banner--slideshow');
+    slideshows.forEach(function(slideshow) {
+      if (slideshow.dataset.initialized === 'true') return;
+      slideshow.dataset.initialized = 'true';
+
+      const slides = slideshow.querySelectorAll('.slideshow__slide');
+      const dots = slideshow.querySelectorAll('.slideshow__dot');
+      if (slides.length <= 1) return;
+
+      let currentSlide = 0;
+      let autoplayTimer = null;
+      const autoplaySpeed = parseInt(slideshow.dataset.autoplaySpeed) * 1000 || 6000;
+      const autoplayEnabled = slideshow.dataset.autoplay === 'true';
+
+      function goToSlide(index) {
+        slides[currentSlide].classList.remove('is-active');
+        if (dots.length > 0) dots[currentSlide].classList.remove('is-active');
+        
+        currentSlide = index;
+        
+        slides[currentSlide].classList.add('is-active');
+        if (dots.length > 0) dots[currentSlide].classList.add('is-active');
+      }
+
+      function nextSlide() {
+        let next = (currentSlide + 1) % slides.length;
+        goToSlide(next);
+      }
+
+      function startAutoplay() {
+        if (!autoplayEnabled) return;
+        stopAutoplay();
+        autoplayTimer = setInterval(nextSlide, autoplaySpeed);
+      }
+
+      function stopAutoplay() {
+        if (autoplayTimer) {
+          clearInterval(autoplayTimer);
+          autoplayTimer = null;
+        }
+      }
+
+      dots.forEach(function(dot) {
+        dot.addEventListener('click', function() {
+          const index = parseInt(this.dataset.index);
+          goToSlide(index);
+          startAutoplay(); // Reset timer on manual click
+        });
+      });
+
+      // Pause on hover
+      slideshow.addEventListener('mouseenter', stopAutoplay);
+      slideshow.addEventListener('mouseleave', startAutoplay);
+
+      // Listen for Shopify customizer select/deselect events
+      document.addEventListener('shopify:block:select', function(event) {
+        const selectedSlide = event.target;
+        if (selectedSlide.classList.contains('slideshow__slide') && slideshow.contains(selectedSlide)) {
+          const index = Array.from(slides).indexOf(selectedSlide);
+          if (index !== -1) {
+            goToSlide(index);
+            stopAutoplay();
+          }
+        }
+      });
+
+      document.addEventListener('shopify:block:deselect', function(event) {
+        const deselectedSlide = event.target;
+        if (deselectedSlide.classList.contains('slideshow__slide') && slideshow.contains(deselectedSlide)) {
+          startAutoplay();
+        }
+      });
+
+      startAutoplay();
+    });
+  }
+</script>
+
+{% stylesheet %}
+  .hero-banner--slideshow {
+    position: relative;
+    height: var(--hero-height, 700px);
+    width: 100%;
+    overflow: hidden;
+    background-color: #000000;
+  }
+
+  .slideshow__slides {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .slideshow__slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.8s;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .slideshow__slide.is-active {
+    opacity: 1;
+    visibility: visible;
+    z-index: 2;
+  }
+
+  .slideshow__bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  .slideshow__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    transform: scale(1.0);
+  }
+
+  /* Individual slide image customizations */
+  .slideshow__slide:nth-child(1) .slideshow__img {
+    filter: contrast(1.03) saturate(1.05); /* Enhances the 1st slide without extra brightness */
+  }
+
+  .slideshow__slide:nth-child(2) .slideshow__img {
+    /* Custom styles for 2nd slide (e.g. filter: brightness(1.0);) if needed */
+  }
+
+  .slideshow__slide:nth-child(3) .slideshow__img {
+    /* Custom styles for 3rd slide if needed */
+  }
+
+  .hero-banner__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+    opacity: 0;
+    z-index: 1;
+    display: none;
+  }
+
+  .hero-banner__content {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    width: 100%;
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 4.8rem;
+    padding-right: 4.8rem;
+  }
+
+  .hero-banner__text-box {
+    max-width: 58ch;
+    color: #FFFFFF;
+    opacity: 0;
+    transform: translateY(25px);
+    transition: transform 0.8s cubic-bezier(0.215, 0.610, 0.355, 1), opacity 0.8s ease;
+  }
+
+  .slideshow__slide.is-active .hero-banner__text-box {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.25s;
+  }
+
+  .hero-banner--left .hero-banner__content {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .hero-banner--center .hero-banner__content {
+    justify-content: center;
+    text-align: center;
+  }
+  .hero-banner--center .hero-banner__text-box {
+    margin: 0 auto;
+  }
+
+  .hero-banner--right .hero-banner__content {
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .hero-banner__subheading {
+    display: inline-block;
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    color: var(--color-accent, #D4AF37);
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-banner__title {
+    color: #FFFFFF;
+    font-size: 5.8rem;
+    margin-bottom: 2.2rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  .hero-banner__description {
+    font-size: 1.6rem;
+    margin-bottom: 3.5rem;
+    color: rgba(255, 255, 255, 0.88);
+    font-weight: 300;
+    line-height: 1.65;
+  }
+
+  .hero-banner__buttons {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: inherit;
+  }
+
+  .hero-banner__btn-secondary {
+    border-color: #FFFFFF;
+    color: #FFFFFF;
+  }
+  .hero-banner__btn-secondary:hover {
+    background-color: #FFFFFF;
+    color: var(--color-primary, #013F3E);
+    border-color: #FFFFFF;
+  }
+
+  /* Slideshow Indicators (Dots) */
+  .slideshow__controls {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .slideshow__dots {
+    display: flex;
+    gap: 12px;
+  }
+
+  .slideshow__dot {
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+  }
+  
+  .slideshow__dot:hover {
+    transform: scale(1.20);
+  }
+
+  .slideshow__dot-inner {
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+
+  .slideshow__dot.is-active .slideshow__dot-inner {
+    width: 26px;
+    border-radius: 4px;
+    background-color: var(--color-accent, #D4AF37);
+    border-color: var(--color-accent, #D4AF37);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+  }
+
+  /* Layout Breakpoints */
+  @media (max-width: 767px) {
+    .hero-banner--slideshow {
+      height: 694px !important; /* Mobile height requirement: 694px (9:16 aspect ratio) */
+    }
+
+    .hero-banner__content {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+
+    .hero-banner__title {
+      font-size: 3.4rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .hero-banner__description {
+      font-size: 1.4rem;
+      margin-bottom: 2.8rem;
+    }
+
+    .hero-banner__buttons {
+      flex-direction: column;
+      gap: 1.2rem;
+      width: 100%;
+    }
+
+    .hero-banner__buttons .btn {
+      width: 100%;
+      text-align: center;
+    }
+
+    .slideshow__controls {
+      bottom: 25px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Hero banner",
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "default": true,
+      "label": "Autoplay slideshow"
+    },
+    {
+      "type": "range",
+      "id": "autoplay_speed",
+      "min": 3,
+      "max": 10,
+      "step": 1,
+      "default": 6,
+      "unit": "s",
+      "label": "Change slides every"
+    },
+    {
+      "type": "select",
+      "id": "hero_size",
+      "label": "Banner size",
+      "options": [
+        { "value": "adapt", "label": "Adapt to first image" },
+        { "value": "fixed", "label": "Fixed height" }
+      ],
+      "default": "adapt"
+    },
+    {
+      "type": "range",
+      "id": "hero_height",
+      "min": 500,
+      "max": 900,
+      "step": 10,
+      "default": 810,
+      "unit": "px",
+      "label": "Desktop banner height"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "min": 0,
+      "max": 90,
+      "step": 5,
+      "default": 35,
+      "unit": "%",
+      "label": "Overlay opacity"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "slide",
+      "name": "Slide",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image_desktop",
+          "label": "Desktop image (1440 x 810 px suggested)"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_mobile",
+          "label": "Mobile image (390 x 694 px suggested)"
+        },
+        {
+          "type": "select",
+          "id": "alignment",
+          "label": "Text alignment",
+          "options": [
+            { "value": "left", "label": "Left" },
+            { "value": "center", "label": "Center" },
+            { "value": "right", "label": "Right" }
+          ],
+          "default": "left"
+        },
+        {
+          "type": "text",
+          "id": "subheading",
+          "default": "OWN YOUR GLOW",
+          "label": "Subheading"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Diamonds That Speak Your Code",
+          "label": "Heading"
+        },
+        {
+          "type": "textarea",
+          "id": "description",
+          "default": "Ethically crafted, stackable fine jewelry designed for your daily edit. Because you don’t need an excuse to shine.",
+          "label": "Description text"
+        },
+        {
+          "type": "text",
+          "id": "button_1_label",
+          "default": "Shop Daily Ice",
+          "label": "Primary button text"
+        },
+        {
+          "type": "url",
+          "id": "button_1_link",
+          "label": "Primary button link"
+        },
+        {
+          "type": "text",
+          "id": "button_2_label",
+          "default": "Discover the Vibe",
+          "label": "Secondary button text"
+        },
+        {
+          "type": "url",
+          "id": "button_2_link",
+          "label": "Secondary button link"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hero banner",
+      "blocks": [
+        {
+          "type": "slide",
+          "settings": {
+            "subheading": "OWN YOUR GLOW",
+            "title": "Diamonds That Speak Your Code",
+            "description": "Ethically crafted, stackable fine jewelry designed for your daily edit. Because you don’t need an excuse to shine.",
+            "button_1_label": "Shop Daily Ice",
+            "button_2_label": "Discover the Vibe"
+          }
+        },
+        {
+          "type": "slide",
+          "settings": {
+            "subheading": "LESS TALK, MORE SHINE",
+            "title": "Liquid Ice, Stacked Your Way",
+            "description": "From sleek tennis bracelets to bold statement bands. Layer them up, make them yours, and elevate any fit instantly.",
+            "button_1_label": "Shop Tennis Collection",
+            "button_2_label": "View Stacking Guide"
+          }
+        },
+        {
+          "type": "slide",
+          "settings": {
+            "subheading": "REDEFINING FOREVER",
+            "title": "Diamonds Without Rules",
+            "description": "Gender-fluid silhouettes, organic textures, and bold cuts. Fine jewelry for the next era of love and individuality.",
+            "button_1_label": "Shop Fluid Jewelry",
+            "button_2_label": "Our Ethical Craft"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,906 @@
+{% comment %}
+  Renders the New Arrivals section with an interactive product carousel,
+  overlay navigation arrows, and customizable content options.
+{% endcomment %}
+
+<div class="new-arrivals section-spacing" style="
+  --bg-color: {{ section.settings.bg_color | default: '#FFFFFF' }};
+  --card-bg-color: {{ section.settings.card_bg_color | default: '#FFFFFF' }};
+">
+  <div class="new-arrivals__container">
+    
+    <!-- Section Header -->
+    <div class="new-arrivals__header">
+      {% if section.settings.subheading != blank %}
+        <div class="new-arrivals__subheading-wrapper">
+          <span class="new-arrivals__divider-line"></span>
+          <span class="new-arrivals__subheading">
+            {{ section.settings.subheading | split: '[emblem]' | first | escape }}
+            <span class="new-arrivals__subheading-emblem">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 3H18L22 9L12 22L2 9L6 3Z" fill="var(--color-accent, #D4AF37)"/>
+                <path d="M6 3L10 9L12 3L14 9L18 3" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 9H22" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M10 9L12 22L14 9" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            {{ section.settings.subheading | split: '[emblem]' | last | escape }}
+          </span>
+          <span class="new-arrivals__divider-line"></span>
+        </div>
+      {% endif %}
+      
+      {% if section.settings.title != blank %}
+        <h2 class="new-arrivals__heading serif-font">{{ section.settings.title | escape }}</h2>
+      {% endif %}
+      
+      {% if section.settings.description != blank %}
+        <p class="new-arrivals__description">{{ section.settings.description | escape }}</p>
+      {% endif %}
+      
+      <div class="new-arrivals__divider-ornament">
+        <span class="ornament-line"></span>
+        <span class="ornament-sparkle">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 3H18L22 9L12 22L2 9L6 3Z" fill="var(--color-accent, #D4AF37)"/>
+            <path d="M6 3L10 9L12 3L14 9L18 3" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 9H22" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 9L12 22L14 9" stroke="#FFFFFF" stroke-width="0.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="ornament-line"></span>
+      </div>
+    </div>
+
+    <!-- Carousel Viewport Wrapper -->
+    <div class="new-arrivals__slider-viewport">
+      <!-- Side arrows overlay (left/right of carousel) -->
+      <button class="new-arrivals__side-arrow new-arrivals__side-arrow--left new-arrivals__nav-btn--prev" aria-label="Previous Slide">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+      </button>
+      <button class="new-arrivals__side-arrow new-arrivals__side-arrow--right new-arrivals__nav-btn--next" aria-label="Next Slide">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </button>
+
+      <!-- Carousel Slider container -->
+      <div class="new-arrivals__slider">
+        <!-- Render Products -->
+        {% assign section_collection = collections[section.settings.collection] %}
+        {% if section_collection != blank and section_collection.products_count > 0 %}
+          {% for product in section_collection.products limit: 8 %}
+            <div class="new-arrivals__slide">
+              {% render 'product-card', product: product, badge_text: 'NEW', class_prefix: 'new-arrivals' %}
+            </div>
+          {% endfor %}
+        {% elsif request.design_mode %}
+          <!-- Editor-only hint: shows in the Theme Editor, never on the live storefront -->
+          <div class="new-arrivals__slide">
+            <p style="padding:3rem 2rem;text-align:center;color:#888;font-family:'Montserrat',sans-serif;font-size:1.4rem;">
+              Select a collection in this section's settings to display your products here.
+            </p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if section.settings.view_all_link != blank %}
+      <div class="new-arrivals__footer">
+        <a href="{{ section.settings.view_all_link }}" class="btn-view-all">
+          {{ section.settings.view_all_text | default: 'VIEW ALL' }}
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% stylesheet %}
+  .new-arrivals {
+    background-color: var(--bg-color, #FFFFFF);
+    padding-top: 8rem;
+    padding-bottom: 8rem;
+    overflow: hidden;
+  }
+
+  .new-arrivals__container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-left: 4.8rem;
+    padding-right: 4.8rem;
+    position: relative;
+  }
+
+  /* Section Header Styling */
+  .new-arrivals__header {
+    text-align: center;
+    max-width: 80rem;
+    margin: 0 auto 5rem auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Subheading with Emblem */
+  .new-arrivals__subheading-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    width: 100%;
+  }
+
+  .new-arrivals__divider-line {
+    height: 1px;
+    background-color: var(--color-accent, #D4AF37);
+    width: 80px;
+    opacity: 0.5;
+  }
+
+  .new-arrivals__subheading {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--color-accent, #D4AF37);
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    display: inline-flex;
+    align-items: center;
+    gap: 1.2rem;
+  }
+
+  .new-arrivals__subheading-emblem {
+    display: inline-flex;
+    align-items: center;
+    color: var(--color-accent, #D4AF37);
+  }
+
+  .new-arrivals__heading {
+    font-size: 4.2rem;
+    color: var(--color-primary, #013F3E);
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+
+  .new-arrivals__description {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.5rem;
+    font-style: normal;
+    color: var(--color-foreground, #1A1A1A);
+    opacity: 0.8;
+    margin-bottom: 2rem;
+    margin-top: 0;
+  }
+
+  .new-arrivals__divider-ornament {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    margin-top: 1rem;
+  }
+
+  .new-arrivals__divider-ornament .ornament-line {
+    height: 1px;
+    background-color: var(--color-accent, #D4AF37);
+    width: 40px;
+    opacity: 0.4;
+  }
+
+  .new-arrivals__divider-ornament .ornament-sparkle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* Section Footer / View All Styling */
+  .new-arrivals__footer {
+    text-align: center;
+    margin-top: 5rem;
+  }
+
+  .btn-view-all {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    padding: 1.6rem 4rem;
+    border: 1px solid var(--color-primary, #013F3E);
+    color: var(--color-primary, #013F3E);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    border-radius: 4px;
+    transition: background-color 0.35s ease, border-color 0.35s ease, transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.35s ease, color 0.35s ease;
+    text-transform: uppercase;
+    text-decoration: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .btn-view-all svg {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-view-all:hover {
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(1, 63, 62, 0.2);
+  }
+
+  .btn-view-all:hover svg {
+    transform: translateX(4px);
+  }
+
+  .btn-view-all:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 3px 8px rgba(1, 63, 62, 0.15);
+  }
+
+  /* Slider Viewport and Overlays */
+  .new-arrivals__slider-viewport {
+    position: relative;
+    width: 100%;
+  }
+
+  /* Side overlay arrows */
+  .new-arrivals__side-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4.8rem;
+    height: 4.8rem;
+    border-radius: 50%;
+    background-color: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: var(--color-primary, #013F3E);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
+    padding: 0;
+  }
+
+  .new-arrivals__side-arrow:hover {
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+    border-color: var(--color-primary, #013F3E);
+    transform: translateY(-50%) scale(1.08);
+  }
+
+  .new-arrivals__side-arrow--left {
+    left: -2.4rem;
+  }
+
+  .new-arrivals__side-arrow--right {
+    right: -2.4rem;
+  }
+
+  /* Horizontal Slider Track */
+  .new-arrivals__slider {
+    display: flex;
+    gap: 3.2rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+    padding: 1.6rem 0.8rem;
+    margin: -1.6rem -0.8rem;
+  }
+
+  .new-arrivals__slider::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  .new-arrivals__slider.dragging {
+    scroll-behavior: auto;
+    cursor: grabbing;
+  }
+
+  .new-arrivals__slide {
+    flex: 0 0 calc(25% - 2.4rem); /* 4 cards visible by default */
+    min-width: 280px;
+    box-sizing: border-box;
+  }
+
+  /* Card Component Styling (Matching best-sellers style but scoped to new arrivals) */
+  .new-arrivals__card {
+    background: var(--card-bg-color, #FFFFFF);
+    border-radius: 12px;
+    border: 1px solid rgba(1, 63, 62, 0.06);
+    overflow: hidden;
+    transition: transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    user-select: none;
+  }
+
+  .new-arrivals__card:hover {
+    transform: translateY(-8px) scale(1.01);
+    box-shadow: 0 15px 35px rgba(1, 63, 62, 0.1);
+  }
+
+  .new-arrivals__image-wrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    background-color: #FDFBF7;
+    overflow: hidden;
+  }
+
+  .new-arrivals__img-slides {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .new-arrivals__img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease, transform 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+
+  .new-arrivals__img.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .new-arrivals__card:hover .new-arrivals__img.active {
+    transform: scale(1.05);
+  }
+
+  .new-arrivals__card-tag {
+    position: absolute;
+    top: 1.6rem;
+    left: 1.6rem;
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    z-index: 2;
+    letter-spacing: 0.05em;
+  }
+
+  .new-arrivals__wishlist-btn {
+    position: absolute;
+    top: 1.6rem;
+    right: 1.6rem;
+    width: 3.6rem;
+    height: 3.6rem;
+    background-color: #FFFFFF;
+    color: #888888;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.3s ease, border-color 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 0;
+  }
+
+  @keyframes heartPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+
+  .new-arrivals__wishlist-btn:hover {
+    color: var(--color-accent, #D4AF37);
+    transform: scale(1.1);
+  }
+
+  .new-arrivals__wishlist-btn.active {
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+    border-color: var(--color-primary, #013F3E);
+  }
+
+  .new-arrivals__wishlist-btn svg {
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  .new-arrivals__wishlist-btn.active svg {
+    animation: heartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    fill: currentColor;
+    transform: scale(1.1);
+  }
+
+  .new-arrivals__dots {
+    position: absolute;
+    bottom: 1.6rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.6rem;
+    z-index: 2;
+  }
+
+  .new-arrivals__dots .dot {
+    width: 8px;
+    height: 8px;
+    background-color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 50%;
+    transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+    cursor: pointer;
+    padding: 0;
+    outline: none;
+  }
+
+  .new-arrivals__dots .dot:hover {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  .new-arrivals__dots .dot--active {
+    width: 20px;
+    height: 8px;
+    background-color: var(--color-accent, #D4AF37);
+    border-color: var(--color-accent, #D4AF37);
+    border-radius: 4px;
+  }
+
+  /* Card Content */
+  .new-arrivals__card-content {
+    padding: 2.4rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .new-arrivals__card-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--color-primary, #013F3E);
+    margin-bottom: 0.6rem;
+    line-height: 1.3;
+    margin-top: 0;
+  }
+
+  .new-arrivals__card-title a {
+    text-decoration: none;
+    color: inherit;
+    transition: color 0.3s ease;
+  }
+
+  .new-arrivals__card-title a:hover {
+    color: var(--color-accent, #D4AF37);
+  }
+
+  .new-arrivals__card-desc {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.25rem;
+    color: #777777;
+    margin-bottom: 1.6rem;
+    letter-spacing: 0.02em;
+    margin-top: 0;
+  }
+
+  .new-arrivals__price-row {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-bottom: 2.4rem;
+    flex-wrap: wrap;
+  }
+
+  .price-current {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-primary, #013F3E);
+  }
+
+  .price-original {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.4rem;
+    color: #999999;
+    text-decoration: line-through;
+  }
+
+  .price-discount {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    background-color: var(--color-accent, #D4AF37);
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .new-arrivals__button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: auto;
+  }
+
+  .btn-add-cart {
+    flex-grow: 1;
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+    border: 1px solid var(--color-primary, #013F3E);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 1.2rem 1.6rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    transition: background-color 0.35s ease, border-color 0.35s ease, transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.35s ease;
+  }
+
+  .btn-add-cart:hover {
+    transform: translateY(-2px) scale(1.02);
+    background-color: #012b2a;
+    border-color: #012b2a;
+    color: #FFFFFF;
+    box-shadow: 0 8px 20px rgba(1, 63, 62, 0.2);
+  }
+
+  .btn-add-cart:active {
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 3px 8px rgba(1, 63, 62, 0.15);
+  }
+
+  .btn-quick-view {
+    width: 4.8rem;
+    height: 4.8rem;
+    background-color: #FFFFFF;
+    color: var(--color-primary, #013F3E);
+    border: 1px solid rgba(1, 63, 62, 0.15);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s cubic-bezier(0.16, 1, 0.3, 1), color 0.35s ease, transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+    padding: 0;
+  }
+
+  .btn-quick-view:hover {
+    background-color: rgba(1, 63, 62, 0.05);
+    color: var(--color-primary, #013F3E);
+    border-color: var(--color-primary, #013F3E);
+    transform: scale(1.05);
+  }
+
+  .btn-quick-view:active {
+    transform: scale(0.95);
+  }
+
+  /* Responsive styling */
+  @media (max-width: 1200px) {
+    .new-arrivals__slide {
+      flex: 0 0 calc(33.333% - 2.2rem); /* 3 columns */
+    }
+  }
+
+  @media (max-width: 900px) {
+    .new-arrivals__slide {
+      flex: 0 0 calc(50% - 1.6rem); /* 2 columns */
+    }
+    .new-arrivals__side-arrow {
+      display: none; /* Hide overlay arrows on smaller screens, rely on touch swipe */
+    }
+  }
+
+  @media (max-width: 768px) {
+    .new-arrivals {
+      padding-top: 6rem;
+      padding-bottom: 6rem;
+    }
+    .new-arrivals__container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+    .new-arrivals__header {
+      margin-bottom: 3.5rem;
+    }
+    .new-arrivals__divider-line {
+      width: 45px;
+    }
+    .new-arrivals__subheading-wrapper {
+      gap: 1.2rem;
+    }
+    .new-arrivals__subheading {
+      font-size: 1.15rem;
+      letter-spacing: 0.2em;
+    }
+    .new-arrivals__heading {
+      font-size: 3rem;
+    }
+    .new-arrivals__description {
+      font-size: 1.35rem;
+      margin-bottom: 1.5rem;
+    }
+    .new-arrivals__footer {
+      margin-top: 3.5rem;
+    }
+    .btn-view-all {
+      padding: 1.2rem 3rem;
+      font-size: 1.2rem;
+    }
+    .new-arrivals__slider {
+      gap: 1.6rem;
+    }
+    .new-arrivals__slide {
+      min-width: 250px;
+    }
+    .new-arrivals__card-content {
+      padding: 1.6rem;
+    }
+    .new-arrivals__card-title {
+      font-size: 1.5rem;
+    }
+    .new-arrivals__card-desc {
+      font-size: 1.1rem;
+      margin-bottom: 1.2rem;
+    }
+    .new-arrivals__price-row {
+      margin-bottom: 1.6rem;
+    }
+    .price-current {
+      font-size: 1.6rem;
+    }
+    .price-original {
+      font-size: 1.2rem;
+    }
+    .price-discount {
+      font-size: 1rem;
+    }
+    .btn-add-cart {
+      font-size: 1rem;
+      padding: 1rem;
+    }
+    .btn-quick-view {
+      width: 4rem;
+      height: 4rem;
+    }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  function initNewArrivals() {
+    const section = document.querySelector('.new-arrivals');
+    if (!section) return;
+
+    const slider = section.querySelector('.new-arrivals__slider');
+    const prevBtns = section.querySelectorAll('.new-arrivals__nav-btn--prev');
+    const nextBtns = section.querySelectorAll('.new-arrivals__nav-btn--next');
+
+    if (!slider) return;
+
+    function getScrollAmount() {
+      const firstSlide = slider.querySelector('.new-arrivals__slide');
+      if (firstSlide) {
+        // Scroll by one card width plus the gap
+        return firstSlide.offsetWidth + 32;
+      }
+      return slider.offsetWidth * 0.75;
+    }
+
+    prevBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        slider.scrollBy({ left: -getScrollAmount(), behavior: 'smooth' });
+      });
+    });
+
+    nextBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        slider.scrollBy({ left: getScrollAmount(), behavior: 'smooth' });
+      });
+    });
+
+    // Desktop mouse drag scrolling
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    slider.addEventListener('mousedown', (e) => {
+      isDown = true;
+      slider.classList.add('dragging');
+      startX = e.pageX - slider.offsetLeft;
+      scrollLeft = slider.scrollLeft;
+    });
+
+    slider.addEventListener('mouseleave', () => {
+      isDown = false;
+      slider.classList.remove('dragging');
+    });
+
+    slider.addEventListener('mouseup', () => {
+      isDown = false;
+      slider.classList.remove('dragging');
+    });
+
+    slider.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - slider.offsetLeft;
+      const walk = (x - startX) * 1.5; // Drag sensitivity
+      slider.scrollLeft = scrollLeft - walk;
+    });
+
+    // Autoplay card images on hover (Same behavior as best sellers)
+    const cards = section.querySelectorAll('.new-arrivals__card');
+    cards.forEach(card => {
+      const slides = card.querySelectorAll('.new-arrivals__img');
+      const dots = card.querySelectorAll('.dot');
+      let currentIdx = 0;
+      let intervalId = null;
+
+      function showSlide(index) {
+        if (slides.length <= 1) return;
+        const idx = (index + slides.length) % slides.length;
+        currentIdx = idx;
+
+        slides.forEach((slide, i) => {
+          if (i === idx) {
+            slide.classList.add('active');
+          } else {
+            slide.classList.remove('active');
+          }
+        });
+
+        dots.forEach((dot, i) => {
+          if (i === idx) {
+            dot.classList.add('dot--active');
+          } else {
+            dot.classList.remove('dot--active');
+          }
+        });
+      }
+
+      dots.forEach(dot => {
+        dot.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const slideTo = parseInt(dot.getAttribute('data-slide-to') || 0);
+          showSlide(slideTo);
+          stopAutoplay();
+        });
+      });
+
+      function startAutoplay() {
+        if (slides.length <= 1) return;
+        stopAutoplay();
+        intervalId = setInterval(() => {
+          showSlide(currentIdx + 1);
+        }, 1800);
+      }
+
+      function stopAutoplay() {
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
+      }
+
+      card.addEventListener('mouseenter', startAutoplay);
+      card.addEventListener('mouseleave', () => {
+        stopAutoplay();
+        showSlide(0);
+      });
+    });
+
+    // Wishlist heart toggle handled globally in theme-ajax-sync.liquid
+  }
+
+  // Load handler
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNewArrivals);
+  } else {
+    initNewArrivals();
+  }
+
+  // Customizer reload support
+  document.addEventListener('shopify:section:load', (e) => {
+    if (e.target.querySelector('.new-arrivals')) {
+      initNewArrivals();
+    }
+  });
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "New arrivals",
+  "settings": [
+    {
+      "type": "text",
+      "id": "subheading",
+      "default": "NEW [emblem] ARRIVALS",
+      "label": "Subheading (use [emblem] where the SVG should render)"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "default": "Fresh Designs, Just For You",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "description",
+      "default": "Discover our latest handcrafted pieces, made to shine every day.",
+      "label": "Description"
+    },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection"
+    },
+    {
+      "type": "url",
+      "id": "view_all_link",
+      "label": "View All Link"
+    },
+    {
+      "type": "text",
+      "id": "view_all_text",
+      "default": "VIEW ALL",
+      "label": "View All Text"
+    },
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "default": "#FFFFFF",
+      "label": "Background color"
+    },
+    {
+      "type": "color",
+      "id": "card_bg_color",
+      "default": "#FFFFFF",
+      "label": "Card Background color"
+    }
+  ],
+  "presets": [
+    {
+      "name": "New arrivals",
+      "settings": {}
+    }
+  ]
+}
+{% endschema %}

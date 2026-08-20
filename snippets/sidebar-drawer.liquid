@@ -1,0 +1,360 @@
+{% doc %}
+  Renders a sliding sidebar drawer for displaying Cart or Wishlist contents.
+{% enddoc %}
+
+<div class="sidebar-drawer-overlay" id="SidebarDrawerOverlay"></div>
+
+<div class="sidebar-drawer" id="SidebarDrawer" aria-hidden="true">
+  <div class="sidebar-drawer__header">
+    <h2 class="sidebar-drawer__title" id="SidebarDrawerTitle">Your Cart</h2>
+    <button type="button" class="sidebar-drawer__close" id="SidebarDrawerClose" aria-label="Close drawer">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+  
+  <div class="sidebar-drawer__content" id="SidebarDrawerContent">
+    <!-- Items will be injected here via JavaScript -->
+  </div>
+  
+  <div class="sidebar-drawer__footer" id="SidebarDrawerFooter" style="display: none;">
+    <div style="text-align: center; font-size: 0.85rem; margin-bottom: 1rem; color: rgba(0,46,40,0.7); font-family: 'Inter', sans-serif;">
+      Discount codes can be applied at checkout.
+    </div>
+    <a href="/cart" class="btn-primary sidebar-drawer__checkout-btn">Proceed to Checkout</a>
+  </div>
+</div>
+
+<style>
+  .sidebar-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 46, 40, 0.4);
+    z-index: 1000000 !important;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    backdrop-filter: blur(2px);
+  }
+  .sidebar-drawer-overlay.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .sidebar-drawer {
+    position: fixed;
+    top: 0;
+    right: -420px;
+    width: 100%;
+    max-width: 420px;
+    height: 100vh;
+    background-color: #FAF8F2;
+    z-index: 1000001 !important;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
+    transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .sidebar-drawer.open {
+    right: 0;
+  }
+
+  .sidebar-drawer__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem;
+    border-bottom: 1px solid rgba(0, 46, 40, 0.1);
+  }
+
+  .sidebar-drawer__title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: var(--color-primary, #013F3E);
+    margin: 0;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .sidebar-drawer__close {
+    background: none;
+    border: none;
+    color: var(--color-primary, #013F3E);
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: color 0.2s;
+  }
+  .sidebar-drawer__close:hover {
+    color: var(--color-accent, #D4AF37);
+  }
+
+  .sidebar-drawer__content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .sidebar-drawer__empty-message {
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+    color: rgba(0, 46, 40, 0.6);
+    margin-top: 4rem;
+  }
+
+  .sidebar-drawer__item {
+    display: flex;
+    gap: 1.5rem;
+    border-bottom: 1px solid rgba(0, 46, 40, 0.05);
+    padding-bottom: 1.5rem;
+    position: relative;
+  }
+  .sidebar-drawer__item:last-child {
+    border-bottom: none;
+  }
+
+  .sidebar-drawer__item-image-wrapper {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    background-color: #fff;
+    border: 1px solid rgba(0, 46, 40, 0.05);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .sidebar-drawer__item-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .sidebar-drawer__item-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .sidebar-drawer__item-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--color-primary, #013F3E);
+    text-decoration: none;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .sidebar-drawer__item-price {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-accent, #D4AF37);
+  }
+
+  .sidebar-drawer__item-remove {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: none;
+    border: none;
+    color: rgba(0, 46, 40, 0.4);
+    cursor: pointer;
+    padding: 0.2rem;
+    transition: color 0.2s;
+  }
+  .sidebar-drawer__item-remove:hover {
+    color: #E25C5C;
+  }
+
+  .sidebar-drawer__item-qty {
+    font-size: 0.9rem;
+    color: rgba(0, 46, 40, 0.7);
+    margin-top: 0.2rem;
+  }
+
+  .sidebar-drawer__footer {
+    padding: 2rem;
+    border-top: 1px solid rgba(0, 46, 40, 0.1);
+    background-color: #fff;
+  }
+
+  .sidebar-drawer__checkout-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+    background-color: var(--color-primary, #013F3E);
+    color: #fff;
+    padding: 1.2rem;
+    text-decoration: none;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: background-color 0.2s;
+  }
+  .sidebar-drawer__checkout-btn:hover {
+    background-color: var(--color-accent, #D4AF37);
+  }
+
+  @media (max-width: 480px) {
+    .sidebar-drawer {
+      max-width: 100%;
+      right: -100%;
+    }
+  }
+</style>
+
+<script>
+  (function() {
+    const drawer = document.getElementById('SidebarDrawer');
+    const overlay = document.getElementById('SidebarDrawerOverlay');
+    const closeBtn = document.getElementById('SidebarDrawerClose');
+    const title = document.getElementById('SidebarDrawerTitle');
+    const content = document.getElementById('SidebarDrawerContent');
+    const footer = document.getElementById('SidebarDrawerFooter');
+    
+    let currentMode = 'cart'; // 'cart' or 'wishlist'
+
+    // Open Drawer
+    window.openSidebarDrawer = function(mode) {
+      currentMode = mode;
+      title.innerText = mode === 'cart' ? 'Your Cart' : 'Your Wishlist';
+      drawer.classList.add('open');
+      drawer.setAttribute('aria-hidden', 'false');
+      overlay.classList.add('active');
+      document.body.classList.add('body-lock');
+      document.body.classList.add('drawer-open');
+      renderDrawerContent();
+    };
+
+    // Close Drawer
+    window.closeSidebarDrawer = function() {
+      drawer.classList.remove('open');
+      drawer.setAttribute('aria-hidden', 'true');
+      overlay.classList.remove('active');
+      document.body.classList.remove('body-lock');
+      document.body.classList.remove('drawer-open');
+    };
+
+    closeBtn.addEventListener('click', closeSidebarDrawer);
+    overlay.addEventListener('click', closeSidebarDrawer);
+
+    // Format Money
+    function formatMoney(cents) {
+      if (window.formatMoney) {
+        return window.formatMoney(cents);
+      }
+      if (!cents) return '₹0';
+      const formatted = (cents / 100).toLocaleString('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      });
+      return formatted;
+    }
+
+    // Render Content
+    window.renderDrawerContent = function() {
+      content.innerHTML = '';
+      
+      let items = [];
+      try {
+        if (currentMode === 'cart') {
+          const stored = localStorage.getItem('cart_items_data');
+          if (stored) items = JSON.parse(stored);
+          footer.style.display = items.length > 0 ? 'block' : 'none';
+        } else {
+          const stored = localStorage.getItem('wishlist_items_data');
+          if (stored) items = JSON.parse(stored);
+          footer.style.display = 'none';
+        }
+      } catch(e) {
+        console.error('Local storage read error: ', e);
+      }
+
+      if (items.length === 0) {
+        content.innerHTML = `<div class="sidebar-drawer__empty-message">Your ${currentMode} is empty.</div>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const itemHtml = `
+          <div class="sidebar-drawer__item" data-id="${item.id}">
+            <div class="sidebar-drawer__item-image-wrapper">
+              <img src="${item.image || window.themeFallbackImage || '//cdn.shopify.com/s/images/themes/product-1.png'}" alt="${item.title}" class="sidebar-drawer__item-image">
+            </div>
+            <div class="sidebar-drawer__item-details">
+              <a href="${item.url || '#'}" class="sidebar-drawer__item-title">${item.title}</a>
+              <div class="sidebar-drawer__item-price">${formatMoney(item.price)}</div>
+              ${currentMode === 'cart' && item.quantity > 1 ? `<div class="sidebar-drawer__item-qty">Qty: ${item.quantity}</div>` : ''}
+            </div>
+            <button type="button" class="sidebar-drawer__item-remove" data-id="${item.id}" aria-label="Remove item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        `;
+        content.insertAdjacentHTML('beforeend', itemHtml);
+      });
+
+      // Add remove listeners
+      content.querySelectorAll('.sidebar-drawer__item-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          removeItem(id);
+        });
+      });
+    };
+
+    function removeItem(id) {
+      if (currentMode === 'cart') {
+        // Find quantity to update badge
+        let items = JSON.parse(localStorage.getItem('cart_items_data') || '[]');
+        const removedItem = items.find(i => i.id === id);
+        if (removedItem) {
+          let cartCount = parseInt(localStorage.getItem('cart_count') || '0');
+          cartCount = Math.max(0, cartCount - removedItem.quantity);
+          localStorage.setItem('cart_count', cartCount);
+          if (window.updateCartBadge) window.updateCartBadge();
+        }
+        
+        items = items.filter(i => i.id !== id);
+        localStorage.setItem('cart_items_data', JSON.stringify(items));
+      } else {
+        // Update both basic ID array and detailed objects for Wishlist
+        let items = JSON.parse(localStorage.getItem('wishlist_items_data') || '[]');
+        items = items.filter(i => i.id !== id);
+        localStorage.setItem('wishlist_items_data', JSON.stringify(items));
+
+        let wishlistIds = JSON.parse(localStorage.getItem('wishlist') || '[]');
+        wishlistIds = wishlistIds.filter(i => i !== id);
+        localStorage.setItem('wishlist', JSON.stringify(wishlistIds));
+        
+        if (window.updateWishlistBadge) window.updateWishlistBadge();
+        
+        // Uncheck the heart button on the UI if it's visible
+        const heartBtn = document.querySelector(`[data-product-id="${id}"] .active`);
+        if (heartBtn) {
+           heartBtn.classList.remove('active');
+        }
+      }
+      renderDrawerContent();
+    }
+  })();
+</script>

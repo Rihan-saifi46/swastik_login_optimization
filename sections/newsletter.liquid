@@ -1,0 +1,245 @@
+{% comment %}
+  Renders an elegant, full-width newsletter sign-up section with customizable backgrounds, headings, and descriptions.
+{% endcomment %}
+
+<div class="newsletter-section newsletter-section--{{ section.settings.bg_color }}">
+  <div class="container">
+    <div class="newsletter-card fade-in">
+      
+      <!-- Text content -->
+      <div class="newsletter-card__header">
+        {% if section.settings.subheading != blank %}
+          <span class="newsletter-card__subheading">{{ section.settings.subheading | escape }}</span>
+        {% endif %}
+        {% if section.settings.title != blank %}
+          <h2 class="newsletter-card__title serif-font">{{ section.settings.title | escape }}</h2>
+        {% endif %}
+        {% if section.settings.description != blank %}
+          <p class="newsletter-card__description">{{ section.settings.description | escape }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Sign-up Form -->
+      <div class="newsletter-card__form-wrapper">
+        {% form 'customer', class: 'newsletter-form' %}
+          <input type="hidden" name="contact[tags]" value="newsletter">
+          
+          <div class="newsletter-form__input-group">
+            <input
+              type="email"
+              name="contact[email]"
+              id="NewsletterEmail"
+              class="newsletter-form__input"
+              value="{{ form.email }}"
+              placeholder="Enter your email address"
+              autocorrect="off"
+              autocapitalize="off"
+              required
+            >
+            <button type="submit" class="btn btn-primary newsletter-form__btn" name="commit">
+              Subscribe
+            </button>
+          </div>
+
+          {% if form.posted_successfully? %}
+            <p class="newsletter-form__success-message">
+              Thank you for subscribing! You are now part of our inner circle.
+            </p>
+          {% endif %}
+        {% endform %}
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .newsletter-section {
+    padding-top: 12rem;
+    padding-bottom: 12rem;
+  }
+
+  /* Background options */
+  .newsletter-section--white {
+    background-color: var(--color-background, #FFFFFF);
+  }
+  .newsletter-section--cream {
+    background-color: var(--color-secondary-bg, #FDFBF7);
+  }
+  .newsletter-section--dark {
+    background-color: var(--color-primary, #013F3E);
+  }
+  .newsletter-section--dark .newsletter-card {
+    background-color: rgba(253, 251, 247, 0.03);
+    border: 1px solid rgba(253, 251, 247, 0.1);
+  }
+  .newsletter-section--dark .newsletter-card__title {
+    color: var(--color-secondary-bg, #FDFBF7);
+  }
+  .newsletter-section--dark .newsletter-card__description {
+    color: rgba(253, 251, 247, 0.75);
+  }
+  .newsletter-section--dark .newsletter-form__input {
+    background-color: rgba(253, 251, 247, 0.05);
+    border-color: rgba(253, 251, 247, 0.15);
+    color: #FFFFFF;
+  }
+  .newsletter-section--dark .newsletter-form__input:focus {
+    border-color: var(--color-accent, #D4AF37);
+  }
+  .newsletter-section--dark .newsletter-form__btn {
+    background-color: var(--color-accent, #D4AF37);
+    color: var(--color-primary, #013F3E);
+    border-color: var(--color-accent, #D4AF37);
+  }
+  .newsletter-section--dark .newsletter-form__btn:hover {
+    background-color: transparent;
+    color: var(--color-accent, #D4AF37);
+    border-color: var(--color-accent, #D4AF37);
+  }
+
+  .newsletter-card__header {
+    text-align: center;
+  }
+
+  /* Card styling */
+  .newsletter-card {
+    background-color: var(--color-secondary-bg, #FDFBF7);
+    border: 1px solid rgba(1, 63, 62, 0.05);
+    border-radius: 12px;
+    padding: 8rem 6rem;
+    max-width: 80rem;
+    margin: 0 auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .newsletter-card__subheading {
+    display: inline-block;
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    color: var(--color-accent, #D4AF37);
+    margin-bottom: 1.5rem;
+  }
+
+  .newsletter-card__title {
+    font-size: 3.8rem;
+    margin-bottom: 2rem;
+  }
+
+  .newsletter-card__description {
+    font-size: 1.6rem;
+    color: rgba(26, 26, 26, 0.7);
+    max-width: 50ch;
+    margin: 0 auto 4rem;
+  }
+
+  /* Form styling */
+  .newsletter-card__form-wrapper {
+    width: 100%;
+    max-width: 55rem;
+  }
+
+  .newsletter-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .newsletter-form__input-group {
+    display: flex;
+    width: 100%;
+    gap: 1.2rem;
+  }
+
+  .newsletter-form__input {
+    flex-grow: 1;
+  }
+
+  .newsletter-form__btn {
+    flex-shrink: 0;
+  }
+
+  .newsletter-form__success-message {
+    margin-top: 1.5rem;
+    color: var(--color-primary, #013F3E);
+    font-size: 1.4rem;
+    font-weight: 500;
+    text-align: center;
+  }
+  .newsletter-section--dark .newsletter-form__success-message {
+    color: var(--color-accent, #D4AF37);
+  }
+
+  @media (max-width: 768px) {
+    .newsletter-section {
+      padding-top: 6rem;
+      padding-bottom: 6rem;
+    }
+    .newsletter-card {
+      padding: 4rem 2rem;
+    }
+    .newsletter-card__title {
+      font-size: 2.8rem;
+    }
+    .newsletter-card__description {
+      font-size: 1.4rem;
+      margin-bottom: 3rem;
+    }
+    .newsletter-form__input-group {
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+    }
+    .newsletter-form__btn {
+      width: 100%;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Newsletter",
+  "settings": [
+    {
+      "type": "select",
+      "id": "bg_color",
+      "label": "Background color style",
+      "options": [
+        { "value": "white", "label": "White background" },
+        { "value": "cream", "label": "Luxury cream background" },
+        { "value": "dark", "label": "Brand emerald background" }
+      ],
+      "default": "cream"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "default": "Join the Inner Circle",
+      "label": "Subheading"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "default": "Exclusive Invitations",
+      "label": "Heading"
+    },
+    {
+      "type": "text",
+      "id": "description",
+      "default": "Subscribe to receive early access to new collection launches, trunk shows, and private exhibitions.",
+      "label": "Description"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Newsletter"
+    }
+  ]
+}
+{% endschema %}

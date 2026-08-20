@@ -1,0 +1,39 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "banner": {
+      "type": "main-collection-banner",
+      "settings": {
+        "show_text": false,
+        "title": "GOLD JEWELLERY",
+        "subtitle": "<p>A legacy in every layer. Discover pure, hallmarked gold crafted for generations.</p>",
+        "button_label": "DISCOVER GOLD",
+        "button_link": "",
+        "text_color": "#ffffff",
+        "bg_color": "#b38245",
+        "btn_bg_color": "#ffffff",
+        "btn_text_color": "#b38245"
+      }
+    },
+    "product_grid": {
+      "type": "main-collection-product-grid",
+      "settings": {
+        "bg_color": "#ffffff",
+        "show_coming_soon": true,
+        "coming_soon_text": "New Gold Design"
+      }
+    }
+  },
+  "order": [
+    "banner",
+    "product_grid"
+  ]
+}

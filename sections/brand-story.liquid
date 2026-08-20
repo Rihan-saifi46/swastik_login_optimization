@@ -1,0 +1,257 @@
+{% comment %}
+  Renders a storytelling section with a large image and a descriptive text block, ideal for sharing brand heritage or craftsmanship details.
+{% endcomment %}
+
+<div class="brand-story brand-story--{{ section.settings.bg_color }} brand-story--layout-{{ section.settings.layout }}">
+  <div class="container brand-story__grid">
+    
+    <!-- Image Column -->
+    <div class="brand-story__image-col">
+      {% if section.settings.image != blank %}
+        <div class="brand-story__image-wrapper hover-lift">
+          {{ section.settings.image | image_url: width: 1000 | image_tag: class: 'brand-story__img', loading: 'lazy' }}
+        </div>
+      {% else %}
+        <!-- Premium solid color block placeholder -->
+        <div class="brand-story__placeholder hover-lift">
+          <svg viewBox="0 0 100 100" class="brand-story__placeholder-svg">
+            <rect width="100" height="100" fill="var(--color-primary, #013F3E)" opacity="0.1"/>
+            <path d="M50 30 L65 50 L35 50 Z" fill="var(--color-accent, #D4AF37)"/>
+            <circle cx="50" cy="65" r="10" fill="var(--color-primary, #013F3E)"/>
+          </svg>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Text Column -->
+    <div class="brand-story__text-col">
+      {% if section.settings.subheading != blank %}
+        <span class="brand-story__subheading">{{ section.settings.subheading | escape }}</span>
+      {% endif %}
+      
+      {% if section.settings.title != blank %}
+        <h2 class="brand-story__title serif-font">{{ section.settings.title | escape }}</h2>
+      {% endif %}
+
+      {% if section.settings.content != blank %}
+        <div class="brand-story__content">
+          {{ section.settings.content | newline_to_br }}
+        </div>
+      {% endif %}
+
+      {% if section.settings.button_label != blank and section.settings.button_link != blank %}
+        <a href="{{ section.settings.button_link }}" class="btn btn-secondary brand-story__btn">
+          {{ section.settings.button_label | escape }}
+        </a>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+{% stylesheet %}
+  .brand-story {
+    padding-top: 10rem;
+    padding-bottom: 10rem;
+  }
+
+  /* Background options */
+  .brand-story--white {
+    background-color: var(--color-background, #FFFFFF);
+  }
+  .brand-story--cream {
+    background-color: var(--color-secondary-bg, #FDFBF7);
+  }
+  .brand-story--dark {
+    background-color: var(--color-primary, #013F3E);
+    color: #FFFFFF;
+  }
+  .brand-story--dark .brand-story__title {
+    color: var(--color-secondary-bg, #FDFBF7);
+  }
+  .brand-story--dark .brand-story__content {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .brand-story--dark .brand-story__btn {
+    color: var(--color-secondary-bg, #FDFBF7);
+    border-color: var(--color-accent, #D4AF37);
+  }
+  .brand-story--dark .brand-story__btn:hover {
+    background-color: var(--color-accent, #D4AF37);
+    color: var(--color-primary, #013F3E);
+  }
+
+  /* Grid layout */
+  .brand-story__grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 8rem;
+    align-items: center;
+  }
+
+  .brand-story--layout-right .brand-story__grid {
+    grid-template-columns: 1fr 1.2fr;
+  }
+  .brand-story--layout-right .brand-story__image-col {
+    order: 2;
+  }
+  .brand-story--layout-right .brand-story__text-col {
+    order: 1;
+  }
+
+  /* Image styling */
+  .brand-story__image-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.05);
+    aspect-ratio: 4/5;
+  }
+  .brand-story__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
+  }
+  .brand-story__image-wrapper:hover .brand-story__img {
+    transform: scale(1.03);
+  }
+
+  /* Fallback placeholder */
+  .brand-story__placeholder {
+    aspect-ratio: 4/5;
+    background-color: rgba(1, 63, 62, 0.03);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed rgba(212, 175, 55, 0.3);
+  }
+  .brand-story__placeholder-svg {
+    width: 40%;
+    height: auto;
+  }
+
+  /* Text block styling */
+  .brand-story__text-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  .brand-story__subheading {
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--color-accent, #D4AF37);
+  }
+  .brand-story__title {
+    font-size: 3.8rem;
+    line-height: 1.25;
+  }
+  .brand-story__content {
+    font-size: 1.5rem;
+    line-height: 1.8;
+    color: rgba(26, 26, 26, 0.8);
+  }
+  .brand-story__btn {
+    width: fit-content;
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 1024px) {
+    .brand-story__grid {
+      gap: 4rem;
+    }
+    .brand-story__title {
+      font-size: 3.2rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .brand-story {
+      padding-top: 6rem;
+      padding-bottom: 6rem;
+    }
+    .brand-story__grid {
+      grid-template-columns: 1fr !important;
+      gap: 3.5rem;
+    }
+    .brand-story__image-col,
+    .brand-story__text-col {
+      order: unset !important;
+    }
+    .brand-story__title {
+      font-size: 2.8rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Brand story",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Heritage image"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Image placement",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "right", "label": "Right" }
+      ],
+      "default": "left"
+    },
+    {
+      "type": "select",
+      "id": "bg_color",
+      "label": "Background color style",
+      "options": [
+        { "value": "white", "label": "White background" },
+        { "value": "cream", "label": "Luxury cream background" },
+        { "value": "dark", "label": "Brand emerald background" }
+      ],
+      "default": "cream"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "default": "Honoring Fine Artistry",
+      "label": "Subheading"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "default": "Handcrafted to Perfection",
+      "label": "Heading"
+    },
+    {
+      "type": "textarea",
+      "id": "content",
+      "default": "Swastik Jewels embodies a legacy of craftsmanship, bringing together rare gemstones and meticulous gold designs. Every piece of jewelry is individually hand-finished to reflect unmatched brilliance.\n\nFrom modern daily statement pieces to ancestral royal heirlooms, we craft stories to be passed down through generations.",
+      "label": "Story content text"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "default": "Discover our craftsmanship",
+      "label": "Button label"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Brand story"
+    }
+  ]
+}
+{% endschema %}

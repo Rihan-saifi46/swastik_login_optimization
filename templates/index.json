@@ -1,0 +1,716 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "hero_banner": {
+      "type": "hero-banner",
+      "blocks": {
+        "slide_pMGFNc": {
+          "type": "slide",
+          "settings": {
+            "image_desktop": "shopify://shop_images/new_size_1.png",
+            "image_mobile": "shopify://shop_images/diamond_772d79dc-a229-42f0-abbe-f16265fd4202.png",
+            "alignment": "left",
+            "subheading": "",
+            "title": "",
+            "description": "",
+            "button_1_label": "",
+            "button_1_link": "",
+            "button_2_label": "Discover the Vibe",
+            "button_2_link": ""
+          }
+        },
+        "slide_WxzxDN": {
+          "type": "slide",
+          "settings": {
+            "image_desktop": "shopify://shop_images/hero_banner_2_2800_x_1100_px_caa5edff-d986-451e-b14d-9b13e06df6a9.png",
+            "image_mobile": "shopify://shop_images/mobile_banner_gold_jewel.png",
+            "alignment": "left",
+            "subheading": "",
+            "title": "",
+            "description": "",
+            "button_1_label": "",
+            "button_1_link": "",
+            "button_2_label": "Discover the Vibe",
+            "button_2_link": ""
+          }
+        },
+        "slide_4LQDeb": {
+          "type": "slide",
+          "settings": {
+            "image_desktop": "shopify://shop_images/Untitled_design.png",
+            "image_mobile": "shopify://shop_images/mobile_banner_bridal_offer.png",
+            "alignment": "left",
+            "subheading": "",
+            "title": "",
+            "description": "",
+            "button_1_label": "",
+            "button_1_link": "",
+            "button_2_label": "Discover the Vibe",
+            "button_2_link": ""
+          }
+        }
+      },
+      "block_order": [
+        "slide_pMGFNc",
+        "slide_WxzxDN",
+        "slide_4LQDeb"
+      ],
+      "settings": {
+        "autoplay": true,
+        "autoplay_speed": 5,
+        "hero_size": "adapt",
+        "hero_height": 650,
+        "overlay_opacity": 10
+      }
+    },
+    "latest_collections": {
+      "type": "latest-collections",
+      "blocks": {
+        "clay_whispers": {
+          "type": "collection_card",
+          "settings": {
+            "image": "shopify://shop_images/sj_collection_desktop_396_x_460_px_25.png",
+            "title": "",
+            "subtitle": "",
+            "link": "shopify://collections/lab-grown-diamonds",
+            "text_position": "middle-center",
+            "title_style": "white",
+            "custom_title_color": "#ffffff",
+            "subtitle_color": "#ffffff",
+            "title_font_size_desktop": 28,
+            "title_font_size_mobile": 20,
+            "title_font_weight": "400"
+          }
+        },
+        "gemphony": {
+          "type": "collection_card",
+          "settings": {
+            "image": "shopify://shop_images/b6_Diamond.png",
+            "title": "",
+            "subtitle": "",
+            "link": "shopify://collections/natural-diamonds",
+            "text_position": "bottom-center",
+            "title_style": "gradient",
+            "custom_title_color": "#ffffff",
+            "subtitle_color": "#ffffff",
+            "title_font_size_desktop": 28,
+            "title_font_size_mobile": 20,
+            "title_font_weight": "400"
+          }
+        },
+        "raw_reverie": {
+          "type": "collection_card",
+          "settings": {
+            "image": "shopify://shop_images/sj_collection_desktop_396_x_460_px_31.png",
+            "title": "",
+            "subtitle": "",
+            "link": "shopify://collections/gold-jewellery",
+            "text_position": "middle-right",
+            "title_style": "gold",
+            "custom_title_color": "#ffffff",
+            "subtitle_color": "#ffffff",
+            "title_font_size_desktop": 28,
+            "title_font_size_mobile": 20,
+            "title_font_weight": "400"
+          }
+        }
+      },
+      "block_order": [
+        "clay_whispers",
+        "gemphony",
+        "raw_reverie"
+      ],
+      "settings": {
+        "eyebrow": "",
+        "title": "Three Worlds of Beauty",
+        "subtitle": "Every world, a story. Every piece, a masterpiece.",
+        "bg_color": "#fdfcfa",
+        "padding_top": 64,
+        "padding_bottom": 40,
+        "button_label": "Browse Collections",
+        "button_link": "shopify://collections/three-worlds-of-beauty",
+        "btn_bg_color": "#013f3e",
+        "btn_text_color": "#fdfcfa",
+        "btn_hover_bg_color": "#025654",
+        "btn_hover_text_color": "#ffffff"
+      }
+    },
+    "discover_grid": {
+      "type": "discover-grid",
+      "blocks": {
+        "rings": {
+          "type": "card",
+          "settings": {
+            "image": "shopify://shop_images/new.png",
+            "link": "shopify://collections/forever-classics"
+          }
+        },
+        "earrings": {
+          "type": "card",
+          "settings": {
+            "image": "shopify://shop_images/new_2.png",
+            "image_mobile": "shopify://shop_images/latest_ear_ring_flipped_version.png",
+            "link": "shopify://collections/everyday-sparkle"
+          }
+        },
+        "pendants": {
+          "type": "card",
+          "settings": {
+            "image": "shopify://shop_images/sj_narrow_category.png",
+            "link": "shopify://collections/close-to-heart"
+          }
+        },
+        "tennis": {
+          "type": "card",
+          "settings": {
+            "image": "shopify://shop_images/new_3.png",
+            "link": "shopify://collections/eternal-promises"
+          }
+        }
+      },
+      "block_order": [
+        "rings",
+        "earrings",
+        "pendants",
+        "tennis"
+      ],
+      "settings": {
+        "subheading": "DISCOVER",
+        "title": "Diamonds that stay with you",
+        "description": "Explore collections for every memory, and every YOU.",
+        "bg_color": "#fdfcfa",
+        "padding_top": 40,
+        "padding_bottom": 80
+      }
+    },
+    "gold_collection_showcase": {
+      "type": "gold-collection-showcase",
+      "blocks": {
+        "ring": {
+          "type": "collection",
+          "settings": {
+            "collection": "gold-rings",
+            "title": "GOLD RINGS",
+            "image": "shopify://shop_images/latest_4.png",
+            "is_coming_soon": false
+          }
+        },
+        "necklace": {
+          "type": "collection",
+          "settings": {
+            "collection": "gold-necklaces",
+            "title": "GOLD NECKLACES",
+            "image": "shopify://shop_images/latest_7.png",
+            "is_coming_soon": false
+          }
+        },
+        "pendant_set": {
+          "type": "collection",
+          "settings": {
+            "collection": "pendant-sets",
+            "title": "PENDANT SETS",
+            "image": "shopify://shop_images/latest_6.png",
+            "is_coming_soon": false
+          }
+        },
+        "earring": {
+          "type": "collection",
+          "settings": {
+            "collection": "gold-bracelets",
+            "title": "GOLD BRACELETS",
+            "image": "shopify://shop_images/latest_5.png",
+            "is_coming_soon": false
+          }
+        },
+        "bangle": {
+          "type": "collection",
+          "settings": {
+            "collection": "gold-chikpatti-sets",
+            "title": "GOLD CHIKPATTIS",
+            "image": "shopify://shop_images/Gold_Jewellery_1_a2a98288-c703-4edc-b5f2-9cdee7d1d7ac.png",
+            "is_coming_soon": false
+          }
+        }
+      },
+      "block_order": [
+        "ring",
+        "necklace",
+        "pendant_set",
+        "earring",
+        "bangle"
+      ],
+      "settings": {
+        "subheading": "TIMELESS. TRADITIONAL. YOU.",
+        "heading": "GOLD JEWELLERY",
+        "description": "Classic designs crafted in pure gold, made for every celebration.",
+        "button_label": "EXPLORE GOLD COLLECTION",
+        "button_link": "shopify://collections/gold-jewellery",
+        "bg_color": "#fbf6f0",
+        "text_color": "#0a2a26",
+        "accent_color": "#b38245"
+      }
+    },
+    "new_arrivals": {
+      "type": "new-arrivals",
+      "disabled": true,
+      "settings": {
+        "subheading": "NEW [emblem] ARRIVALS",
+        "title": "Fresh Designs, Just For You",
+        "description": "Discover our latest handcrafted pieces, made to shine every day.",
+        "collection": "new-arrivals",
+        "view_all_link": "",
+        "view_all_text": "VIEW ALL",
+        "bg_color": "#ffffff",
+        "card_bg_color": "#ffffff"
+      }
+    },
+    "best_sellers": {
+      "type": "best-sellers",
+      "disabled": true,
+      "settings": {
+        "title": "BEST SELLERS",
+        "subheading": "OUR MOST LOVED",
+        "description": "Handpicked favorites that our customers can't get enough of.",
+        "bg_color": "#ffffff"
+      }
+    },
+    "why_choose_us": {
+      "type": "why-choose-us",
+      "disabled": true,
+      "settings": {
+        "title": "Why Choose Us",
+        "subheading": "THE SWASTIK DIFFERENCE",
+        "description": "Discover the pillars of trust, craft, and care that define the Swastik experience.",
+        "bg_color": "#fdfbf7"
+      }
+    },
+    "shop_by_occasion": {
+      "type": "shop-by-occasion",
+      "blocks": {
+        "wedding": {
+          "type": "occasion",
+          "settings": {
+            "title": "Wedding",
+            "description": "Timeless designs for your most precious moments.",
+            "link": "",
+            "icon": "wedding"
+          }
+        },
+        "daily_wear": {
+          "type": "occasion",
+          "settings": {
+            "title": "Daily Wear",
+            "description": "Elegant & lightweight pieces for everyday you.",
+            "link": "",
+            "icon": "daily_wear"
+          }
+        },
+        "gifts": {
+          "type": "occasion",
+          "settings": {
+            "title": "Gifts",
+            "description": "Meaningful pieces for the ones who matter.",
+            "link": "",
+            "icon": "gifts"
+          }
+        },
+        "festive": {
+          "type": "occasion",
+          "settings": {
+            "title": "Festive Collection",
+            "description": "Shine brighter with festive ready designs.",
+            "link": "",
+            "icon": "festive"
+          }
+        }
+      },
+      "block_order": [
+        "wedding",
+        "daily_wear",
+        "gifts",
+        "festive"
+      ],
+      "disabled": true,
+      "settings": {
+        "title": "Find the Perfect Piece for Every Moment",
+        "subheading": "SHOP BY OCCASION",
+        "description": "Handpicked jewelry styles for life's celebrated milestones.",
+        "bg_color": "#ffffff",
+        "view_all_link": ""
+      }
+    },
+    "brand_story": {
+      "type": "brand-story",
+      "disabled": true,
+      "settings": {
+        "layout": "left",
+        "bg_color": "cream",
+        "subheading": "Honoring Fine Artistry",
+        "title": "Handcrafted to Perfection",
+        "content": "Swastik Jewels embodies a legacy of craftsmanship, bringing together rare gemstones and meticulous gold designs. Every piece of jewelry is individually hand-finished to reflect unmatched brilliance.\n\nFrom modern daily statement pieces to ancestral royal heirlooms, we craft stories to be passed down through generations.",
+        "button_label": "Discover our craftsmanship",
+        "button_link": ""
+      }
+    },
+    "newsletter": {
+      "type": "newsletter",
+      "disabled": true,
+      "settings": {
+        "bg_color": "cream",
+        "subheading": "Join the Inner Circle",
+        "title": "Exclusive Invitations",
+        "description": "Subscribe to receive early access to new collection launches, trunk shows, and private exhibitions."
+      }
+    },
+    "gifts_for_him_her": {
+      "type": "gifts-for-him-her",
+      "settings": {
+        "image_him": "shopify://shop_images/b14_new.png",
+        "title_him": "",
+        "link_him": "shopify://collections/gifts-for-her",
+        "image_her": "shopify://shop_images/b13_new.png",
+        "title_her": "Her",
+        "link_her": "shopify://collections/gifts-for-him",
+        "bg_color": "#f8f5ef",
+        "text_color": "#0a2a26",
+        "accent_color": "#b38245",
+        "border_color": "#ebe7df"
+      }
+    },
+    "made_for_every_bond": {
+      "type": "made-for-every-bond",
+      "blocks": {
+        "mother": {
+          "type": "bond",
+          "settings": {
+            "image": "shopify://shop_images/ChatGPT_Image_Jul_14_2026_04_44_45_PM.png",
+            "title": "For Mothers",
+            "subtitle": "Her love, our forever.",
+            "link": "/collections/made-for-every-bond/for-mothers",
+            "icon": "mother",
+            "custom_icon_svg": ""
+          }
+        },
+        "sister": {
+          "type": "bond",
+          "settings": {
+            "image": "shopify://shop_images/sisters_3.png",
+            "title": "For Sisters",
+            "subtitle": "Partners in all things.",
+            "link": "/collections/made-for-every-bond/for-sisters",
+            "icon": "sister",
+            "custom_icon_svg": ""
+          }
+        },
+        "bride": {
+          "type": "bond",
+          "settings": {
+            "image": "shopify://shop_images/b21_bride.png",
+            "title": "For Brides",
+            "subtitle": "For the beginning of forever.",
+            "link": "/collections/made-for-every-bond/for-brides",
+            "icon": "bride",
+            "custom_icon_svg": ""
+          }
+        }
+      },
+      "block_order": [
+        "mother",
+        "sister",
+        "bride"
+      ],
+      "settings": {
+        "heading_main": "Made for",
+        "heading_accent": "Every Bond",
+        "description": "Beautiful jewellery for the people who make every moment special.",
+        "button_label": "Explore Collection",
+        "button_link": "/collections/made-for-every-bond",
+        "bg_color": "#fdfcfa",
+        "text_color": "#0a2a26",
+        "accent_color": "#b38245"
+      }
+    },
+    "store_highlights": {
+      "type": "store-highlights",
+      "blocks": {
+        "hallmark": {
+          "type": "highlight",
+          "settings": {
+            "icon": "hallmark",
+            "title": "BIS HALLMARKED",
+            "description": "100% certified gold you can trust."
+          }
+        },
+        "diamond": {
+          "type": "highlight",
+          "settings": {
+            "icon": "diamond",
+            "title": "IGI CERTIFIED",
+            "description": "100% IGI certified diamonds you can trust."
+          }
+        },
+        "shipping": {
+          "type": "highlight",
+          "settings": {
+            "icon": "insurance",
+            "title": "FREE INSURANCE",
+            "description": "100% safe & transit insured delivery."
+          }
+        },
+        "exchange": {
+          "type": "highlight",
+          "settings": {
+            "icon": "exchange",
+            "title": "LIFETIME EXCHANGE",
+            "description": "Our promise of trust, forever."
+          }
+        },
+        "support": {
+          "type": "highlight",
+          "settings": {
+            "icon": "support",
+            "title": "EXPERT SUPPORT",
+            "description": "Here for you at every step of the way."
+          }
+        }
+      },
+      "block_order": [
+        "hallmark",
+        "diamond",
+        "shipping",
+        "exchange",
+        "support"
+      ],
+      "settings": {
+        "bg_color": "#fbf6f0",
+        "border_color": "#ebe7df",
+        "icon_color": "#b38245",
+        "text_color": "#0a2a26",
+        "desc_color": "#555555",
+        "autoplay": true,
+        "autoplay_speed": 3
+      }
+    },
+    "for_every_you": {
+      "type": "for-every-you",
+      "blocks": {
+        "slide_2": {
+          "type": "slide",
+          "settings": {
+            "image": "shopify://shop_images/b19_daily_1.png",
+            "title": "",
+            "subtitle": "",
+            "link": "shopify://collections/daily-wear"
+          }
+        },
+        "slide_5": {
+          "type": "slide",
+          "settings": {
+            "image": "shopify://shop_images/new_b15_office_wear_1.png",
+            "title": "",
+            "subtitle": "",
+            "link": "shopify://collections/office-wear"
+          }
+        },
+        "slide_1": {
+          "type": "slide",
+          "settings": {
+            "image": "shopify://shop_images/b16_wedding_1.png",
+            "title": "",
+            "subtitle": "",
+            "link": "shopify://collections/wedding-wear"
+          }
+        },
+        "slide_3": {
+          "type": "slide",
+          "settings": {
+            "image": "shopify://shop_images/b_20_festive.png",
+            "title": "",
+            "subtitle": "",
+            "link": "shopify://collections/festive-wear"
+          }
+        },
+        "slide_4": {
+          "type": "slide",
+          "settings": {
+            "image": "shopify://shop_images/b18_new_party_wear.png",
+            "title": "",
+            "subtitle": "",
+            "link": "shopify://collections/party-wear"
+          }
+        }
+      },
+      "block_order": [
+        "slide_2",
+        "slide_5",
+        "slide_1",
+        "slide_3",
+        "slide_4"
+      ],
+      "settings": {
+        "heading": "FOR EVERY YOU",
+        "subheading": "For every mood, moment, and milestone — there is a piece that speaks your style.",
+        "bg_color": "#ffffff",
+        "text_color": "#0a2a26"
+      }
+    },
+    "video_call": {
+      "type": "video-call",
+      "settings": {
+        "image": "shopify://shop_images/b12_video_call.png",
+        "image_mobile": "shopify://shop_images/video_call_tab_version_56a9ef25-d8ee-4cf0-8351-0f18f6073156.png",
+        "bg_color": "#fdf9f5",
+        "heading": "Shop with Confidence, From Wherever You Are.",
+        "text": "Connect on a video call with our experts and find your perfect jewellery.",
+        "button_label": "SCHEDULE A VIDEO CALL",
+        "button_link": ""
+      }
+    },
+    "instagram_reels": {
+      "type": "instagram-reels",
+      "blocks": {
+        "reel_4": {
+          "type": "reel",
+          "settings": {
+            "video_url": "shopify://files/videos/Diamond Bali.mp4",
+            "view_count": "1M"
+          }
+        },
+        "reel_2": {
+          "type": "reel",
+          "settings": {
+            "video_url": "shopify://files/videos/IGI Certified Diamond Rings.mp4",
+            "view_count": "1M"
+          }
+        },
+        "reel_3": {
+          "type": "reel",
+          "settings": {
+            "video_url": "shopify://files/videos/cocktail rings.mp4",
+            "view_count": "3.6M"
+          }
+        },
+        "reel_1": {
+          "type": "reel",
+          "settings": {
+            "video_url": "shopify://files/videos/✨ 5 Diamond Bali Designs Under 3 Grams – Lightweight Luxury for Everyday Elegance! ✨Looking for  (1).mp4",
+            "view_count": "11.9K"
+          }
+        }
+      },
+      "block_order": [
+        "reel_4",
+        "reel_2",
+        "reel_3",
+        "reel_1"
+      ],
+      "settings": {
+        "subheading": "The Swastik Edit",
+        "heading": "Every Detail Deserves a Closer Look",
+        "description": "",
+        "button_label": "FOLLOW US ON INSTAGRAM",
+        "button_link": "https://www.instagram.com/swastikjewels_bynitingupta/",
+        "bg_color": "#fdfaf7",
+        "padding_top": 40,
+        "padding_bottom": 60
+      }
+    },
+    "testimonials_slider": {
+      "type": "testimonials-slider",
+      "blocks": {
+        "testimonial_1": {
+          "type": "testimonial",
+          "settings": {
+            "rating": 5,
+            "text": "Beautiful craftsmanship and genuine diamonds. Worth every penny.",
+            "author": "Neha Agarwal",
+            "location": "JAIPUR"
+          }
+        },
+        "testimonial_2": {
+          "type": "testimonial",
+          "settings": {
+            "rating": 5,
+            "text": "The engagement ring was everything I hoped for and more.",
+            "author": "Kunal Malhotra",
+            "location": "PUNE"
+          }
+        },
+        "testimonial_3": {
+          "type": "testimonial",
+          "settings": {
+            "rating": 5,
+            "text": "Customer support was amazing. They answered every question patiently.",
+            "author": "Simran Bhatia",
+            "location": "GURUGRAM"
+          }
+        },
+        "testimonial_4": {
+          "type": "testimonial",
+          "settings": {
+            "rating": 5,
+            "text": "Loved the packaging and the certification details.",
+            "author": "Aditi Sharma",
+            "location": "DELHI"
+          }
+        }
+      },
+      "block_order": [
+        "testimonial_1",
+        "testimonial_2",
+        "testimonial_3",
+        "testimonial_4"
+      ],
+      "settings": {
+        "layout_style": "centered",
+        "show_rating_badge": true,
+        "rating_badge_text": "4.9/5",
+        "subheading": "REAL STORIES, REAL TRUST",
+        "title": "Loved By Thousands",
+        "trust_copy": "Over 4,800+ customers trust Swastik Jewels for life's most special moments.",
+        "stat_1_value": "",
+        "stat_1_label": "",
+        "stat_2_value": "",
+        "stat_2_label": "",
+        "stat_3_value": "",
+        "stat_3_label": "",
+        "stat_4_value": "",
+        "stat_4_label": "",
+        "bg_color": "#fdfbf7",
+        "text_color": "#013f3e",
+        "accent_color": "#d4af37",
+        "autoplay": true,
+        "autoplay_speed": 6,
+        "padding_top": 40,
+        "padding_bottom": 40
+      }
+    }
+  },
+  "order": [
+    "hero_banner",
+    "latest_collections",
+    "discover_grid",
+    "gold_collection_showcase",
+    "new_arrivals",
+    "best_sellers",
+    "why_choose_us",
+    "shop_by_occasion",
+    "brand_story",
+    "newsletter",
+    "gifts_for_him_her",
+    "made_for_every_bond",
+    "store_highlights",
+    "for_every_you",
+    "video_call",
+    "instagram_reels",
+    "testimonials_slider"
+  ]
+}

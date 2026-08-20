@@ -1,0 +1,879 @@
+{%- assign mobile_menu = section.settings.menu -%}
+{%- if mobile_menu == blank -%}
+  {%- assign mobile_menu = linklists['main-menu'] -%}
+{%- endif -%}
+
+{% comment %}
+  Mobile Categories Luxury Side Drawer (Like Burger Menu)
+  - 85% width side sheet with dark backdrop overlay (no full screen mode)
+  - Fixed search input padding & icon alignment
+  - Sleek Cartier/Tiffany style luxury text capsule tabs (removed cluttered blurry photo circles)
+  - Unified luxury card subcategories with diamond craftsmanship bullets
+  - Complete image interceptor for Shopify sample images (product-1.png to product-6.png)
+{% endcomment %}
+
+<!-- Mobile Categories Luxury Side Drawer -->
+<div class="mobile-categories-drawer" id="MobileCategoriesOverlay" aria-hidden="true">
+  <div class="mobile-categories-drawer__backdrop" id="MobileCategoriesBackdrop"></div>
+  <div class="mobile-categories-drawer__content">
+    
+    <!-- Header -->
+    <div class="mobile-categories-drawer__header">
+      <div class="mobile-categories-drawer__title-wrap">
+        <h2>Categories</h2>
+        <div class="ornament">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="0" y1="12" x2="8" y2="12" stroke="#D4AF37" stroke-width="1"></line>
+            <path d="M12 9l1.5 2.5L16 12l-2.5 1.5L12 16l-1.5-2.5L8 12l2.5-1.5L12 9z" fill="#D4AF37"></path>
+            <line x1="16" y1="12" x2="24" y2="12" stroke="#D4AF37" stroke-width="1"></line>
+          </svg>
+        </div>
+      </div>
+      <button type="button" class="mobile-categories-drawer__close" id="MobileCategoriesClose" aria-label="Close categories">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#00352A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Search Section (Fixed padding & alignment so icon never overlaps!) -->
+    <div class="mobile-categories-drawer__search">
+      <form action="{{ routes.search_url }}" method="get" role="search" id="MobileCategorySearchForm" class="mobile-search-form">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="search" name="q" id="MobileCategorySearchInput" placeholder="Search rings, earrings, diamonds..." value="{{ search.terms | escape }}" autocomplete="off" autocorrect="off">
+        <button type="button" id="MobileCategorySearchClear" class="search-clear-btn" style="display: none;" aria-label="Clear search">✕</button>
+        <input type="hidden" name="options[prefix]" value="last">
+      </form>
+    </div>
+
+    <!-- Live Predictive Search Results Container -->
+    <div id="MobileCategorySearchResults" class="mobile-live-search-container" style="display: none;"></div>
+
+    <!-- Top Category Tabs Bar (Dynamic from Menu) -->
+    <div class="mobile-categories-drawer__tabs-bar" id="MobileCategoriesTabsBar">
+      {%- assign is_first = true -%}
+      {%- for link in mobile_menu.links -%}
+        {%- assign link_handle = link.title | handleize -%}
+        <button type="button" class="category-tab-pill{% if is_first %} active{% endif %}" data-category="{{ link_handle }}">
+          {{ link.title }}
+        </button>
+        {%- assign is_first = false -%}
+      {%- endfor -%}
+    </div>
+
+    <!-- Dynamic Category Content Area (Subcategories + Real Products Grid!) -->
+    <div class="mobile-categories-drawer__body" id="MobileCategoriesBody">
+      <!-- Populated by JS when tab is clicked -->
+    </div>
+
+  </div>
+</div>
+
+<style>
+/* Luxury Side Drawer Styling - 85% Width (Like Burger Menu) */
+.mobile-categories-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000000 !important;
+  visibility: hidden;
+  transition: visibility 0.35s ease;
+}
+
+.mobile-categories-drawer.open {
+  visibility: visible;
+}
+
+.mobile-categories-drawer__backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(1, 39, 38, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.mobile-categories-drawer.open .mobile-categories-drawer__backdrop {
+  opacity: 1;
+}
+
+.mobile-categories-drawer__content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 85%;
+  max-width: 380px;
+  height: 100%;
+  background-color: #FFFFFF;
+  color: #111111;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 30px rgba(0, 0, 0, 0.15);
+  transform: translateX(-100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+.mobile-categories-drawer.open .mobile-categories-drawer__content {
+  transform: translateX(0);
+}
+
+/* Header */
+.mobile-categories-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.2rem;
+  background-color: #FFFFFF;
+  border-bottom: 1px solid #F0F0F0;
+}
+
+.mobile-categories-drawer__title-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-categories-drawer__title-wrap h2 {
+  font-family: var(--font-heading-family), serif;
+  font-size: 1.4rem;
+  color: #00352A;
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.mobile-categories-drawer__title-wrap .ornament {
+  margin-top: 4px;
+}
+
+.mobile-categories-drawer__close {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Search Box - 100% Guaranteed No Overlap */
+.mobile-categories-drawer__search {
+  padding: 1rem 1.2rem 0.8rem 1.2rem;
+  background: #FFFFFF;
+  border-bottom: 1px solid #F5F5F5;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.mobile-search-form {
+  position: relative !important;
+  width: 100% !important;
+  display: block !important;
+}
+
+.mobile-search-form input[type="search"] {
+  width: 100% !important;
+  height: 44px !important;
+  padding: 10px 36px 10px 42px !important;
+  border: 1.5px solid #E0E0E0 !important;
+  border-radius: 50px !important;
+  background-color: #F9F9F9 !important;
+  font-size: 14px !important;
+  color: #222 !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02) !important;
+  box-sizing: border-box !important;
+}
+
+.mobile-search-form input[type="search"]:focus {
+  outline: none !important;
+  border-color: #D4AF37 !important;
+  background-color: #FFF !important;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15) !important;
+}
+
+.mobile-search-form .search-icon {
+  position: absolute !important;
+  left: 14px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 18px !important;
+  height: 18px !important;
+  color: #888 !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+
+.search-clear-btn {
+  position: absolute !important;
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: #EEE !important;
+  border: none !important;
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 50% !important;
+  font-size: 11px !important;
+  color: #666 !important;
+  display: flex;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  z-index: 2 !important;
+}
+
+/* Horizontal Category Tabs Bar (Sleek Cartier/Tiffany Style Luxury Text Capsules) */
+.mobile-categories-drawer__tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 1.2rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  background-color: #FAFAF8;
+  border-bottom: 1px solid #EBE7E0;
+}
+
+.mobile-categories-drawer__tabs-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.category-tab-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 22px;
+  background-color: #FFFFFF;
+  border: 1.5px solid #E0D8CE;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2C221E;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+  letter-spacing: 0.2px;
+}
+
+.category-tab-pill:hover {
+  background-color: #F4EFEA;
+  border-color: #D4AF37;
+  color: #00352A;
+  transform: translateY(-1px);
+}
+
+.category-tab-pill.active {
+  background-color: #00352A;
+  color: #FFFFFF;
+  border-color: #00352A;
+  box-shadow: 0 4px 14px rgba(0, 53, 42, 0.28);
+  transform: translateY(-1px);
+}
+
+/* Dynamic Body Area */
+.mobile-categories-drawer__body {
+  flex: 1;
+  padding: 1.4rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Section Headers */
+.category-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #7A6F66;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.category-section-title a {
+  font-size: 0.8rem;
+  color: #00352A;
+  text-decoration: none;
+  text-transform: none;
+  font-weight: 600;
+  letter-spacing: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.2s ease;
+}
+
+.category-section-title a:hover {
+  opacity: 0.8;
+}
+
+/* Subcategories Luxury Card Container */
+.subcategories-list {
+  display: flex;
+  flex-direction: column;
+  background-color: #FCFBF9;
+  border: 1px solid #EBE6DF;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.subcategory-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  text-decoration: none;
+  color: #2C221E;
+  font-weight: 500;
+  font-size: 0.94rem;
+  border-bottom: 1px solid #EBE6DF;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  background: transparent;
+}
+
+.subcategory-item:last-child {
+  border-bottom: none;
+}
+
+.subcategory-item:hover, .subcategory-item:active {
+  background-color: #F5EFE6;
+  padding-left: 20px;
+  color: #00352A;
+}
+
+.subcategory-item__label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subcategory-item__diamond {
+  color: #D4AF37;
+  font-size: 0.8rem;
+  transition: transform 0.2s ease;
+}
+
+.subcategory-item:hover .subcategory-item__diamond {
+  transform: scale(1.25);
+}
+
+.subcategory-item__arrow {
+  color: #D4AF37;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s ease;
+}
+
+.subcategory-item:hover .subcategory-item__arrow {
+  transform: translateX(3px);
+}
+
+/* Featured Products Grid inside Category Menu */
+.category-products-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.category-product-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  background: #FFFFFF;
+  border: 1px solid #EBE6DF;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.03);
+}
+
+.category-product-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  border-color: #D4AF37;
+}
+
+.category-product-card__img-wrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #FAFAF8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.category-product-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.category-product-card:hover .category-product-card__img {
+  transform: scale(1.04);
+}
+
+.category-product-card__info {
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+}
+
+.category-product-card__title {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #1C2B26;
+  line-height: 1.35;
+  margin-bottom: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.category-product-card__price-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.category-product-card__price {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #00352A;
+}
+
+.category-product-card__compare {
+  font-size: 0.74rem;
+  color: #999;
+  text-decoration: line-through;
+}
+
+/* Live Search Container */
+.mobile-live-search-container {
+  padding: 1rem 1.2rem 2rem 1.2rem;
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+}
+
+.live-search-loading {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #7A6F66;
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.live-search-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid #F5F5F5;
+  text-decoration: none;
+  color: inherit;
+  transition: padding-left 0.2s ease;
+}
+
+.live-search-item:hover, .live-search-item:active {
+  padding-left: 6px;
+}
+
+.live-search-item__img {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: #F9F9F9;
+  border: 1px solid #EBE6DF;
+}
+
+.live-search-item__info {
+  flex: 1;
+}
+
+.live-search-item__title {
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #222;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.live-search-item__price {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #00352A;
+}
+
+.live-search-item__compare-price {
+  font-size: 0.75rem;
+  color: #999;
+  text-decoration: line-through;
+  margin-left: 6px;
+}
+
+mark.search-highlight {
+  background: rgba(255, 223, 0, 0.5);
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.live-search-view-all {
+  display: block;
+  text-align: center;
+  padding: 14px;
+  margin-top: 18px;
+  background: #00352A;
+  color: #FFF;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.92rem;
+  box-shadow: 0 4px 14px rgba(0, 53, 42, 0.25);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const drawer = document.getElementById('MobileCategoriesOverlay');
+  const backdrop = document.getElementById('MobileCategoriesBackdrop');
+  const closeBtn = document.getElementById('MobileCategoriesClose');
+  const toggles = document.querySelectorAll('.js-mobile-categories-toggle, .js-mobile-search-toggle, [href="#MobileCategoriesOverlay"]');
+  const tabsBar = document.getElementById('MobileCategoriesTabsBar');
+  const bodyArea = document.getElementById('MobileCategoriesBody');
+  const tabPills = document.querySelectorAll('.category-tab-pill');
+
+  // Search elements
+  const searchInput = document.getElementById('MobileCategorySearchInput');
+  const searchClear = document.getElementById('MobileCategorySearchClear');
+  const searchResults = document.getElementById('MobileCategorySearchResults');
+  let searchTimeout;
+
+  // Reusable Luxury Image Interceptor (Catches all Shopify sample drawings like product-1.png to product-6.png)
+  function getLuxuryImageUrl(imgUrl, categoryKey = 'rings') {
+    let isFallback = !imgUrl || 
+        imgUrl.includes('no-image') || 
+        imgUrl.includes('placeholder') || 
+        imgUrl.includes('.gif') || 
+        imgUrl.includes('product-1') || 
+        imgUrl.includes('product-2') || 
+        imgUrl.includes('product-3') || 
+        imgUrl.includes('product-4') || 
+        imgUrl.includes('product-5') || 
+        imgUrl.includes('product-6') || 
+        imgUrl.includes('s/images/themes') || 
+        imgUrl.includes('empty-state');
+
+    // If it's a predictive search result, prod.image might be an object { url: ... } in some API versions
+    if (imgUrl && typeof imgUrl === 'object' && imgUrl.url) {
+      imgUrl = imgUrl.url;
+      // Re-evaluate fallback with the string URL
+      isFallback = !imgUrl || 
+          imgUrl.includes('no-image') || 
+          imgUrl.includes('placeholder') || 
+          imgUrl.includes('.gif') || 
+          imgUrl.includes('product-1') || 
+          imgUrl.includes('product-2') || 
+          imgUrl.includes('product-3') || 
+          imgUrl.includes('product-4') || 
+          imgUrl.includes('product-5') || 
+          imgUrl.includes('product-6') || 
+          imgUrl.includes('s/images/themes') || 
+          imgUrl.includes('empty-state');
+    }
+
+    if (isFallback) {
+      const key = String(categoryKey).toLowerCase();
+      if (key.includes('earring') || key.includes('stud') || key.includes('jhumka')) {
+        return '{{ "earring_placeholder.png" | asset_url }}';
+      } else if (key.includes('bracelet') || key.includes('bangle') || key.includes('wrist') || key.includes('classic')) {
+        return '{{ "bangle_placeholder.png" | asset_url }}';
+      } else if (key.includes('necklace') || key.includes('choker') || key.includes('jewel')) {
+        return '{{ "necklace_placeholder.png" | asset_url }}';
+      } else if (key.includes('pendant')) {
+        return '{{ "pendant_placeholder.png" | asset_url }}';
+      } else {
+        return '{{ "ring_placeholder.png" | asset_url }}';
+      }
+    }
+    return imgUrl;
+  }
+
+  // Category Subcategories & Links Data (Dynamic from Menu)
+  const categoriesData = {
+    {%- for link in mobile_menu.links -%}
+      {%- assign link_handle = link.title | handleize -%}
+      "{{ link_handle }}": {
+        name: {{ link.title | json }},
+        url: {{ link.url | json }},
+        subcategories: [
+          {%- for childlink in link.links -%}
+            { title: {{ childlink.title | json }}, url: {{ childlink.url | json }} }
+            {%- unless forloop.last -%},{%- endunless -%}
+          {%- endfor -%}
+        ]
+      }
+      {%- unless forloop.last -%},{%- endunless -%}
+    {%- endfor -%}
+  };
+
+  // Open / Close Drawer Logic
+  function openDrawer() {
+    if (!drawer) return;
+    drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    
+    // Default to the first key in categoriesData
+    const keys = Object.keys(categoriesData);
+    if (keys.length > 0) {
+      renderCategoryContent(keys[0]);
+    } else {
+      if (bodyArea) bodyArea.innerHTML = '<div style="padding: 2rem 0; text-align: center; color: #7a6f66;">No categories configured.</div>';
+    }
+  }
+
+  function closeDrawer() {
+    if (!drawer) return;
+    drawer.classList.remove('open');
+    drawer.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  toggles.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openDrawer();
+    });
+  });
+
+  if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+  if (backdrop) backdrop.addEventListener('click', closeDrawer);
+
+  // Tab Selection & Dynamic Content Rendering
+  function renderCategoryContent(categoryKey) {
+    if (!bodyArea) return;
+    const cat = categoriesData[categoryKey] || categoriesData['rings'];
+
+    // Update active tab styling
+    tabPills.forEach(pill => {
+      if (pill.getAttribute('data-category') === categoryKey) {
+        pill.classList.add('active');
+      } else {
+        pill.classList.remove('active');
+      }
+    });
+
+    // 1. Build Subcategories HTML with Luxury Diamond Bullets
+    let subcatsHtml = '';
+    if (cat.subcategories && cat.subcategories.length > 0) {
+      subcatsHtml = `
+        <div>
+          <div class="category-section-title">
+            <span>Shop ${cat.name} By</span>
+            <a href="${cat.url}">View All ↗</a>
+          </div>
+          <div class="subcategories-list">
+      `;
+
+      cat.subcategories.forEach(sub => {
+        subcatsHtml += `
+          <a href="${sub.url}" class="subcategory-item">
+            <span class="subcategory-item__label"><span class="subcategory-item__diamond">◈</span> ${sub.title}</span>
+            <span class="subcategory-item__arrow">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </span>
+          </a>
+        `;
+      });
+      subcatsHtml += `</div></div>`;
+    }
+
+    // 2. Build Featured Products Container (Will be populated via fetch)
+    const productsContainerId = `FeaturedProducts_${categoryKey}`;
+    let productsHtml = `
+      <div>
+        <div class="category-section-title">
+          <span>Featured in ${cat.name}</span>
+        </div>
+        <div id="${productsContainerId}" class="category-products-grid">
+          <div class="live-search-loading" style="grid-column: span 2; padding: 1.5rem 0;">Loading luxury jewelry...</div>
+        </div>
+      </div>
+    `;
+
+    bodyArea.innerHTML = subcatsHtml + productsHtml;
+
+    // 3. Dynamically Fetch Real Store Products for this Category!
+    fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(cat.name)}&resources[type]=product&resources[limit]=4`)
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById(productsContainerId);
+        if (!container) return;
+        const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
+        
+        if (products.length === 0) {
+          container.innerHTML = `<div style="grid-column: span 2; color: #7A6F66; font-size: 0.88rem; padding: 1rem 0;">No featured products found. <a href="${cat.url}" style="color: #00352A; text-decoration: underline; font-weight: 600;">Browse Collection ↗</a></div>`;
+          return;
+        }
+
+        let gridHtml = '';
+        products.forEach(prod => {
+          // Pass through luxury image interceptor to catch any Shopify sample briefcase/luggage sketches
+          const imgUrl = getLuxuryImageUrl(prod.image, categoryKey);
+          const fallbackUrl = getLuxuryImageUrl(null, categoryKey);
+          const priceFormatted = prod.price ? '₹' + (parseFloat(prod.price) / 100).toLocaleString('en-IN') : '';
+          const compareFormatted = prod.compare_at_price && parseFloat(prod.compare_at_price) > parseFloat(prod.price) ? '₹' + (parseFloat(prod.compare_at_price) / 100).toLocaleString('en-IN') : '';
+
+          gridHtml += `
+            <a href="${prod.url}" class="category-product-card">
+              <div class="category-product-card__img-wrap">
+                <img src="${imgUrl}" alt="${prod.title}" class="category-product-card__img" loading="lazy" onerror="this.src='${fallbackUrl}'">
+              </div>
+              <div class="category-product-card__info">
+                <div class="category-product-card__title">${prod.title}</div>
+              </div>
+            </a>
+          `;
+        });
+        container.innerHTML = gridHtml;
+      })
+      .catch(err => {
+        const container = document.getElementById(productsContainerId);
+        if (container) container.innerHTML = '';
+      });
+  }
+
+  // Bind Category Tabs Click
+  tabPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      const catKey = pill.getAttribute('data-category');
+      renderCategoryContent(catKey);
+    });
+  });
+
+  // Also bind any secondary buttons that might try to open category sheets
+  document.querySelectorAll('.js-open-category-sheet').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const cat = btn.getAttribute('data-category');
+      openDrawer();
+      if (cat) renderCategoryContent(cat);
+    });
+  });
+
+  // Predictive Search Logic
+  function performSearch(query) {
+    if (!query || query.trim().length < 2) {
+      if (searchResults) searchResults.style.display = 'none';
+      if (tabsBar) tabsBar.style.display = 'flex';
+      if (bodyArea) bodyArea.style.display = 'flex';
+      if (searchClear) searchClear.style.display = 'none';
+      return;
+    }
+
+    if (searchClear) searchClear.style.display = 'flex';
+    if (tabsBar) tabsBar.style.display = 'none';
+    if (bodyArea) bodyArea.style.display = 'none';
+    
+    if (searchResults) {
+      searchResults.style.display = 'block';
+      searchResults.innerHTML = '<div class="live-search-loading">Searching Swastik Jewels...</div>';
+    }
+
+    fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(query)}&resources[type]=product&resources[limit]=8`)
+      .then(res => res.json())
+      .then(data => {
+        const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
+        if (products.length === 0) {
+          searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${query}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
+          return;
+        }
+
+        const regex = new RegExp(`(${query.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+        let html = '';
+        products.forEach(product => {
+          const highlightedTitle = product.title.replace(regex, '<mark class="search-highlight">$1</mark>');
+          
+          // Determine category key based on product title/type to show correct placeholder if fallback is triggered
+          let categoryKey = 'rings';
+          if (product.title) {
+            const titleLower = product.title.toLowerCase();
+            if (titleLower.includes('earring') || titleLower.includes('stud') || titleLower.includes('jhumka') || titleLower.includes('hoop')) {
+              categoryKey = 'earrings';
+            } else if (titleLower.includes('bracelet') || titleLower.includes('bangle')) {
+              categoryKey = 'bracelets';
+            } else if (titleLower.includes('necklace') || titleLower.includes('choker') || titleLower.includes('mangalsutra')) {
+              categoryKey = 'necklaces';
+            } else if (titleLower.includes('pendant')) {
+              categoryKey = 'pendants';
+            }
+          }
+          
+          const imgUrl = getLuxuryImageUrl(product.image, categoryKey);
+          const fallbackUrl = getLuxuryImageUrl(null, categoryKey);
+          const priceFormatted = product.price ? '₹' + (parseFloat(product.price) / 100).toLocaleString('en-IN') : '';
+          const compareFormatted = product.compare_at_price && parseFloat(product.compare_at_price) > parseFloat(product.price) ? '₹' + (parseFloat(product.compare_at_price) / 100).toLocaleString('en-IN') : '';
+
+          html += `
+            <a href="${product.url}" class="live-search-item">
+              <img src="${imgUrl}" alt="${product.title}" class="live-search-item__img" onerror="this.src='${fallbackUrl}'">
+              <div class="live-search-item__info">
+                <div class="live-search-item__title">${highlightedTitle}</div>
+              </div>
+            </a>
+          `;
+        });
+
+        html += `<a href="{{ routes.search_url }}?q=${encodeURIComponent(query)}" class="live-search-view-all">View all results for "${query}" ↗</a>`;
+        searchResults.innerHTML = html;
+      })
+      .catch(err => {
+        searchResults.innerHTML = `<div class="live-search-loading">Error loading suggestions. Please hit enter to search.</div>`;
+      });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      clearTimeout(searchTimeout);
+      const val = e.target.value;
+      searchTimeout = setTimeout(() => performSearch(val), 250);
+    });
+  }
+
+  if (searchClear && searchInput) {
+    searchClear.addEventListener('click', () => {
+      searchInput.value = '';
+      performSearch('');
+      searchInput.focus();
+    });
+  }
+});
+</script>

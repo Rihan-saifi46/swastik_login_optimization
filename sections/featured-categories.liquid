@@ -1,0 +1,308 @@
+{% comment %}
+  Renders a featured categories list with pill badges and circle images, matching the luxury Swastik Jewels palette.
+{% endcomment %}
+
+<div class="featured-categories section-spacing" style="--bg-color: {{ section.settings.bg_color }};">
+  <div class="featured-categories__container">
+    {% if section.settings.title != blank %}
+      <h2 class="featured-categories__heading serif-font">{{ section.settings.title | escape }}</h2>
+    {% endif %}
+
+    <div class="featured-categories__grid">
+      {% for block in section.blocks %}
+        <a href="{{ block.settings.link | default: '#' }}" class="featured-categories__card" {{ block.shopify_attributes }}>
+          <div class="featured-categories__card-box">
+            {% if block.settings.item_count != blank %}
+              <span class="featured-categories__badge">{{ block.settings.item_count | escape }}</span>
+            {% endif %}
+            <div class="featured-categories__circle">
+              {% if block.settings.image != blank %}
+                {{ block.settings.image | image_url: width: 300, height: 300 | image_tag: class: 'featured-categories__img', loading: 'lazy' }}
+              {% else %}
+                {% # Use static asset image name matches if present, else fallback %}
+                {% assign fallback_image_name = 'fallback-image.png' %}
+                <img src="{{ fallback_image_name | asset_url }}" 
+                     alt="{{ block.settings.title | escape }}" 
+                     class="featured-categories__img"
+                     loading="lazy"
+                     width="300"
+                     height="300"
+                     onerror="this.src='{{ 'logo.png' | asset_url }}'; this.style.opacity='0.15';">
+              {% endif %}
+            </div>
+          </div>
+          <span class="featured-categories__title">{{ block.settings.title | escape }}</span>
+        </a>
+      {% else %}
+        {% if request.design_mode %}
+          <p style="grid-column:1/-1;padding:2rem;text-align:center;color:#888;font-family:'Montserrat',sans-serif;">
+            Add “Category” blocks in this section's settings, each with an image and a link to a collection.
+          </p>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .featured-categories {
+    background-color: var(--bg-color, var(--color-secondary-bg, #FDFBF7));
+    padding-top: 8rem;
+    padding-bottom: 8rem;
+    border-top: 1px solid rgba(1, 63, 62, 0.05);
+    border-bottom: 1px solid rgba(1, 63, 62, 0.05);
+  }
+
+  .featured-categories__container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding-left: 4.8rem;
+    padding-right: 4.8rem;
+  }
+
+  .featured-categories__heading {
+    font-size: 3.6rem;
+    color: var(--color-primary, #013F3E);
+    margin-bottom: 5rem;
+    font-weight: 500;
+    text-align: center;
+  }
+
+  .featured-categories__grid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4rem;
+  }
+
+  .featured-categories__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+
+  .featured-categories__card-box {
+    position: relative;
+    width: 220px;
+    height: 180px;
+    background-color: #F8F3ED; /* Soft blush/cream card backdrop matching the image */
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    transition: box-shadow 0.3s ease, background-color 0.3s ease;
+    border: 1px solid rgba(1, 63, 62, 0.03);
+  }
+
+  .featured-categories__badge {
+    position: absolute;
+    top: -1.2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #FFFFFF;
+    color: var(--color-foreground, #1A1A1A);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.5rem 1.2rem;
+    border-radius: 2rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(1, 63, 62, 0.06);
+    white-space: nowrap;
+    z-index: 2;
+  }
+
+  .featured-categories__circle {
+    width: 130px;
+    height: 130px;
+    background-color: #FFFFFF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+    overflow: hidden;
+    padding: 1.5rem;
+    z-index: 1;
+  }
+
+  .featured-categories__img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .featured-categories__title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 500;
+    color: var(--color-foreground, #1A1A1A);
+    transition: color 0.3s ease;
+  }
+
+  /* Hover Animations */
+  .featured-categories__card:hover .featured-categories__circle {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(1, 63, 62, 0.1);
+  }
+
+  .featured-categories__card:hover .featured-categories__img {
+    transform: scale(1.1);
+  }
+
+  .featured-categories__card:hover .featured-categories__title {
+    color: var(--color-accent, #D4AF37);
+  }
+
+  .featured-categories__card:hover .featured-categories__card-box {
+    background-color: #F0E8E2;
+    border-color: rgba(212, 175, 55, 0.2);
+  }
+
+  @media (max-width: 1200px) {
+    .featured-categories__grid {
+      gap: 3rem;
+    }
+    .featured-categories__card-box {
+      width: 190px;
+      height: 160px;
+    }
+    .featured-categories__circle {
+      width: 110px;
+      height: 110px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .featured-categories {
+      padding-top: 6rem;
+      padding-bottom: 6rem;
+    }
+    .featured-categories__container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+    .featured-categories__heading {
+      font-size: 2.8rem;
+      margin-bottom: 4rem;
+    }
+    .featured-categories__grid {
+      gap: 2.5rem;
+    }
+    .featured-categories__card-box {
+      width: 150px;
+      height: 130px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .featured-categories__circle {
+      width: 90px;
+      height: 90px;
+      padding: 1rem;
+    }
+    .featured-categories__title {
+      font-size: 1.4rem;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Featured categories",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "default": "Jewelry categor",
+      "label": "Heading"
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "default": "#FDFBF7",
+      "label": "Background color"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "Category",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "default": "Category Name",
+          "label": "Category name"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Category image"
+        },
+        {
+          "type": "text",
+          "id": "item_count",
+          "default": "12+ Items",
+          "label": "Item count text"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Category link"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Featured categories",
+      "blocks": [
+        {
+          "type": "category",
+          "settings": {
+            "title": "Rings",
+            "item_count": "12 + ITEMS"
+          }
+        },
+        {
+          "type": "category",
+          "settings": {
+            "title": "Earrings",
+            "item_count": "10 + ITEMS"
+          }
+        },
+        {
+          "type": "category",
+          "settings": {
+            "title": "Pendants",
+            "item_count": "12 + ITEMS"
+          }
+        },
+        {
+          "type": "category",
+          "settings": {
+            "title": "Bangles",
+            "item_count": "12 + ITEMS"
+          }
+        },
+        {
+          "type": "category",
+          "settings": {
+            "title": "Necklace",
+            "item_count": "8 + ITEMS"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,200 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin language editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "404": {
+    "title": "404",
+    "not_found": "Page not found.",
+    "back_to_shopping": "Back to shopping"
+  },
+  "blog": {
+    "article_comments": "Comments",
+    "article_metadata_html": "{{ date }} by {{ author }}",
+    "comment_form_body": "Comment",
+    "comment_form_email": "Email",
+    "comment_form_name": "Name",
+    "comment_form_submit": "Post",
+    "comment_form_title": "Add a comment"
+  },
+  "cart": {
+    "checkout": "Checkout",
+    "title": "Cart",
+    "update": "Update",
+    "remove": "Remove"
+  },
+  "customers": {
+    "login": {
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "title": "Login"
+    }
+  },
+  "collections": {
+    "title": "Collections"
+  },
+  "gift_card": {
+    "add_to_apple_wallet": "Add to Apple Wallet",
+    "card": "Gift card",
+    "expired": "This gift card has expired",
+    "expires_on": "Expires on {{ expires_on }}",
+    "use_at_checkout": "Use this gift card at checkout"
+  },
+  "password": {
+    "title": "This shop is private",
+    "password": "Password",
+    "enter": "Enter"
+  },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search articles, pages, or products",
+    "submit": "Search",
+    "no_results_html": "No results found for {{ terms }}",
+    "results_for_html": "{{ count }} results found for {{ terms }}"
+  },
+  "general": {
+    "accessibility": {
+      "close": "Close",
+      "skip_to_content": "Skip to content"
+    },
+    "custom_section": "Custom section",
+    "text": "Text",
+    "group": "Group",
+    "column": "Column",
+    "row": "Row"
+  },
+  "sections": {
+    "header": {
+      "announcement_fallback": "Welcome to Swastik Jewels | Handcrafted Luxury Jewelry"
+    },
+    "footer": {
+      "brand_description": "Handcrafted luxury jewelry designed for the modern individual.",
+      "quick_links": "Quick links",
+      "customer_care": "Customer care",
+      "stay_connected": "Stay connected",
+      "subscribe_success": "Thank you for subscribing!"
+    },
+    "hero_banner": {
+      "title": "Timeless elegance, handcrafted for you",
+      "subheading": "Swastik Jewels heritage",
+      "description": "Explore the fine artistry and heritage of luxury gold and gemstone masterpieces.",
+      "button_1": "Shop the collection",
+      "button_2": "Our heritage"
+    },
+    "brand_story": {
+      "subheading": "Honoring fine artistry",
+      "title": "Handcrafted to perfection",
+      "button": "Discover our craftsmanship"
+    },
+    "featured_collection": {
+      "title": "Curated masterpieces",
+      "subheading": "Swastik Jewels treasures",
+      "view_all": "View all masterpieces"
+    },
+    "newsletter": {
+      "title": "Exclusive invitations",
+      "subheading": "Join the inner circle",
+      "description": "Subscribe to receive early access to new collection launches, trunk shows, and private exhibitions."
+    },
+    "discover_grid": {
+      "name": "Discover Category Grid",
+      "explore": "Explore",
+      "settings": {
+        "title": "Discover, Designed For You",
+        "subheading": "Discover",
+        "description": "Explore our finest diamond creations, crafted for every occasion, every emotion, every you."
+      },
+      "blocks": {
+        "card": {
+          "name": "Category Card",
+          "settings": {
+            "image_desktop": "Card Image (Desktop)",
+            "image_mobile": "Card Image (Mobile)",
+            "number": "Card Number",
+            "title": "Card Title",
+            "link": "Card Link",
+            "color_scheme": "Color Scheme",
+            "cream": "Cream Theme",
+            "dark_green": "Dark Green Theme"
+          }
+        }
+      }
+    },
+    "gold_collection_showcase": {
+      "name": "Gold Collection Showcase",
+      "explore": "Explore",
+      "settings": {
+        "subheading": "Subheading",
+        "heading": "Heading",
+        "description": "Description",
+        "button_label": "Button Label",
+        "button_link": "Button Link",
+        "bg_color": "Background Color",
+        "text_color": "Text Color",
+        "accent_color": "Accent Color"
+      },
+      "blocks": {
+        "collection": {
+          "name": "Collection Item",
+          "settings": {
+            "collection": "Collection",
+            "title": "Custom Title Override",
+            "image": "Custom Image Override"
+          }
+        }
+      }
+    },
+    "testimonials_slider": {
+      "name": "Testimonials Slider",
+      "settings": {
+        "title": "Heading",
+        "subheading": "Subheading",
+        "description": "Description",
+        "bg_color": "Background Color",
+        "text_color": "Text Color",
+        "accent_color": "Accent Color",
+        "autoplay": "Enable Autoplay",
+        "autoplay_speed": "Autoplay Speed (seconds)"
+      },
+      "blocks": {
+        "testimonial": {
+          "name": "Testimonial Card",
+          "settings": {
+            "rating": "Rating (Stars)",
+            "text": "Review Text",
+            "author": "Author Name",
+            "location": "Location"
+          }
+        }
+      }
+    },
+    "store_highlights": {
+      "name": "Store Highlights",
+      "settings": {
+        "bg_color": "Background Color",
+        "border_color": "Border Color",
+        "icon_color": "Icon Color",
+        "text_color": "Text Color",
+        "desc_color": "Description Color",
+        "autoplay": "Enable Autoplay",
+        "autoplay_speed": "Autoplay Speed (seconds)"
+      },
+      "blocks": {
+        "highlight": {
+          "name": "Highlight Item",
+          "settings": {
+            "icon": "Icon",
+            "title": "Title",
+            "description": "Description"
+          }
+        }
+      }
+    }
+  }
+}
