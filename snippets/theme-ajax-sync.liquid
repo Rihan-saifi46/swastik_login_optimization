@@ -377,5 +377,88 @@
       }
     });
 
+    // 8. Centralized Checkout Protection
+    const customerLoggedIn = {% if customer %}true{% else %}false{% endif %};
+    
+    if (!customerLoggedIn) {
+      // Intercept clicks on links or buttons pointing to checkout
+      document.addEventListener('click', function(e) {
+        const target = e.target.closest('a[href*="/checkout"], button[name="checkout"], .btn-checkout, .pp-btn-buy, .btn-buy-now');
+        if (target) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleCheckoutInterception(target);
+        }
+      }, true);
+
+      // Intercept form submissions going to checkout
+      document.addEventListener('submit', function(e) {
+        const form = e.target;
+        const isCheckoutSubmit = form.action.includes('/checkout') || 
+                                 form.querySelector('input[name="return_to"]')?.value === '/checkout' ||
+                                 e.submitter?.name === 'checkout' ||
+                                 e.submitter?.classList.contains('btn-checkout');
+        if (isCheckoutSubmit) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleCheckoutInterception(e.submitter || form);
+        }
+      }, true);
+    }
+
+    function handleCheckoutInterception(triggerElement) {
+      // Close cart drawer if open
+      if (typeof window.closeCartDrawer === 'function') {
+        window.closeCartDrawer();
+      } else {
+        const cartDrawer = document.getElementById('CartDrawer');
+        if (cartDrawer) cartDrawer.classList.remove('is-open');
+        document.body.style.overflow = '';
+      }
+
+      // If it's a "Buy Now" action, add to cart via AJAX first so guest doesn't lose their selection
+      const form = triggerElement.closest('form');
+      if (form && (triggerElement.classList.contains('pp-btn-buy') || triggerElement.classList.contains('btn-buy-now'))) {
+        const submitBtn = triggerElement;
+        submitBtn.classList.add('btn-loading');
+        
+        fetch(window.Shopify.routes.root + 'cart/add.js', {
+          method: 'POST',
+          body: new FormData(form)
+        })
+        .then(response => {
+          submitBtn.classList.remove('btn-loading');
+          triggerLoginAndRedirectCheckout();
+        })
+        .catch(() => {
+          submitBtn.classList.remove('btn-loading');
+          triggerLoginAndRedirectCheckout();
+        });
+        return;
+      }
+
+      triggerLoginAndRedirectCheckout();
+    }
+
+    function triggerLoginAndRedirectCheckout() {
+      const accountEl = document.getElementById('storefront-shopify-account');
+      if (accountEl) {
+        // Dynamically update the sign-in URL redirection parameter
+        accountEl.setAttribute('sign-in-url', '/customer_authentication/login?return_to=/checkout');
+        
+        // Open overlay backdrop visually
+        document.body.classList.add('login-active');
+
+        // Trigger the login overlay via click on the profile icon
+        const trigger = accountEl.querySelector('[slot="signed-out-avatar"]');
+        if (trigger) {
+          trigger.click();
+        }
+      } else {
+        // Fallback redirection to hosted login
+        window.location.href = '/customer_authentication/login?return_to=/checkout';
+      }
+    }
+
   })();
 </script>

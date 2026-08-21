@@ -342,13 +342,37 @@
       <span class="header__icon-divider"></span>
 
       <!-- Profile Link -->
-      <a href="{{ routes.account_url }}" class="header__icon-link header__profile-trigger" aria-label="Account">
-        <svg class="icon icon-profile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-        </svg>
-      </a>
+      {%- if shop.customer_accounts_enabled -%}
+        {%- if customer -%}
+          <shopify-account menu="customer-account-main-menu" sign-in-url="/customer_authentication/login?return_to=/" class="header__profile-component">
+            <div slot="signed-out-avatar" class="header__icon-link header__profile-trigger" aria-label="Account" style="cursor: pointer;">
+              <svg class="icon icon-profile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+            </div>
+          </shopify-account>
+        {%- else -%}
+          <shopify-account menu="guest-account-menu" sign-in-url="/customer_authentication/login?return_to=/" class="header__profile-component" id="storefront-shopify-account">
+            <div slot="signed-out-avatar" class="header__icon-link header__profile-trigger" aria-label="Account" style="cursor: pointer;" id="shopify-account-trigger">
+              <svg class="icon icon-profile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+            </div>
+          </shopify-account>
+        {%- endif -%}
+      {%- endif -%}
     </div>
   </header>
+
+  <!-- Custom Full-Page Login Overlay Background and Close Button -->
+  <div class="full-page-login-overlay" id="FullPageLoginOverlay">
+    <button type="button" class="full-page-login-overlay__close" id="FullPageLoginClose" aria-label="Close login screen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
 
   <!-- Mobile Navigation Drawer (Bespoke Swastik Jewels Design) -->
   <div class="mobile-menu-drawer" id="MobileNavDrawer" aria-hidden="true">
@@ -663,6 +687,72 @@
     }
   }
   {% endif %}
+  shopify-account.header__profile-component {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    --shopify-account-signed-in-avatar-size: 2.2rem;
+  }
+
+  /* Full-Page Login Overlay Styles */
+  .full-page-login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #013F3E; /* Brand Green */
+    z-index: 999990; /* Right below shopify-account shadow DOM but above storefront */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+
+  body.login-active .full-page-login-overlay {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .full-page-login-overlay__close {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    background: none;
+    border: none;
+    color: #FFFFFF;
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999;
+    padding: 0;
+    transition: transform 0.2s ease;
+  }
+
+  .full-page-login-overlay__close:hover {
+    transform: scale(1.1);
+  }
+
+  .full-page-login-overlay__close svg {
+    width: 24px;
+    height: 24px;
+    display: block;
+    stroke: #FFFFFF;
+  }
+
+  body.login-active {
+    overflow: hidden !important;
+  }
+
+  /* Ensure native panel overlays properly and is visible on dark bg */
+  body.login-active shopify-account {
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    z-index: 999995 !important;
+  }
 {% endstyle %}
 
 {% stylesheet %}
@@ -2242,6 +2332,43 @@
       }
     }
   };
+
+  // Initialize Full-Page Login Overlay Interactions
+  (function() {
+    function initLoginOverlay() {
+      const trigger = document.getElementById('shopify-account-trigger');
+      const closeBtn = document.getElementById('FullPageLoginClose');
+      if (!trigger || !closeBtn) return;
+
+      if (trigger.dataset.overlayListenerInitialized === 'true') return;
+      trigger.dataset.overlayListenerInitialized = 'true';
+
+      trigger.addEventListener('click', function(e) {
+        document.body.classList.add('login-active');
+      });
+
+      closeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.body.classList.remove('login-active');
+        document.dispatchEvent(new KeyboardEvent('keydown', {
+          key: 'Escape',
+          code: 'Escape',
+          keyCode: 27,
+          which: 27,
+          bubbles: true,
+          cancelable: true
+        }));
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initLoginOverlay);
+    } else {
+      initLoginOverlay();
+    }
+    document.addEventListener('shopify:section:load', initLoginOverlay);
+  })();
 </script>
 
 {% schema %}

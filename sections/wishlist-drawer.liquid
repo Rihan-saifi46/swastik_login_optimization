@@ -452,7 +452,19 @@
     })
     .then(response => {
       if(response.ok) {
-        window.location.href = '/checkout';
+        if ({% if customer %}true{% else %}false{% endif %}) {
+          window.location.href = '/checkout';
+        } else {
+          const accountEl = document.getElementById('storefront-shopify-account');
+          if (accountEl) {
+            accountEl.setAttribute('sign-in-url', '/customer_authentication/login?return_to=/checkout');
+            document.body.classList.add('login-active');
+            const trigger = accountEl.querySelector('[slot="signed-out-avatar"]');
+            if (trigger) trigger.click();
+          } else {
+            window.location.href = '/customer_authentication/login?return_to=/checkout';
+          }
+        }
       }
     });
   };
