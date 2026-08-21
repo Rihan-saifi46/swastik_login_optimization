@@ -441,13 +441,13 @@
     }
 
     function triggerLoginAndRedirectCheckout() {
+      // Store intent in sessionStorage for reliable post-login redirection
+      sessionStorage.setItem('post_login_redirect', '/checkout');
+      
       const accountEl = document.getElementById('storefront-shopify-account');
       if (accountEl) {
-        // Dynamically update the sign-in URL redirection parameter
+        // Dynamically update the sign-in URL redirection parameter (fallback)
         accountEl.setAttribute('sign-in-url', '/customer_authentication/login?return_to=/checkout');
-        
-        // Open overlay backdrop visually
-        document.body.classList.add('login-active');
 
         // Trigger the login overlay via click on the profile icon
         const trigger = accountEl.querySelector('[slot="signed-out-avatar"]');

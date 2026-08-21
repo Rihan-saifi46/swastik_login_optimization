@@ -2318,6 +2318,7 @@
 
       accountEl.addEventListener('close', function(e) {
         document.body.classList.remove('login-active');
+        sessionStorage.removeItem('post_login_redirect'); // Clear intent if canceled
       });
     }
 

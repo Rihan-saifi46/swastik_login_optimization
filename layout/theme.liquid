@@ -4,6 +4,16 @@
     {% # Inlined CSS Variables %}
     {% render 'css-variables' %}
 
+    {% if customer %}
+      <script>
+        // Redirect to checkout immediately if intent exists, preventing flash of home page
+        if (sessionStorage.getItem('post_login_redirect') === '/checkout') {
+          sessionStorage.removeItem('post_login_redirect');
+          window.location.replace('/checkout');
+        }
+      </script>
+    {% endif %}
+
     {% comment %}
       Font preloading:
       1. Preconnect to font CDN for faster connection
