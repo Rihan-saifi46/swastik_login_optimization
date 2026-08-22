@@ -2329,6 +2329,118 @@
     }
     document.addEventListener('shopify:section:load', initLoginOverlay);
   })();
+
+  // Dynamic injection of Logout button inside the shadow DOM of <shopify-account>
+  (function() {
+    function watchShopifyAccount(accountEl) {
+      if (!accountEl) return;
+      if (accountEl.dataset.logoutButtonInitialized === 'true') return;
+      accountEl.dataset.logoutButtonInitialized = 'true';
+      
+      let shadowObserved = false;
+      
+      function checkAndObserveShadow() {
+        if (accountEl.shadowRoot) {
+          observeShadow(accountEl.shadowRoot);
+          shadowObserved = true;
+          return true;
+        }
+        return false;
+      }
+      
+      if (!checkAndObserveShadow()) {
+        const interval = setInterval(() => {
+          if (checkAndObserveShadow()) {
+            clearInterval(interval);
+          }
+        }, 100);
+        setTimeout(() => clearInterval(interval), 10000);
+      }
+      
+      function observeShadow(shadowRoot) {
+        injectLogoutButton(shadowRoot);
+        
+        const observer = new MutationObserver(() => {
+          injectLogoutButton(shadowRoot);
+        });
+        
+        observer.observe(shadowRoot, {
+          childList: true,
+          subtree: true
+        });
+      }
+      
+      function injectLogoutButton(shadowRoot) {
+        const links = Array.from(shadowRoot.querySelectorAll('a'));
+        if (links.length === 0) return;
+        
+        // Check if Logout button already exists
+        if (shadowRoot.querySelector('.custom-logout-btn') || links.some(a => a.getAttribute('href') && a.getAttribute('href').includes('logout'))) {
+          return;
+        }
+        
+        const profileLink = links.find(a => a.getAttribute('href') && (a.getAttribute('href').includes('profile') || a.getAttribute('href').includes('settings')));
+        const ordersLink = links.find(a => a.getAttribute('href') && (a.getAttribute('href').includes('orders') || a.getAttribute('href').includes('account')));
+        
+        const refLink = profileLink || ordersLink;
+        if (!refLink) return;
+        
+        const parentLi = refLink.closest('li');
+        const elementToClone = parentLi || refLink;
+        const clonedElement = elementToClone.cloneNode(true);
+        
+        const clonedLink = clonedElement.tagName === 'A' ? clonedElement : clonedElement.querySelector('a');
+        if (clonedLink) {
+          clonedLink.textContent = 'Logout';
+          clonedLink.setAttribute('href', '/account/logout');
+          clonedLink.classList.add('custom-logout-btn');
+          clonedLink.id = 'custom-logout-button';
+          clonedLink.onclick = null;
+          
+          if (clonedLink.hasAttribute('aria-label')) {
+            clonedLink.setAttribute('aria-label', 'Logout');
+          }
+          if (clonedLink.hasAttribute('title')) {
+            clonedLink.setAttribute('title', 'Logout');
+          }
+        }
+        
+        elementToClone.parentNode.insertBefore(clonedElement, elementToClone.nextSibling);
+      }
+    }
+
+    function initWatchers() {
+      document.querySelectorAll('shopify-account').forEach(watchShopifyAccount);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initWatchers);
+    } else {
+      initWatchers();
+    }
+    
+    // Watch for dynamically added elements
+    const pageObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === 1) {
+            if (node.tagName === 'SHOPIFY-ACCOUNT') {
+              watchShopifyAccount(node);
+            } else {
+              node.querySelectorAll('shopify-account').forEach(watchShopifyAccount);
+            }
+          }
+        });
+      });
+    });
+    
+    pageObserver.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    
+    document.addEventListener('shopify:section:load', initWatchers);
+  })();
 </script>
 
 {% schema %}
