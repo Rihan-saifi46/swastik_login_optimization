@@ -1,5 +1,10 @@
 {%- assign active_filter_count = 0 -%}
 {%- for filter in collection.filters -%}
+  {%- if filter.label == 'Gender' -%}
+    {%- if collection.handle == 'everyday-sparkle' or collection.handle == 'close-to-heart' -%}
+      {%- continue -%}
+    {%- endif -%}
+  {%- endif -%}
   {%- if filter.type == 'price_range' -%}
     {%- if filter.min_value.value or filter.max_value.value -%}
       {%- assign active_filter_count = active_filter_count | plus: 1 -%}
@@ -125,6 +130,11 @@
           {%- endif -%}
 
             {%- for filter in collection.filters -%}
+              {%- if filter.label == 'Gender' -%}
+                {%- if collection.handle == 'everyday-sparkle' or collection.handle == 'close-to-heart' -%}
+                  {%- continue -%}
+                {%- endif -%}
+              {%- endif -%}
               {%- assign show_filter_group = false -%}
               {%- assign valid_values_count = 0 -%}
               
@@ -253,6 +263,11 @@
       {% if active_filter_count > 0 %}
         <div class="active-filters-chips">
           {% for filter in collection.filters %}
+            {%- if filter.label == 'Gender' -%}
+              {%- if collection.handle == 'everyday-sparkle' or collection.handle == 'close-to-heart' -%}
+                {%- continue -%}
+              {%- endif -%}
+            {%- endif -%}
             {% for filter_value in filter.active_values %}
               <a href="{{ filter_value.url_to_remove }}" class="active-filter-chip">
                 <span>{{ filter_value.label }}</span>
