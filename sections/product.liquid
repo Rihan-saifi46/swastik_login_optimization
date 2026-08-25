@@ -180,6 +180,7 @@
               </div>
               
               <!-- CUSTOMIZE ACCORDION -->
+              {%- unless product.has_only_default_variant or product.variants.size <= 1 or product.tags contains 'Solitaire' -%}
               <div class="pp-customize-wrap">
                 <button type="button" class="pp-customize-toggle" aria-expanded="false">
                   <div class="pp-customize-toggle-left">
@@ -345,13 +346,13 @@
                     </div>
                   </div>
                 </div>
-                </div>
               {%- endunless -%}
                 <div class="pp-clear-wrap" style="display: flex; justify-content: flex-end; margin-top: 10px;">
                   <button type="button" class="pp-clear-btn" id="pp-clear-customizations" style="font-size: 12px; font-weight: 600; color: #888; text-decoration: underline; background: transparent; border: none; cursor: pointer; padding: 0; transition: color 0.2s;" onmouseover="this.style.color='#013F3E'" onmouseout="this.style.color='#888'">Clear Customizations</button>
                 </div>
               </div> <!-- End customize content -->
             </div> <!-- End customize wrap -->
+            {%- endunless -%}
             {% endform %}
 
           {%- when 'buy_buttons' -%}
@@ -360,7 +361,7 @@
               <!-- IN STOCK INDICATOR -->
               <div class="pp-stock-indicator">
                 {%- if current_variant.available -%}
-                  {%- if current_variant.inventory_management and current_variant.inventory_quantity <= 0 and current_variant.inventory_policy == 'continue' -%}
+                  {%- if current_variant.inventory_management and current_variant.inventory_quantity != blank and current_variant.inventory_quantity <= 0 and current_variant.inventory_policy == 'continue' -%}
                     <div class="pp-stock-status pp-stock-status--made-to-order">
                       <span>Made to Order</span>
                     </div>
@@ -440,11 +441,15 @@
 
         <!-- Card Below: Tab 1 (Product Details) -->
         <div class="pp-info-card pp-tab-body is-active" id="tab-details">
-          <div class="pp-table-row">
-            <span class="pp-row-label">Metal</span>
-            <span class="pp-row-value" id="ui-detail-metal">18K Yellow Gold</span>
-          </div>
-          <div class="pp-row-divider"></div>
+          {%- unless product.has_only_default_variant -%}
+            {%- if sum_purity != blank or sum_metal != blank -%}
+              <div class="pp-table-row">
+                <span class="pp-row-label">Metal</span>
+                <span class="pp-row-value" id="ui-detail-metal">{{ sum_purity }} {{ sum_metal }}</span>
+              </div>
+              <div class="pp-row-divider"></div>
+            {%- endif -%}
+          {%- endunless -%}
 
           <div class="pp-table-row">
             <span class="pp-row-label">Gross Weight</span>
@@ -474,10 +479,14 @@
           </div>
           {%- endunless -%}
 
-          <div class="pp-table-row">
-            <span class="pp-row-label">Diamond Quality</span>
-            <span class="pp-row-value" id="ui-detail-quality">G–VS</span>
-          </div>
+          {%- unless product.has_only_default_variant -%}
+            {%- if sum_quality != blank -%}
+              <div class="pp-table-row">
+                <span class="pp-row-label">Diamond Quality</span>
+                <span class="pp-row-value" id="ui-detail-quality">{{ sum_quality }}</span>
+              </div>
+            {%- endif -%}
+          {%- endunless -%}
 
         </div>
 
@@ -2395,7 +2404,7 @@
             }
             
             if (isAvailable) {
-              if (invMgmt && invQty <= 0 && invPolicy === 'continue') {
+              if (invMgmt && invQty !== null && invQty !== undefined && invQty <= 0 && invPolicy === 'continue') {
                 if (elStockStatus) {
                   elStockStatus.className = 'pp-stock-status pp-stock-status--made-to-order';
                   elStockStatus.innerHTML = '<span>Made to Order</span>';
@@ -2699,6 +2708,65 @@
     const defaultActiveBtn = document.querySelector('.pp-option-group .pp-opt-btn.is-active');
     if (defaultActiveBtn) {
       defaultActiveBtn.click();
+    } else {
+      // If there are no option buttons (e.g., Solitaire), manually update the stock status based on the inventory JSON
+      const variantIdInput = document.getElementById('pp-variant-id');
+      const variantInventoryEl = document.getElementById('pp-variant-inventory-json');
+      if (variantIdInput && variantInventoryEl) {
+        try {
+          const inventories = JSON.parse(variantInventoryEl.textContent || '{}');
+          const currentId = variantIdInput.value;
+          const invInfo = inventories[currentId];
+          if (invInfo) {
+            const elStockStatus = document.querySelector('.pp-stock-status');
+            const elBtnAdd = document.querySelector('.pp-btn-add');
+            const elBtnAddText = elBtnAdd ? elBtnAdd.querySelector('span') : null;
+            const elBtnBuy = document.getElementById('pp-buy-now');
+            
+            let isAvailable = invInfo.available;
+            let invMgmt = invInfo.inventory_management;
+            let invPolicy = invInfo.inventory_policy;
+            let invQty = invInfo.inventory_quantity;
+            
+            if (isAvailable) {
+              if (invMgmt && invQty !== null && invQty !== undefined && invQty <= 0 && invPolicy === 'continue') {
+                if (elStockStatus) {
+                  elStockStatus.className = 'pp-stock-status pp-stock-status--made-to-order';
+                  elStockStatus.innerHTML = '<span>Made to Order</span>';
+                }
+              } else {
+                if (elStockStatus) {
+                  elStockStatus.className = 'pp-stock-status pp-stock-status--in-stock';
+                  elStockStatus.innerHTML = '<span>In Stock</span>';
+                }
+              }
+              if (elBtnAdd) {
+                elBtnAdd.removeAttribute('disabled');
+                if (elBtnAddText) elBtnAddText.textContent = 'ADD TO CART';
+              }
+              if (elBtnBuy) {
+                elBtnBuy.removeAttribute('disabled');
+                elBtnBuy.style.display = '';
+              }
+            } else {
+              if (elStockStatus) {
+                elStockStatus.className = 'pp-stock-status pp-stock-status--sold-out';
+                elStockStatus.innerHTML = '<span>Sold Out</span>';
+              }
+              if (elBtnAdd) {
+                elBtnAdd.setAttribute('disabled', 'true');
+                if (elBtnAddText) elBtnAddText.textContent = 'SOLD OUT';
+              }
+              if (elBtnBuy) {
+                elBtnBuy.setAttribute('disabled', 'true');
+                elBtnBuy.style.display = 'none';
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error initializing stock status:', err);
+        }
+      }
     }
   });
 })();
