@@ -44,7 +44,8 @@
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input type="search" name="q" id="MobileCategorySearchInput" placeholder="Search rings, earrings, diamonds..." value="{{ search.terms | escape }}" autocomplete="off" autocorrect="off">
+        {%- assign clean_terms = search.terms | split: ' OR sku:' | first -%}
+        <input type="search" name="q" id="MobileCategorySearchInput" placeholder="Search rings, earrings, diamonds..." value="{{ clean_terms | escape }}" autocomplete="off" autocorrect="off">
         <button type="button" id="MobileCategorySearchClear" class="search-clear-btn" style="display: none;" aria-label="Clear search">✕</button>
         <input type="hidden" name="options[prefix]" value="last">
       </form>
@@ -789,6 +790,44 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  function renderMobileSearchResults(products, query) {
+    const regex = new RegExp(`(${query.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+    let html = '';
+    products.forEach(product => {
+      const highlightedTitle = product.title.replace(regex, '<mark class="search-highlight">$1</mark>');
+      
+      // Determine category key based on product title/type to show correct placeholder if fallback is triggered
+      let categoryKey = 'rings';
+      if (product.title) {
+        const titleLower = product.title.toLowerCase();
+        if (titleLower.includes('earring') || titleLower.includes('stud') || titleLower.includes('jhumka') || titleLower.includes('hoop')) {
+          categoryKey = 'earrings';
+        } else if (titleLower.includes('bracelet') || titleLower.includes('bangle')) {
+          categoryKey = 'bracelets';
+        } else if (titleLower.includes('necklace') || titleLower.includes('choker') || titleLower.includes('mangalsutra')) {
+          categoryKey = 'necklaces';
+        } else if (titleLower.includes('pendant')) {
+          categoryKey = 'pendants';
+        }
+      }
+      
+      const imgUrl = getLuxuryImageUrl(product.image, categoryKey);
+      const fallbackUrl = getLuxuryImageUrl(null, categoryKey);
+
+      html += `
+        <a href="${product.url}" class="live-search-item">
+          <img src="${imgUrl}" alt="${product.title}" class="live-search-item__img" onerror="this.src='${fallbackUrl}'">
+          <div class="live-search-item__info">
+            <div class="live-search-item__title">${highlightedTitle}</div>
+          </div>
+        </a>
+      `;
+    });
+
+    html += `<a href="{{ routes.search_url }}?q=${encodeURIComponent(query)}" class="live-search-view-all">View all results for "${query}" ↗</a>`;
+    searchResults.innerHTML = html;
+  }
+
   // Predictive Search Logic
   function performSearch(query) {
     if (!query || query.trim().length < 2) {
@@ -813,47 +852,27 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(data => {
         const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
         if (products.length === 0) {
-          searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${query}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
+          if (window.searchSkuStorefront) {
+            window.searchSkuStorefront(query).then(skuProduct => {
+              if (skuProduct) {
+                const mappedProduct = {
+                  title: skuProduct.title,
+                  url: `/products/${skuProduct.handle}`,
+                  image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
+                  price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
+                };
+                renderMobileSearchResults([mappedProduct], query);
+              } else {
+                searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${query}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
+              }
+            });
+          } else {
+            searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${query}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
+          }
           return;
         }
 
-        const regex = new RegExp(`(${query.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
-        let html = '';
-        products.forEach(product => {
-          const highlightedTitle = product.title.replace(regex, '<mark class="search-highlight">$1</mark>');
-          
-          // Determine category key based on product title/type to show correct placeholder if fallback is triggered
-          let categoryKey = 'rings';
-          if (product.title) {
-            const titleLower = product.title.toLowerCase();
-            if (titleLower.includes('earring') || titleLower.includes('stud') || titleLower.includes('jhumka') || titleLower.includes('hoop')) {
-              categoryKey = 'earrings';
-            } else if (titleLower.includes('bracelet') || titleLower.includes('bangle')) {
-              categoryKey = 'bracelets';
-            } else if (titleLower.includes('necklace') || titleLower.includes('choker') || titleLower.includes('mangalsutra')) {
-              categoryKey = 'necklaces';
-            } else if (titleLower.includes('pendant')) {
-              categoryKey = 'pendants';
-            }
-          }
-          
-          const imgUrl = getLuxuryImageUrl(product.image, categoryKey);
-          const fallbackUrl = getLuxuryImageUrl(null, categoryKey);
-          const priceFormatted = product.price ? '₹' + (parseFloat(product.price) / 100).toLocaleString('en-IN') : '';
-          const compareFormatted = product.compare_at_price && parseFloat(product.compare_at_price) > parseFloat(product.price) ? '₹' + (parseFloat(product.compare_at_price) / 100).toLocaleString('en-IN') : '';
-
-          html += `
-            <a href="${product.url}" class="live-search-item">
-              <img src="${imgUrl}" alt="${product.title}" class="live-search-item__img" onerror="this.src='${fallbackUrl}'">
-              <div class="live-search-item__info">
-                <div class="live-search-item__title">${highlightedTitle}</div>
-              </div>
-            </a>
-          `;
-        });
-
-        html += `<a href="{{ routes.search_url }}?q=${encodeURIComponent(query)}" class="live-search-view-all">View all results for "${query}" ↗</a>`;
-        searchResults.innerHTML = html;
+        renderMobileSearchResults(products, query);
       })
       .catch(err => {
         searchResults.innerHTML = `<div class="live-search-loading">Error loading suggestions. Please hit enter to search.</div>`;

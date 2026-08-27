@@ -1,3 +1,9 @@
+<script>
+  if (window.location.search.indexOf('nobanner=true') !== -1) {
+    document.write('<style>.collection-banner { display: none !important; }</style>');
+  }
+</script>
+
 {%- assign desktop_image = collection.image | default: section.settings.image -%}
 {%- assign mobile_image = collection.metafields.custom.mobile_banner | default: section.settings.image_mobile | default: desktop_image -%}
 

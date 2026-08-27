@@ -298,16 +298,6 @@
 
       <!-- Gold price badge -->
       <div class="header__gold-price">
-        <div class="gold-price__icon-wrapper">
-          <svg class="icon icon-gold" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M 4.5 15 L 11.5 15 L 13 19 L 3 19 Z" />
-            <path d="M 12.5 15 L 19.5 15 L 21 19 L 11 19 Z" />
-            <path d="M 8.5 10 L 15.5 10 L 17 14 L 7 14 Z" />
-            <path d="M20 7 L20.5 9 L22.5 9.5 L20.5 10 L20 12 L19.5 10 L17.5 9.5 L19.5 9 Z" />
-            <circle cx="21.5" cy="7.5" r="0.8" />
-          </svg>
-        </div>
-        <div class="gold-price__separator"></div>
         <div class="gold-price__text-container">
           <span class="gold-price__label">GOLD RATE</span>
           <span class="gold-price__value">
@@ -319,6 +309,14 @@
           </span>
         </div>
       </div>
+
+      <!-- Search Link -->
+      <a href="{{ routes.search_url }}" class="header__icon-link header__search-trigger" id="HeaderSearchTrigger" aria-label="Search" aria-expanded="false" aria-controls="HeaderSearchPanel">
+        <svg class="icon icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </a>
 
       <!-- Wishlist Link & Count -->
       <a href="javascript:void(0)" onclick="if(window.openWishlistDrawer) window.openWishlistDrawer(); return false;" class="header__icon-link header__wishlist-trigger" aria-label="Wishlist">
@@ -361,6 +359,102 @@
           </shopify-account>
         {%- endif -%}
       {%- endif -%}
+    </div>
+
+    <!-- Desktop Search Dropdown Panel -->
+    <div class="header__search-panel" id="HeaderSearchPanel" style="display: none;" aria-hidden="true">
+      <div class="header__search-panel-container">
+        
+        <!-- Search Input Bar (Rounded wrapper) -->
+        <div class="header__search-input-wrapper">
+          <svg class="icon icon-search header__search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <form action="{{ routes.search_url }}" method="get" class="header__search-form" role="search" id="DesktopSearchForm">
+            {%- assign clean_terms = search.terms | split: ' OR sku:' | first -%}
+            <input type="search" name="q" class="header__search-input" id="DesktopSearchInput" placeholder="Search for rings, earrings, necklaces and more..." value="{{ clean_terms | escape }}" autocomplete="off" autocorrect="off" required>
+            <input type="hidden" name="options[prefix]" value="last">
+          </form>
+          <button type="button" class="header__search-close" id="HeaderSearchClose" aria-label="Close search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Default Content (Popular Searches & Trending Now) -->
+        <div class="header__search-suggestions" id="HeaderSearchSuggestions">
+          
+          <!-- Left: Popular Searches -->
+          <div class="header__search-popular">
+            <h4 class="header__search-section-title">POPULAR SEARCHES</h4>
+            <div class="header__search-popular-list">
+              <a href="{{ routes.collections_url }}/eternal-promises" class="popular-chip">
+                <svg class="popular-chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="14" r="6"></circle><path d="M12 8L10 5h4z" fill="currentColor"></path></svg>
+                Rings
+              </a>
+              <a href="{{ routes.collections_url }}/close-to-heart" class="popular-chip">
+                <svg class="popular-chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 3c0 8 12 8 12 0"></path><circle cx="12" cy="10" r="2" fill="currentColor"></circle></svg>
+                Necklaces
+              </a>
+              <a href="{{ routes.collections_url }}/everyday-sparkle" class="popular-chip">
+                <svg class="popular-chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 5v6M16 5v6"></path><circle cx="8" cy="13" r="2" fill="currentColor"></circle><circle cx="16" cy="13" r="2" fill="currentColor"></circle></svg>
+                Earrings
+              </a>
+
+              <a href="{{ routes.collections_url }}/forever-classics" class="popular-chip">
+                <svg class="popular-chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h16" stroke-dasharray="3 3"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                Bracelets
+              </a>
+            </div>
+          </div>
+
+          <div class="header__search-vertical-divider"></div>
+
+          <!-- Right: Trending Now -->
+          <div class="header__search-trending">
+            <h4 class="header__search-section-title">TRENDING NOW</h4>
+            <div class="header__search-trending-grid">
+              {%- assign trending_collection = collections.all -%}
+              {%- if trending_collection and trending_collection.products.size > 0 -%}
+                {%- for product in trending_collection.products limit: 4 -%}
+                  <a href="{{ product.url }}" class="header__trending-card">
+                    <div class="header__trending-card-img-wrap">
+                      {%- if product.featured_image -%}
+                        <img src="{{ product.featured_image | image_url: width: 200 }}" alt="{{ product.title | escape }}" class="header__trending-card-img" loading="lazy">
+                      {%- else -%}
+                        <img src="{{ 'ring_placeholder.png' | asset_url }}" alt="Fallback" class="header__trending-card-img" loading="lazy">
+                      {%- endif -%}
+                    </div>
+                    <div class="header__trending-card-info">
+                      <span class="header__trending-card-title">{{ product.title }}</span>
+                      <span class="header__trending-card-price">{{ product.price | money }}</span>
+                    </div>
+                  </a>
+                {%- endfor -%}
+              {%- else -%}
+                <p class="header__search-no-products">No trending products available.</p>
+              {%- endif -%}
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Live Predictive Search Results Container -->
+        <div id="DesktopSearchResults" class="desktop-live-search-container" style="display: none;"></div>
+
+        <!-- Bottom area -->
+        <div class="header__search-bottom-strip">
+          <span class="header__search-bottom-text">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--color-accent, #D4AF37);"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            Discover our exquisite collection of timeless jewellery
+          </span>
+          <a href="{{ routes.collections_url }}/natural-diamonds?nobanner=true" class="header__search-view-all-collections">VIEW ALL COLLECTIONS ➔</a>
+        </div>
+
+      </div>
     </div>
   </header>
 
@@ -572,16 +666,6 @@
 
         <div class="mobile-drawer-actions">
           <div class="mobile-drawer-gold-rate-pill">
-            <div class="gold-price__icon-wrapper">
-              <svg class="icon icon-gold" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M 4.5 15 L 11.5 15 L 13 19 L 3 19 Z" />
-                <path d="M 12.5 15 L 19.5 15 L 21 19 L 11 19 Z" />
-                <path d="M 8.5 10 L 15.5 10 L 17 14 L 7 14 Z" />
-                <path d="M20 7 L20.5 9 L22.5 9.5 L20.5 10 L20 12 L19.5 10 L17.5 9.5 L19.5 9 Z" />
-                <circle cx="21.5" cy="7.5" r="0.8" />
-              </svg>
-            </div>
-            <div class="gold-price__separator"></div>
             <div class="gold-price__text-container">
               <span class="gold-price__label">GOLD RATE</span>
               <span class="gold-price__value">
@@ -2135,6 +2219,311 @@
       padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px)) !important;
     }
   }
+  /* Redesigned Premium Desktop Search Panel (Floating Card Style) */
+  .header__search-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: transparent;
+    z-index: 999990;
+    display: none; /* Controlled by JS flex/none */
+    justify-content: center;
+    padding: 1.5rem 0;
+  }
+  .header__search-panel-container {
+    width: calc(100% - 4rem);
+    max-width: 850px;
+    background-color: #FAF8F2; /* Luxury Ivory/White */
+    border-radius: 12px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(1, 63, 62, 0.08);
+    padding: 2rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  /* Top Input Bar styling (Rounded rectangular wrapper inside card) */
+  .header__search-input-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(1, 63, 62, 0.15);
+    border-radius: 30px;
+    padding: 0.6rem 1.5rem;
+    background-color: #ffffff;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .header__search-input-icon {
+    width: 20px;
+    height: 20px;
+    color: rgba(1, 63, 62, 0.6);
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+  }
+  .header__search-form {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+  }
+  .header__search-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    font-family: var(--font-body-family, 'Inter', sans-serif);
+    font-size: 1.15rem;
+    color: #013F3E;
+    outline: none;
+    padding: 0;
+  }
+  .header__search-input::placeholder {
+    color: rgba(1, 63, 62, 0.4);
+  }
+  .header__search-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(1, 63, 62, 0.5);
+    transition: color 0.2s ease;
+    flex-shrink: 0;
+    margin-left: 0.75rem;
+  }
+  .header__search-close:hover {
+    color: var(--color-accent, #D4AF37);
+  }
+  .header__search-close svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Two-column layout: Popular Searches (Left) vs Trending Now (Right) */
+  .header__search-suggestions {
+    display: grid;
+    grid-template-columns: 240px 1px 1fr;
+    gap: 2.5rem;
+  }
+  .header__search-section-title {
+    font-family: var(--font-heading-family, 'Outfit', sans-serif);
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: rgba(1, 63, 62, 0.55);
+    margin-bottom: 1.25rem;
+    font-weight: 600;
+  }
+  .header__search-popular-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .popular-chip {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 1.25rem;
+    border: 1px solid rgba(1, 63, 62, 0.08);
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.5);
+    text-decoration: none;
+    color: #013F3E;
+    font-family: var(--font-body-family, 'Inter', sans-serif);
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .popular-chip:hover {
+    background-color: #ffffff;
+    border-color: var(--color-accent, #D4AF37);
+    color: var(--color-accent, #D4AF37);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 46, 40, 0.04);
+  }
+  .popular-chip-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 0.75rem;
+    color: rgba(1, 63, 62, 0.6);
+    flex-shrink: 0;
+    transition: color 0.2s ease;
+  }
+  .popular-chip:hover .popular-chip-icon {
+    color: var(--color-accent, #D4AF37);
+  }
+  
+  .header__search-vertical-divider {
+    background-color: rgba(0, 46, 40, 0.08);
+    width: 1px;
+    height: 100%;
+    align-self: stretch;
+  }
+
+  .header__search-trending-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+  .header__trending-card {
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    background: transparent;
+    transition: transform 0.25s ease;
+  }
+  .header__trending-card:hover {
+    transform: translateY(-4px);
+  }
+  .header__trending-card-img-wrap {
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid rgba(0, 46, 40, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  }
+  .header__trending-card-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    border-radius: 8px;
+  }
+  .header__trending-card:hover .header__trending-card-img {
+    transform: scale(1.03);
+  }
+  .header__trending-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0 0.25rem;
+  }
+  .header__trending-card-title {
+    font-family: var(--font-body-family, 'Inter', sans-serif);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #013F3E;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .header__trending-card-price {
+    font-family: var(--font-body-family, 'Inter', sans-serif);
+    font-size: 0.8rem;
+    color: #666;
+    font-weight: 600;
+  }
+
+  /* Bottom Area Styling */
+  .header__search-bottom-strip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(0, 46, 40, 0.08);
+    padding-top: 1.25rem;
+    margin-top: 0.5rem;
+  }
+  .header__search-bottom-text {
+    font-family: var(--font-body-family, 'Inter', sans-serif);
+    font-size: 0.85rem;
+    color: rgba(1, 63, 62, 0.6);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .header__search-view-all-collections {
+    font-family: var(--font-heading-family, 'Outfit', sans-serif);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: #013F3E;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  .header__search-view-all-collections:hover {
+    color: var(--color-accent, #D4AF37);
+  }
+
+  /* Desktop Predictive Search Result Dropdown Overlay (Replaces suggestions once user types) */
+  .desktop-live-search-container {
+    background: #fff;
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0, 46, 40, 0.05);
+    max-height: 450px;
+    overflow-y: auto;
+    width: 100%;
+  }
+  .desktop-live-search-loading {
+    padding: 2rem;
+    font-size: 1rem;
+    color: rgba(1, 63, 62, 0.6);
+    text-align: center;
+  }
+  .desktop-live-search-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    text-decoration: none;
+    color: #013F3E;
+    border-bottom: 1px solid rgba(0, 46, 40, 0.05);
+    transition: background-color 0.2s ease;
+  }
+  .desktop-live-search-item:hover {
+    background-color: #FAF8F2;
+  }
+  .desktop-live-search-item__img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border-radius: 4px;
+    margin-right: 1.25rem;
+    background: #FAF8F2;
+    flex-shrink: 0;
+  }
+  .desktop-live-search-item__info {
+    display: flex;
+    flex-direction: column;
+  }
+  .desktop-live-search-item__title {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+  }
+  .desktop-live-search-item__price {
+    font-size: 0.9rem;
+    color: var(--color-accent, #D4AF37);
+    font-weight: 600;
+  }
+  .desktop-live-search-view-all {
+    display: block;
+    padding: 1.25rem;
+    text-align: center;
+    font-weight: 600;
+    color: #013F3E;
+    text-decoration: none;
+    background: #FAF8F2;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  .desktop-live-search-view-all:hover {
+    background: #013F3E;
+    color: #ffffff;
+  }
+  
+  @media (max-width: 1150px) {
+    .header__search-trigger {
+      display: none !important;
+    }
+  }
 {% endstylesheet %}
 
 {% javascript %}
@@ -2441,6 +2830,349 @@
     
     document.addEventListener('shopify:section:load', initWatchers);
   })();
+
+  // Storefront GraphQL SKU Search fallback
+  function getStorefrontToken() {
+    const el = document.getElementById('shopify-features');
+    if (el) {
+      try {
+        const data = JSON.parse(el.textContent);
+        return data.accessToken || '5422b84fa740e56c9ce9aaa844c88ac5';
+      } catch(e) {}
+    }
+    return '5422b84fa740e56c9ce9aaa844c88ac5';
+  }
+
+  window.searchSkuStorefront = function(sku) {
+    if (!sku || sku.trim().length < 2) return Promise.resolve(null);
+    const token = getStorefrontToken();
+    const escapedSku = sku.replace(/"/g, '\\"').trim();
+    const query = `
+      query {
+        products(first: 10, query: "sku:${escapedSku}") {
+          edges {
+            node {
+              id
+              title
+              handle
+              featuredImage {
+                url
+              }
+              priceRange {
+                minVariantPrice {
+                  amount
+                  currencyCode
+                }
+              }
+              variants(first: 100) {
+                edges {
+                  node {
+                    sku
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `;
+
+    return fetch('/api/2023-04/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Shopify-Storefront-Access-Token': token
+      },
+      body: JSON.stringify({ query: query })
+    })
+    .then(res => res.json())
+    .then(json => {
+      if (!json.data || !json.data.products || !json.data.products.edges) return null;
+      
+      const cleanSku = sku.replace(/"/g, '').trim().toLowerCase();
+      
+      // Find the product that has an exact matching variant SKU
+      for (const edge of json.data.products.edges) {
+        const product = edge.node;
+        if (product.variants && product.variants.edges) {
+          for (const vEdge of product.variants.edges) {
+            if (vEdge.node.sku && vEdge.node.sku.trim().toLowerCase() === cleanSku) {
+              return product;
+            }
+          }
+        }
+      }
+      
+      // Fallback: If no exact variant SKU matches but there are results, check if title contains it or return the first
+      if (json.data.products.edges.length > 0) {
+        return json.data.products.edges[0].node;
+      }
+      
+      return null;
+    })
+    .catch(err => {
+      console.error('Storefront SKU search error:', err);
+      return null;
+    });
+  };
+
+  // Desktop Search Dropdown Panel Toggle
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchTrigger = document.getElementById('HeaderSearchTrigger');
+    const searchPanel = document.getElementById('HeaderSearchPanel');
+    const searchClose = document.getElementById('HeaderSearchClose');
+    const searchInput = searchPanel ? searchPanel.querySelector('.header__search-input') : null;
+    const suggestionsBlock = document.getElementById('HeaderSearchSuggestions');
+    const desktopSearchResults = document.getElementById('DesktopSearchResults');
+
+    if (searchTrigger && searchPanel) {
+      searchTrigger.addEventListener('click', function(e) {
+        e.preventDefault();
+        const isExpanded = searchTrigger.getAttribute('aria-expanded') === 'true';
+        if (isExpanded) {
+          searchPanel.style.display = 'none';
+          searchTrigger.setAttribute('aria-expanded', 'false');
+          searchPanel.setAttribute('aria-hidden', 'true');
+        } else {
+          searchPanel.style.display = 'flex';
+          searchTrigger.setAttribute('aria-expanded', 'true');
+          searchPanel.setAttribute('aria-hidden', 'false');
+          if (searchInput) {
+            setTimeout(() => searchInput.focus(), 50);
+          }
+        }
+      });
+
+      if (searchClose) {
+        searchClose.addEventListener('click', function(e) {
+          e.preventDefault();
+          searchPanel.style.display = 'none';
+          searchTrigger.setAttribute('aria-expanded', 'false');
+          searchPanel.setAttribute('aria-hidden', 'true');
+          // Reset search states on close
+          if (searchInput) searchInput.value = '';
+          if (desktopSearchResults) desktopSearchResults.style.display = 'none';
+          if (suggestionsBlock) suggestionsBlock.style.display = 'grid';
+        });
+      }
+
+      // Close on click outside
+      document.addEventListener('click', function(e) {
+        const searchPanelContainer = document.querySelector('.header__search-panel-container');
+        if (searchPanel.style.display === 'flex' && searchPanelContainer && !searchPanelContainer.contains(e.target) && !searchTrigger.contains(e.target)) {
+          searchPanel.style.display = 'none';
+          searchTrigger.setAttribute('aria-expanded', 'false');
+          searchPanel.setAttribute('aria-hidden', 'true');
+        }
+      });
+
+      // Desktop Predictive Search JS
+      let desktopSearchTimeout;
+
+      function getDesktopLuxuryImageUrl(imgUrl, categoryKey = 'rings') {
+        let isFallback = !imgUrl || 
+            imgUrl.includes('no-image') || 
+            imgUrl.includes('placeholder') || 
+            imgUrl.includes('.gif') || 
+            imgUrl.includes('product-1') || 
+            imgUrl.includes('product-2') || 
+            imgUrl.includes('product-3') || 
+            imgUrl.includes('product-4') || 
+            imgUrl.includes('product-5') || 
+            imgUrl.includes('product-6') || 
+            imgUrl.includes('s/images/themes') || 
+            imgUrl.includes('empty-state');
+    
+        if (imgUrl && typeof imgUrl === 'object' && imgUrl.url) {
+          imgUrl = imgUrl.url;
+          isFallback = !imgUrl || 
+              imgUrl.includes('no-image') || 
+              imgUrl.includes('placeholder') || 
+              imgUrl.includes('.gif') || 
+              imgUrl.includes('product-1') || 
+              imgUrl.includes('product-2') || 
+              imgUrl.includes('product-3') || 
+              imgUrl.includes('product-4') || 
+              imgUrl.includes('product-5') || 
+              imgUrl.includes('product-6') || 
+              imgUrl.includes('s/images/themes') || 
+              imgUrl.includes('empty-state');
+        }
+    
+        if (isFallback) {
+          const key = String(categoryKey).toLowerCase();
+          if (key.includes('earring') || key.includes('stud') || key.includes('jhumka')) {
+            return '{{ "earring_placeholder.png" | asset_url }}';
+          } else if (key.includes('bracelet') || key.includes('bangle') || key.includes('wrist') || key.includes('classic')) {
+            return '{{ "bangle_placeholder.png" | asset_url }}';
+          } else if (key.includes('necklace') || key.includes('choker') || key.includes('jewel')) {
+            return '{{ "necklace_placeholder.png" | asset_url }}';
+          } else if (key.includes('pendant')) {
+            return '{{ "pendant_placeholder.png" | asset_url }}';
+          } else {
+            return '{{ "ring_placeholder.png" | asset_url }}';
+          }
+        }
+        return imgUrl;
+      }
+
+      function renderDesktopSearchResults(products, query) {
+        const regex = new RegExp(`(${query.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+        let html = '';
+        products.forEach(product => {
+          const highlightedTitle = product.title.replace(regex, '<mark class="search-highlight">$1</mark>');
+          
+          let categoryKey = 'rings';
+          if (product.title) {
+            const titleLower = product.title.toLowerCase();
+            if (titleLower.includes('earring') || titleLower.includes('stud') || titleLower.includes('jhumka') || titleLower.includes('hoop')) {
+              categoryKey = 'earrings';
+            } else if (titleLower.includes('bracelet') || titleLower.includes('bangle')) {
+              categoryKey = 'bracelets';
+            } else if (titleLower.includes('necklace') || titleLower.includes('choker') || titleLower.includes('mangalsutra')) {
+              categoryKey = 'necklaces';
+            } else if (titleLower.includes('pendant')) {
+              categoryKey = 'pendants';
+            }
+          }
+          
+          const imgUrl = getDesktopLuxuryImageUrl(product.image, categoryKey);
+          const fallbackUrl = getDesktopLuxuryImageUrl(null, categoryKey);
+          const priceFormatted = product.price ? '₹' + (parseFloat(product.price) / 100).toLocaleString('en-IN') : '';
+
+          html += `
+            <a href="${product.url}" class="desktop-live-search-item">
+              <img src="${imgUrl}" alt="${product.title}" class="desktop-live-search-item__img" onerror="this.src='${fallbackUrl}'">
+              <div class="desktop-live-search-item__info">
+                <div class="desktop-live-search-item__title">${highlightedTitle}</div>
+                <div class="desktop-live-search-item__price">${priceFormatted}</div>
+              </div>
+            </a>
+          `;
+        });
+
+        html += `<a href="{{ routes.search_url }}?q=${encodeURIComponent(query)}&options[prefix]=last" class="desktop-live-search-view-all">View all results for "${query}" ↗</a>`;
+        if (desktopSearchResults) desktopSearchResults.innerHTML = html;
+      }
+
+      function performDesktopSearch(query) {
+        if (!query || query.trim().length < 2) {
+          if (desktopSearchResults) desktopSearchResults.style.display = 'none';
+          if (suggestionsBlock) suggestionsBlock.style.display = 'grid';
+          return;
+        }
+
+        if (desktopSearchResults) {
+          desktopSearchResults.style.display = 'block';
+          desktopSearchResults.innerHTML = '<div class="desktop-live-search-loading">Searching Swastik Jewels...</div>';
+        }
+
+        fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(query)}&resources[type]=product&resources[limit]=6`)
+          .then(res => res.json())
+          .then(data => {
+            const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
+            if (products.length === 0) {
+              if (window.searchSkuStorefront) {
+                window.searchSkuStorefront(query).then(skuProduct => {
+                  if (skuProduct) {
+                    const mappedProduct = {
+                      title: skuProduct.title,
+                      url: `/products/${skuProduct.handle}`,
+                      image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
+                      price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
+                    };
+                    renderDesktopSearchResults([mappedProduct], query);
+                  } else {
+                    if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${query}". Try searching "rings" or "diamonds".</div>`;
+                  }
+                });
+              } else {
+                if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${query}". Try searching "rings" or "diamonds".</div>`;
+              }
+              return;
+            }
+
+            renderDesktopSearchResults(products, query);
+          })
+          .catch(err => {
+            if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">Error loading suggestions. Please hit enter to search.</div>`;
+          });
+      }
+
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          clearTimeout(desktopSearchTimeout);
+          const val = e.target.value;
+          if (val.trim().length >= 2) {
+            if (suggestionsBlock) suggestionsBlock.style.display = 'none';
+            desktopSearchTimeout = setTimeout(() => performDesktopSearch(val), 250);
+          } else {
+            if (desktopSearchResults) desktopSearchResults.style.display = 'none';
+            if (suggestionsBlock) suggestionsBlock.style.display = 'grid';
+          }
+        });
+      }
+
+      // Redirect submissions of mapped collection terms directly to collection pages
+      const searchMapping = {
+        'ring': '{{ routes.collections_url }}/eternal-promises',
+        'rings': '{{ routes.collections_url }}/eternal-promises',
+        'necklace': '{{ routes.collections_url }}/close-to-heart',
+        'necklaces': '{{ routes.collections_url }}/close-to-heart',
+        'earring': '{{ routes.collections_url }}/everyday-sparkle',
+        'earrings': '{{ routes.collections_url }}/everyday-sparkle',
+        'bracelet': '{{ routes.collections_url }}/forever-classics',
+        'bracelets': '{{ routes.collections_url }}/forever-classics',
+        'diamond ring': '{{ routes.search_url }}?q=Diamond+Rings&options[prefix]=last',
+        'diamond rings': '{{ routes.search_url }}?q=Diamond+Rings&options[prefix]=last',
+        'mangalsutra': '{{ routes.search_url }}?q=Mangalsutra&options[prefix]=last'
+      };
+
+      function interceptSearchSubmit(e) {
+        const form = e.target;
+        const input = form.querySelector('input[type="search"]');
+        if (!input) return;
+        const rawVal = input.value.trim();
+        const lowerVal = rawVal.toLowerCase();
+        
+        if (searchMapping[lowerVal]) {
+          e.preventDefault();
+          window.location.href = searchMapping[lowerVal];
+          return;
+        }
+
+        if (rawVal.length > 0) {
+          e.preventDefault();
+          
+          if (window.searchSkuStorefront) {
+            window.searchSkuStorefront(rawVal).then(skuProduct => {
+              if (skuProduct) {
+                window.location.href = `/products/${skuProduct.handle}`;
+              } else {
+                const targetQuery = `${rawVal} OR sku:"${rawVal}"`;
+                window.location.href = `${form.action || '/search'}?q=${encodeURIComponent(targetQuery)}&options[prefix]=last`;
+              }
+            });
+          } else {
+            const targetQuery = `${rawVal} OR sku:"${rawVal}"`;
+            window.location.href = `${form.action || '/search'}?q=${encodeURIComponent(targetQuery)}&options[prefix]=last`;
+          }
+        }
+      }
+
+      const desktopSearchForm = document.getElementById('DesktopSearchForm');
+      if (desktopSearchForm) {
+        desktopSearchForm.addEventListener('submit', interceptSearchSubmit);
+      }
+
+      // Safe global observer listener for mobile category form (using event delegation)
+      document.addEventListener('submit', function(e) {
+        if (e.target && e.target.id === 'MobileCategorySearchForm') {
+          interceptSearchSubmit(e);
+        }
+      });
+    }
+  });
 </script>
 
 {% schema %}
