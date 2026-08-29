@@ -1,0 +1,864 @@
+{% comment %}
+  Site-wide Luxury Coupon Popup for Swastik Jewels
+  Automatically appears on first visitor arrival with session persistence
+{% endcomment %}
+
+{%- if section.settings.enable_popup -%}
+  {%- assign shop_coupon_metafield = shop.metafields.custom.coupons | default: shop.metafields.custom.global_coupons -%}
+
+  <div
+    id="SiteCouponOverlay"
+    class="site-coupon-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-hidden="true"
+    aria-labelledby="SiteCouponTitle"
+  >
+    <div class="site-coupon-backdrop" id="SiteCouponBackdrop"></div>
+
+    <div class="site-coupon-container" id="SiteCouponModal">
+      <!-- Close Button -->
+      <button
+        type="button"
+        class="site-coupon-close-btn"
+        id="SiteCouponClose"
+        aria-label="Close coupon offer"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- Header -->
+      <div class="site-coupon-header">
+        <div class="site-coupon-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span>SPECIAL OFFER</span>
+        </div>
+        <h3 class="site-coupon-title" id="SiteCouponTitle">{{ section.settings.heading | escape }}</h3>
+        {%- if section.settings.subtitle != blank -%}
+          <p class="site-coupon-subtitle">{{ section.settings.subtitle | escape }}</p>
+        {%- endif -%}
+      </div>
+
+      <!-- Coupon Cards List Container -->
+      <div class="site-coupon-body" id="SiteCouponList">
+        <!-- Injected dynamically via JS or rendered fallback -->
+      </div>
+
+      <!-- Footer Note -->
+      <div class="site-coupon-footer">
+        <p class="site-coupon-terms-note">Copy coupon code and apply during checkout</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shop Coupons Data JSON -->
+  <script id="site-shop-coupons-json" type="application/json">
+    {{ shop_coupon_metafield | default: '[]' }}
+  </script>
+
+  <!-- Fallback Settings Data JSON -->
+  <script id="site-fallback-coupon-json" type="application/json">
+    {
+      "code": {{ section.settings.fallback_code | default: 'WELCOME10' | json }},
+      "discount": {{ section.settings.fallback_discount | default: '10% OFF' | json }},
+      "desc": {{ section.settings.fallback_description | default: 'Welcome discount on your first luxury order' | json }},
+      "expiry": {{ section.settings.fallback_validity | default: 'Limited time offer' | json }},
+      "delay": {{ section.settings.popup_delay | default: 1.5 | json }}
+    }
+  </script>
+
+  <style>
+    /* =========================================================
+       SITE COUPON POPUP MODAL STYLES (Swastik Jewels Luxury)
+       ========================================================= */
+    .site-coupon-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: visibility 0.3s ease, opacity 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    .site-coupon-overlay.is-active {
+      visibility: visible;
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .site-coupon-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(1, 39, 38, 0.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      cursor: pointer;
+    }
+
+    .site-coupon-container {
+      position: relative;
+      width: 92%;
+      max-width: 480px;
+      max-height: 88vh;
+      background: #FCFBF9;
+      border: 1px solid rgba(1, 63, 62, 0.12);
+      border-radius: 16px;
+      padding: 30px 24px 22px;
+      box-shadow: 0 20px 60px rgba(1, 39, 38, 0.22), 0 4px 16px rgba(0, 0, 0, 0.06);
+      box-sizing: border-box;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      transform: scale(0.94) translateY(10px);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+
+    .site-coupon-overlay.is-active .site-coupon-container {
+      transform: scale(1) translateY(0);
+    }
+
+    /* Close Button */
+    .site-coupon-close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 1px solid rgba(1, 63, 62, 0.1);
+      color: #013F3E;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+      z-index: 10;
+      outline: none;
+    }
+
+    .site-coupon-close-btn:hover {
+      background: #F0EFEA;
+      border-color: #013F3E;
+      transform: rotate(90deg);
+    }
+
+    .site-coupon-close-btn:focus-visible {
+      box-shadow: 0 0 0 2px #013F3E;
+    }
+
+    /* Header */
+    .site-coupon-header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-top: 4px;
+    }
+
+    .site-coupon-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      border-radius: 20px;
+      color: #9E742E;
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .site-coupon-badge svg {
+      color: #D4AF37;
+    }
+
+    .site-coupon-title {
+      font-family: 'Outfit', 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: #013F3E;
+      margin: 0 0 6px;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+    }
+
+    .site-coupon-subtitle {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: #555555;
+      margin: 0;
+      line-height: 1.45;
+      font-weight: 400;
+    }
+
+    /* Body (Scrollable if multiple coupons) */
+    .site-coupon-body {
+      flex: 1;
+      overflow-y: auto;
+      max-height: calc(88vh - 200px);
+      padding: 4px 2px 8px;
+      margin-bottom: 8px;
+      box-sizing: border-box;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .site-coupon-body::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .site-coupon-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .site-coupon-body::-webkit-scrollbar-thumb {
+      background: rgba(1, 63, 62, 0.15);
+      border-radius: 4px;
+    }
+
+    /* Ticket Card */
+    .site-coupon-card {
+      display: flex;
+      align-items: stretch;
+      background: #FFFFFF;
+      border: 1px solid rgba(1, 63, 62, 0.1);
+      border-radius: 12px;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(1, 63, 62, 0.04);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .site-coupon-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .site-coupon-card:hover {
+      border-color: rgba(212, 175, 55, 0.4);
+      box-shadow: 0 6px 20px rgba(1, 63, 62, 0.08);
+    }
+
+    /* Ticket Punch Notches */
+    .site-coupon-card::before,
+    .site-coupon-card::after {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: #FCFBF9;
+      border-radius: 50%;
+      z-index: 3;
+      border: 1px solid rgba(1, 63, 62, 0.1);
+      box-sizing: border-box;
+    }
+
+    .site-coupon-card::before {
+      top: -7px;
+      right: 32%;
+    }
+
+    .site-coupon-card::after {
+      bottom: -7px;
+      right: 32%;
+    }
+
+    .site-coupon-card-left {
+      flex: 1.9;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background-color: #FFFFFF;
+      min-width: 0;
+    }
+
+    .site-coupon-discount {
+      font-family: 'Outfit', sans-serif;
+      font-size: 19px;
+      font-weight: 700;
+      color: #013F3E;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .site-coupon-desc {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: #333333;
+      font-weight: 500;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .site-coupon-expiry {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      color: #888888;
+      margin-top: 5px;
+      font-weight: 400;
+    }
+
+    .site-coupon-card-right {
+      flex: 1.1;
+      padding: 14px 12px;
+      background: #FDFCF9;
+      border-left: 1px dashed rgba(1, 63, 62, 0.18);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 6px;
+      position: relative;
+      min-width: 0;
+    }
+
+    .site-coupon-code-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 9px;
+      font-weight: 700;
+      color: #888888;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .site-coupon-code {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: #013F3E;
+      padding: 4px 8px;
+      background: #FFFFFF;
+      border: 1px dashed rgba(212, 175, 55, 0.6);
+      border-radius: 6px;
+      width: 92%;
+      max-width: 110px;
+      box-sizing: border-box;
+      word-break: break-all;
+      letter-spacing: 0.03em;
+    }
+
+    .site-coupon-copy-btn {
+      width: 92%;
+      max-width: 110px;
+      padding: 7px 6px !important;
+      border-radius: 6px !important;
+      border: none !important;
+      background: #013F3E !important;
+      color: #FFFFFF !important;
+      font-family: 'Inter', sans-serif !important;
+      font-size: 10.5px !important;
+      font-weight: 700 !important;
+      cursor: pointer !important;
+      transition: all 0.2s ease !important;
+      text-align: center !important;
+      line-height: 1 !important;
+      letter-spacing: 0.06em !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 4px !important;
+      outline: none !important;
+    }
+
+    .site-coupon-copy-btn:hover {
+      background: #002b2a !important;
+      transform: translateY(-1px);
+    }
+
+    .site-coupon-copy-btn:focus-visible {
+      box-shadow: 0 0 0 2px #013F3E, 0 0 0 4px rgba(212, 175, 55, 0.5) !important;
+    }
+
+    .site-coupon-copy-btn.copied {
+      background: #2E7D32 !important;
+      color: #FFFFFF !important;
+      transform: none !important;
+    }
+
+    /* Footer */
+    .site-coupon-footer {
+      text-align: center;
+      padding-top: 10px;
+      border-top: 1px solid rgba(1, 63, 62, 0.06);
+    }
+
+    .site-coupon-terms-note {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      color: #777777;
+      margin: 0;
+      letter-spacing: 0.01em;
+    }
+
+    /* Mobile Responsive Adjustments */
+    @media (max-width: 480px) {
+      .site-coupon-container {
+        width: 94%;
+        padding: 24px 16px 18px;
+        border-radius: 14px;
+      }
+
+      .site-coupon-title {
+        font-size: 19px;
+      }
+
+      .site-coupon-subtitle {
+        font-size: 12px;
+      }
+
+      .site-coupon-card {
+        border-radius: 10px;
+      }
+
+      .site-coupon-card::before {
+        right: 34%;
+      }
+
+      .site-coupon-card::after {
+        right: 34%;
+      }
+
+      .site-coupon-card-left {
+        flex: 1.8;
+        padding: 12px 10px;
+      }
+
+      .site-coupon-discount {
+        font-size: 16px;
+      }
+
+      .site-coupon-desc {
+        font-size: 11px;
+      }
+
+      .site-coupon-card-right {
+        flex: 1.2;
+        padding: 10px 8px;
+        gap: 5px;
+      }
+
+      .site-coupon-code {
+        font-size: 12px;
+        padding: 3px 5px;
+      }
+
+      .site-coupon-copy-btn {
+        font-size: 10px !important;
+        padding: 6px 4px !important;
+      }
+    }
+  </style>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const SESSION_STORAGE_KEY = 'swastik_site_coupon_seen';
+
+      function normalizeCoupon(c) {
+        if (!c || typeof c !== 'object') return null;
+        const code = c.code || c.promo_code || '';
+        if (!code || typeof code !== 'string') return null;
+
+        // Expiry check
+        const expiryRaw = c.expiry_date || c.endsAt || c.end_date || null;
+        if (expiryRaw) {
+          const expDate = new Date(expiryRaw);
+          if (!isNaN(expDate.getTime()) && expDate.getTime() < Date.now()) {
+            return null; // Expired coupon
+          }
+        }
+
+        // Format human-readable expiry
+        let formattedExpiry = '';
+        if (expiryRaw) {
+          const expDate = new Date(expiryRaw);
+          if (!isNaN(expDate.getTime())) {
+            formattedExpiry = expDate.toLocaleDateString('en-IN', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            });
+          } else {
+            formattedExpiry = String(expiryRaw).replace(/^Valid till\s*/i, '');
+          }
+        }
+
+        // Type and value calculation
+        let type = c.type || c.discount_type || 'percentage';
+        let value = c.value !== undefined ? c.value :
+          (c.discount_value !== undefined ? c.discount_value :
+            (c.customerGets?.value?.percentage ? c.customerGets.value.percentage * 100 :
+              (c.customerGets?.value?.discountAmount?.amount || 0)));
+
+        if (type === 'percentage' && value > 0 && value < 1) {
+          value = Math.round(value * 100);
+        }
+
+        const minOrder = c.min_order_value || c.minimum_order_value || c.minimumRequirement?.subtotal?.greaterThanOrEqualToSubtotal || null;
+        const desc = c.short_description || c.campaign_name || c.title || '';
+
+        return {
+          code: code.trim().toUpperCase(),
+          type: type,
+          value: value,
+          min_order_value: minOrder,
+          expiry_date: formattedExpiry,
+          short_description: desc
+        };
+      }
+
+      function getSiteCoupons() {
+        const shopJsonEl = document.getElementById('site-shop-coupons-json');
+        const fallbackJsonEl = document.getElementById('site-fallback-coupon-json');
+
+        let coupons = [];
+        if (shopJsonEl) {
+          try {
+            const raw = JSON.parse(shopJsonEl.textContent || '[]');
+            if (Array.isArray(raw)) {
+              raw.forEach(item => {
+                const norm = normalizeCoupon(item);
+                if (norm && norm.code) coupons.push(norm);
+              });
+            }
+          } catch (e) {
+            console.error('Error parsing site coupons:', e);
+          }
+        }
+
+        // If no coupons from metafields, use custom section fallback
+        if (coupons.length === 0 && fallbackJsonEl) {
+          try {
+            const fb = JSON.parse(fallbackJsonEl.textContent || '{}');
+            if (fb && fb.code) {
+              coupons.push({
+                code: String(fb.code).trim().toUpperCase(),
+                type: 'custom',
+                value: 0,
+                custom_discount: fb.discount || '10% OFF',
+                short_description: fb.desc || 'Special Welcome Discount',
+                expiry_date: fb.expiry || ''
+              });
+            }
+          } catch (e) {
+            console.error('Error parsing fallback coupon:', e);
+          }
+        }
+
+        // Deduplicate by coupon code
+        const uniqueMap = new Map();
+        coupons.forEach(c => {
+          if (!uniqueMap.has(c.code)) {
+            uniqueMap.set(c.code, c);
+          }
+        });
+
+        return Array.from(uniqueMap.values());
+      }
+
+      function renderSiteCouponCards(coupons) {
+        const container = document.getElementById('SiteCouponList');
+        if (!container) return;
+
+        if (!coupons || coupons.length === 0) {
+          container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666; font-size: 13px; font-family: Inter, sans-serif;">Special offers available soon.</div>';
+          return;
+        }
+
+        let html = '';
+        coupons.forEach(coupon => {
+          let discountText = coupon.custom_discount || '';
+          if (!discountText) {
+            if (coupon.type === 'percentage') {
+              discountText = `${coupon.value}% OFF`;
+            } else {
+              discountText = `₹${parseFloat(coupon.value || 0).toLocaleString('en-IN')} OFF`;
+            }
+          }
+
+          const minOrderFormatted = coupon.min_order_value ? ' on orders above ₹' + parseFloat(coupon.min_order_value).toLocaleString('en-IN') : '';
+          const descText = coupon.short_description || `Get ${discountText}${minOrderFormatted}`;
+          const expiryText = coupon.expiry_date ? (coupon.expiry_date.toLowerCase().includes('valid') || coupon.expiry_date.toLowerCase().includes('offer') ? coupon.expiry_date : `Valid till ${coupon.expiry_date}`) : '';
+
+          html += `
+            <div class="site-coupon-card">
+              <div class="site-coupon-card-left">
+                <div class="site-coupon-discount">${discountText}</div>
+                <div class="site-coupon-desc">${descText}</div>
+                ${expiryText ? `<div class="site-coupon-expiry">${expiryText}</div>` : ''}
+              </div>
+              <div class="site-coupon-card-right">
+                <div class="site-coupon-code-label">CODE</div>
+                <div class="site-coupon-code">${coupon.code}</div>
+                <button type="button" class="site-coupon-copy-btn js-site-coupon-copy" data-code="${coupon.code}" aria-label="Copy coupon code ${coupon.code}">
+                  <span>COPY</span>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+
+        container.innerHTML = html;
+      }
+
+      function openSiteCouponPopup() {
+        const overlay = document.getElementById('SiteCouponOverlay');
+        if (!overlay) return;
+
+        const coupons = getSiteCoupons();
+        renderSiteCouponCards(coupons);
+
+        overlay.classList.add('is-active');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+
+        // Set session storage flag to avoid re-prompting within the same browsing session
+        try {
+          sessionStorage.setItem(SESSION_STORAGE_KEY, 'true');
+        } catch (e) {}
+
+        // Focus close button for accessibility
+        const closeBtn = document.getElementById('SiteCouponClose');
+        if (closeBtn) {
+          setTimeout(() => closeBtn.focus(), 100);
+        }
+      }
+
+      function closeSiteCouponPopup() {
+        const overlay = document.getElementById('SiteCouponOverlay');
+        if (!overlay) return;
+
+        overlay.classList.remove('is-active');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+
+      // Clipboard copy helper with fallback
+      function copyToClipboard(text, btnElement) {
+        if (!text || !btnElement) return;
+
+        function showSuccess() {
+          const btnSpan = btnElement.querySelector('span') || btnElement;
+          const originalText = btnSpan.textContent;
+          btnElement.classList.add('copied');
+          btnSpan.textContent = 'COPIED ✓';
+
+          setTimeout(() => {
+            btnElement.classList.remove('copied');
+            btnSpan.textContent = originalText;
+          }, 2000);
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(showSuccess).catch(() => {
+            fallbackCopy(text, showSuccess);
+          });
+        } else {
+          fallbackCopy(text, showSuccess);
+        }
+      }
+
+      function fallbackCopy(text, callback) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          const successful = document.execCommand('copy');
+          if (successful && typeof callback === 'function') callback();
+        } catch (err) {
+          console.error('Fallback copy error:', err);
+        }
+        document.body.removeChild(textArea);
+      }
+
+      // Event Listeners: Scoped specifically to SiteCoupon elements
+      function initListeners() {
+        // 1. Close on close button click
+        const closeBtn = document.getElementById('SiteCouponClose');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            closeSiteCouponPopup();
+          });
+        }
+
+        // 2. Close on outside click (backdrop)
+        const backdrop = document.getElementById('SiteCouponBackdrop');
+        if (backdrop) {
+          backdrop.addEventListener('click', function (e) {
+            e.preventDefault();
+            closeSiteCouponPopup();
+          });
+        }
+
+        // 3. Prevent clicks inside modal from closing
+        const modalContainer = document.getElementById('SiteCouponModal');
+        if (modalContainer) {
+          modalContainer.addEventListener('click', function (e) {
+            e.stopPropagation();
+          });
+        }
+
+        // 4. Copy button delegation within modal
+        if (modalContainer) {
+          modalContainer.addEventListener('click', function (e) {
+            const copyBtn = e.target.closest('.js-site-coupon-copy');
+            if (copyBtn) {
+              e.preventDefault();
+              const code = copyBtn.getAttribute('data-code');
+              if (code) {
+                copyToClipboard(code, copyBtn);
+              }
+            }
+          });
+        }
+
+        // 5. Close on Escape key
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' || e.keyCode === 27) {
+            const overlay = document.getElementById('SiteCouponOverlay');
+            if (overlay && overlay.classList.contains('is-active')) {
+              closeSiteCouponPopup();
+            }
+          }
+        });
+      }
+
+      // Auto-trigger on visitor arrival (honoring sessionStorage)
+      function scheduleAutoPopup() {
+        let seen = false;
+        try {
+          seen = sessionStorage.getItem(SESSION_STORAGE_KEY) === 'true';
+        } catch (e) {}
+
+        if (seen) return;
+
+        const fallbackJsonEl = document.getElementById('site-fallback-coupon-json');
+        let delaySec = 1.5;
+        if (fallbackJsonEl) {
+          try {
+            const fb = JSON.parse(fallbackJsonEl.textContent || '{}');
+            if (fb && typeof fb.delay === 'number') delaySec = fb.delay;
+          } catch (e) {}
+        }
+
+        setTimeout(function () {
+          // Do not open if cart drawer or video call modal or search overlay is actively open
+          const cartDrawer = document.getElementById('CartDrawer');
+          const isCartOpen = cartDrawer && cartDrawer.classList.contains('is-open');
+          const videoModal = document.querySelector('.video-call-modal.is-open');
+
+          if (!isCartOpen && !videoModal) {
+            openSiteCouponPopup();
+          }
+        }, Math.max(delaySec * 1000, 500));
+      }
+
+      // Expose globally for optional external triggers
+      window.openSiteCouponPopup = openSiteCouponPopup;
+      window.closeSiteCouponPopup = closeSiteCouponPopup;
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+          initListeners();
+          scheduleAutoPopup();
+        });
+      } else {
+        initListeners();
+        scheduleAutoPopup();
+      }
+    })();
+  </script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Site Coupon Popup",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable_popup",
+      "label": "Enable Site Coupon Popup",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Popup Heading",
+      "default": "Available Coupons"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Popup Subtitle",
+      "default": "Enjoy exclusive savings on handcrafted luxury jewellery"
+    },
+    {
+      "type": "range",
+      "id": "popup_delay",
+      "label": "Auto-show Delay (seconds)",
+      "min": 1,
+      "max": 10,
+      "step": 0.5,
+      "default": 1.5
+    },
+    {
+      "type": "header",
+      "content": "Fallback / Default Coupon Offer"
+    },
+    {
+      "type": "text",
+      "id": "fallback_code",
+      "label": "Coupon Code",
+      "default": "WELCOME10"
+    },
+    {
+      "type": "text",
+      "id": "fallback_discount",
+      "label": "Discount Text",
+      "default": "10% OFF"
+    },
+    {
+      "type": "text",
+      "id": "fallback_description",
+      "label": "Description",
+      "default": "Welcome 10% Discount on your first order"
+    },
+    {
+      "type": "text",
+      "id": "fallback_validity",
+      "label": "Validity / Note",
+      "default": "Limited time offer"
+    }
+  ]
+}
+{% endschema %}
