@@ -1,0 +1,5 @@
+{% layout none %}
+{
+  "results_count": {{ search.results_count | default: 0 }},
+  "terms": {{ search.terms | json }}
+}

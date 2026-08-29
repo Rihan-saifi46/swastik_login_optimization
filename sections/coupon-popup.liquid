@@ -625,18 +625,44 @@
         container.innerHTML = html;
       }
 
-      function openSiteCouponPopup() {
+      function openSiteCouponPopup(customCoupons, title, subtitle) {
         const overlay = document.getElementById('SiteCouponOverlay');
         if (!overlay) return;
 
-        const coupons = getSiteCoupons();
-        renderSiteCouponCards(coupons);
+        let coupons = [];
+        const isCustom = Array.isArray(customCoupons);
+
+        if (isCustom) {
+          customCoupons.forEach(item => {
+            const norm = normalizeCoupon(item);
+            if (norm && norm.code) coupons.push(norm);
+          });
+          // Deduplicate by code
+          const uniqueMap = new Map();
+          coupons.forEach(c => {
+            if (!uniqueMap.has(c.code)) uniqueMap.set(c.code, c);
+          });
+          coupons = Array.from(uniqueMap.values());
+        } else {
+          coupons = getSiteCoupons();
+        }
+
+        const titleEl = document.getElementById('SiteCouponTitle');
+        const subtitleEl = overlay.querySelector('.site-coupon-subtitle');
+        if (title && titleEl) {
+          titleEl.textContent = title;
+        }
+        if (subtitle && subtitleEl) {
+          subtitleEl.textContent = subtitle;
+        }
+
+        renderSiteCouponCards(coupons, isCustom);
 
         overlay.classList.add('is-active');
         overlay.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
 
-        // Set session storage flag to avoid re-prompting within the same browsing session
+        // Set session storage flag to avoid re-prompting visitor auto-modal
         try {
           sessionStorage.setItem(SESSION_STORAGE_KEY, 'true');
         } catch (e) {}
@@ -700,7 +726,7 @@
         document.body.removeChild(textArea);
       }
 
-      // Event Listeners: Scoped specifically to SiteCoupon elements
+      // Event Listeners: Scoped specifically to SiteCoupon elements & Product Triggers
       function initListeners() {
         // 1. Close on close button click
         const closeBtn = document.getElementById('SiteCouponClose');
@@ -742,7 +768,20 @@
           });
         }
 
-        // 5. Close on Escape key
+        // 5. Product card & Product page "Coupon Available" triggers
+        document.addEventListener('click', function (e) {
+          const trigger = e.target.closest('#pp-coupon-trigger, .pp-coupon-status, .js-coupon-trigger, [data-open-coupons]');
+          if (trigger) {
+            e.preventDefault();
+            let variantCoupons = null;
+            if (typeof window.getCouponsForCurrentVariant === 'function') {
+              variantCoupons = window.getCouponsForCurrentVariant();
+            }
+            openSiteCouponPopup(variantCoupons);
+          }
+        });
+
+        // 6. Close on Escape key
         document.addEventListener('keydown', function (e) {
           if (e.key === 'Escape' || e.keyCode === 27) {
             const overlay = document.getElementById('SiteCouponOverlay');

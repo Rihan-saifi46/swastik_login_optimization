@@ -374,6 +374,7 @@
           <form action="{{ routes.search_url }}" method="get" class="header__search-form" role="search" id="DesktopSearchForm">
             {%- assign clean_terms = search.terms | split: ' OR sku:' | first -%}
             <input type="search" name="q" class="header__search-input" id="DesktopSearchInput" placeholder="Search for rings, earrings, necklaces and more..." value="{{ clean_terms | escape }}" autocomplete="off" autocorrect="off" required>
+            <input type="hidden" name="type" value="product">
             <input type="hidden" name="options[prefix]" value="last">
           </form>
           <button type="button" class="header__search-close" id="HeaderSearchClose" aria-label="Close search">
@@ -2505,18 +2506,31 @@
     font-weight: 600;
   }
   .desktop-live-search-view-all {
-    display: block;
-    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 1.1rem 1.25rem;
     text-align: center;
-    font-weight: 600;
     color: #013F3E;
     text-decoration: none;
     background: #FAF8F2;
+    border-bottom: 1px solid rgba(0, 46, 40, 0.08);
     transition: background-color 0.2s ease, color 0.2s ease;
   }
   .desktop-live-search-view-all:hover {
     background: #013F3E;
     color: #ffffff;
+  }
+  .desktop-live-search-view-all__title {
+    font-size: 0.98rem;
+    font-weight: 600;
+  }
+  .desktop-live-search-view-all__count {
+    font-size: 0.82rem;
+    font-weight: 500;
+    opacity: 0.8;
   }
   
   @media (max-width: 1150px) {
@@ -3038,10 +3052,19 @@
         return imgUrl;
       }
 
-      function renderDesktopSearchResults(products, query) {
+      function renderDesktopSearchResults(products, query, totalCount) {
         const safeTerm = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = safeTerm ? new RegExp(`(${safeTerm})`, 'gi') : null;
-        let html = '';
+        const finalCount = (typeof totalCount === 'number' && totalCount > 0) ? totalCount : products.length;
+        const countLabel = finalCount === 1 ? '1 Product' : `${finalCount} Products`;
+
+        let html = `
+          <a href="{{ routes.search_url }}?q=${encodeURIComponent(query)}&type=product" class="desktop-live-search-view-all">
+            <div class="desktop-live-search-view-all__title">View all results for "${query}" →</div>
+            <div class="desktop-live-search-view-all__count">${countLabel}</div>
+          </a>
+        `;
+
         products.forEach(product => {
           const highlightedTitle = regex && product.title ? product.title.replace(regex, '<mark class="search-highlight">$1</mark>') : (product.title || '');
           
@@ -3074,7 +3097,6 @@
           `;
         });
 
-        html += `<a href="{{ routes.search_url }}?q=${encodeURIComponent(query)}&options[prefix]=last" class="desktop-live-search-view-all">View all results for "${query}" ↗</a>`;
         if (desktopSearchResults) desktopSearchResults.innerHTML = html;
       }
 
@@ -3117,66 +3139,74 @@
                 image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
                 price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
               };
-              renderDesktopSearchResults([mappedProduct], trimmedQuery);
+              renderDesktopSearchResults([mappedProduct], trimmedQuery, 1);
             } else {
               // Check predictive search as fallback if SKU wasn't found
-              fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=6`, { signal })
-                .then(res => res.json())
-                .then(data => {
-                  if (searchSeq !== desktopSearchSeq) return;
-                  const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
-                  if (products.length > 0) {
-                    renderDesktopSearchResults(products, trimmedQuery);
-                  } else {
-                    if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
-                  }
-                })
-                .catch(err => {
-                  if (searchSeq !== desktopSearchSeq) return;
-                  if (err.name !== 'AbortError') {
-                    if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
-                  }
-                });
-            }
-          });
-        } else {
-          // Normal keyword predictive search
-          fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=6`, { signal })
-            .then(res => res.json())
-            .then(data => {
-              if (searchSeq !== desktopSearchSeq) return;
-              const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
-              if (products.length === 0) {
-                // Secondary check for exact variant SKU
-                if (window.searchSkuStorefront) {
-                  window.searchSkuStorefront(trimmedQuery, signal).then(skuProduct => {
-                    if (searchSeq !== desktopSearchSeq) return;
-                    if (skuProduct) {
-                      const mappedProduct = {
-                        title: skuProduct.title,
-                        url: `/products/${skuProduct.handle}`,
-                        image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
-                        price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
-                      };
-                      renderDesktopSearchResults([mappedProduct], trimmedQuery);
-                    } else {
-                      if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
-                    }
-                  });
+              Promise.allSettled([
+                fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=6`, { signal }).then(res => res.json()),
+                fetch(`{{ routes.search_url }}?q=${encodeURIComponent(trimmedQuery)}&type=product&view=count`, { signal }).then(res => res.json()).catch(() => null)
+              ]).then(([suggestResult, countResult]) => {
+                if (searchSeq !== desktopSearchSeq) return;
+                const data = suggestResult.status === 'fulfilled' ? suggestResult.value : null;
+                const countData = countResult.status === 'fulfilled' ? countResult.value : null;
+                const products = data && data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
+                const totalCount = countData && typeof countData.results_count === 'number' ? countData.results_count : products.length;
+
+                if (products.length > 0) {
+                  renderDesktopSearchResults(products, trimmedQuery, totalCount);
                 } else {
                   if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
                 }
-                return;
-              }
+              }).catch(err => {
+                if (searchSeq !== desktopSearchSeq) return;
+                if (err.name !== 'AbortError') {
+                  if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
+                }
+              });
+            }
+          });
+        } else {
+          // Normal keyword predictive search + actual total count in parallel
+          Promise.allSettled([
+            fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=6`, { signal }).then(res => res.json()),
+            fetch(`{{ routes.search_url }}?q=${encodeURIComponent(trimmedQuery)}&type=product&view=count`, { signal }).then(res => res.json()).catch(() => null)
+          ]).then(([suggestResult, countResult]) => {
+            if (searchSeq !== desktopSearchSeq) return;
+            const data = suggestResult.status === 'fulfilled' ? suggestResult.value : null;
+            const countData = countResult.status === 'fulfilled' ? countResult.value : null;
+            const products = data && data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
+            const totalCount = countData && typeof countData.results_count === 'number' ? countData.results_count : products.length;
 
-              renderDesktopSearchResults(products, trimmedQuery);
-            })
-            .catch(err => {
-              if (searchSeq !== desktopSearchSeq) return;
-              if (err.name !== 'AbortError') {
-                if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">Error loading suggestions. Please hit enter to search.</div>`;
+            if (products.length === 0) {
+              // Secondary check for exact variant SKU
+              if (window.searchSkuStorefront) {
+                window.searchSkuStorefront(trimmedQuery, signal).then(skuProduct => {
+                  if (searchSeq !== desktopSearchSeq) return;
+                  if (skuProduct) {
+                    const mappedProduct = {
+                      title: skuProduct.title,
+                      url: `/products/${skuProduct.handle}`,
+                      image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
+                      price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
+                    };
+                    renderDesktopSearchResults([mappedProduct], trimmedQuery, 1);
+                  } else {
+                    if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
+                  }
+                });
+              } else {
+                if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
               }
-            });
+              return;
+            }
+
+            renderDesktopSearchResults(products, trimmedQuery, totalCount);
+          }).catch(err => {
+            if (searchSeq !== desktopSearchSeq) return;
+            if (err.name !== 'AbortError') {
+              if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">Error loading suggestions. Please hit enter to search.</div>`;
+            }
+          });
         }
       }
 
@@ -3197,47 +3227,26 @@
         });
       }
 
-      // Redirect submissions of mapped collection terms directly to collection pages
-      const searchMapping = {
-        'ring': '{{ routes.collections_url }}/eternal-promises',
-        'rings': '{{ routes.collections_url }}/eternal-promises',
-        'necklace': '{{ routes.collections_url }}/close-to-heart',
-        'necklaces': '{{ routes.collections_url }}/close-to-heart',
-        'earring': '{{ routes.collections_url }}/everyday-sparkle',
-        'earrings': '{{ routes.collections_url }}/everyday-sparkle',
-        'bracelet': '{{ routes.collections_url }}/forever-classics',
-        'bracelets': '{{ routes.collections_url }}/forever-classics',
-        'diamond ring': '{{ routes.search_url }}?q=Diamond+Rings&options[prefix]=last',
-        'diamond rings': '{{ routes.search_url }}?q=Diamond+Rings&options[prefix]=last',
-        'mangalsutra': '{{ routes.search_url }}?q=Mangalsutra&options[prefix]=last'
-      };
-
       function interceptSearchSubmit(e) {
         const form = e.target;
         const input = form.querySelector('input[type="search"]');
         if (!input) return;
         const rawVal = input.value.trim();
-        const lowerVal = rawVal.toLowerCase();
-        
-        if (searchMapping[lowerVal]) {
-          e.preventDefault();
-          window.location.href = searchMapping[lowerVal];
-          return;
-        }
 
         if (rawVal.length > 0) {
           e.preventDefault();
           
-          if (window.searchSkuStorefront) {
+          const isSkuCandidate = /^[a-zA-Z0-9_-]+$/.test(rawVal) && /\d/.test(rawVal);
+          if (isSkuCandidate && window.searchSkuStorefront) {
             window.searchSkuStorefront(rawVal).then(skuProduct => {
               if (skuProduct && skuProduct.handle) {
                 window.location.href = `/products/${skuProduct.handle}`;
               } else {
-                window.location.href = `${form.action || '/search'}?q=${encodeURIComponent(rawVal)}&options[prefix]=last`;
+                window.location.href = `${form.action || '{{ routes.search_url }}'}?q=${encodeURIComponent(rawVal)}`;
               }
             });
           } else {
-            window.location.href = `${form.action || '/search'}?q=${encodeURIComponent(rawVal)}&options[prefix]=last`;
+            window.location.href = `${form.action || '{{ routes.search_url }}'}?q=${encodeURIComponent(rawVal)}`;
           }
         }
       }

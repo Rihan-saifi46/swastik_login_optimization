@@ -47,6 +47,7 @@
         {%- assign clean_terms = search.terms | split: ' OR sku:' | first -%}
         <input type="search" name="q" id="MobileCategorySearchInput" placeholder="Search rings, earrings, diamonds..." value="{{ clean_terms | escape }}" autocomplete="off" autocorrect="off">
         <button type="button" id="MobileCategorySearchClear" class="search-clear-btn" style="display: none;" aria-label="Clear search">✕</button>
+        <input type="hidden" name="type" value="product">
         <input type="hidden" name="options[prefix]" value="last">
       </form>
     </div>
@@ -547,17 +548,29 @@ mark.search-highlight {
 }
 
 .live-search-view-all {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
   text-align: center;
-  padding: 14px;
-  margin-top: 18px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
   background: #00352A;
   color: #FFF;
-  border-radius: 50px;
+  border-radius: 12px;
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.92rem;
   box-shadow: 0 4px 14px rgba(0, 53, 42, 0.25);
+}
+.live-search-view-all__title {
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+.live-search-view-all__count {
+  font-size: 0.8rem;
+  font-weight: 400;
+  opacity: 0.85;
 }
 </style>
 
@@ -579,10 +592,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let mobileSearchSeq = 0;
   let mobileSearchAbort = null;
 
-  function renderMobileSearchResults(products, query) {
+  function renderMobileSearchResults(products, query, totalCount) {
     const safeTerm = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = safeTerm ? new RegExp(`(${safeTerm})`, 'gi') : null;
-    let html = '';
+    const finalCount = (typeof totalCount === 'number' && totalCount > 0) ? totalCount : products.length;
+    const countLabel = finalCount === 1 ? '1 Product' : `${finalCount} Products`;
+
+    let html = `
+      <a href="{{ routes.search_url }}?q=${encodeURIComponent(query)}&type=product" class="live-search-view-all">
+        <div class="live-search-view-all__title">View all results for "${query}" →</div>
+        <div class="live-search-view-all__count">${countLabel}</div>
+      </a>
+    `;
+
     products.forEach(product => {
       const highlightedTitle = regex && product.title ? product.title.replace(regex, '<mark class="search-highlight">$1</mark>') : (product.title || '');
       
@@ -614,7 +636,6 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     });
 
-    html += `<a href="{{ routes.search_url }}?q=${encodeURIComponent(query)}" class="live-search-view-all">View all results for "${query}" ↗</a>`;
     if (searchResults) searchResults.innerHTML = html;
   }
 
@@ -665,65 +686,73 @@ document.addEventListener('DOMContentLoaded', () => {
             image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
             price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
           };
-          renderMobileSearchResults([mappedProduct], trimmedQuery);
+          renderMobileSearchResults([mappedProduct], trimmedQuery, 1);
         } else {
           // Check predictive search as fallback if SKU wasn't found
-          fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=8`, { signal })
-            .then(res => res.json())
-            .then(data => {
-              if (searchSeq !== mobileSearchSeq) return;
-              const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
-              if (products.length > 0) {
-                renderMobileSearchResults(products, trimmedQuery);
-              } else {
-                if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
-              }
-            })
-            .catch(err => {
-              if (searchSeq !== mobileSearchSeq) return;
-              if (err.name !== 'AbortError') {
-                if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
-              }
-            });
-        }
-      });
-    } else {
-      // Normal keyword predictive search
-      fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=8`, { signal })
-        .then(res => res.json())
-        .then(data => {
-          if (searchSeq !== mobileSearchSeq) return;
-          const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
-          if (products.length === 0) {
-            if (window.searchSkuStorefront) {
-              window.searchSkuStorefront(trimmedQuery, signal).then(skuProduct => {
-                if (searchSeq !== mobileSearchSeq) return;
-                if (skuProduct) {
-                  const mappedProduct = {
-                    title: skuProduct.title,
-                    url: `/products/${skuProduct.handle}`,
-                    image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
-                    price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
-                  };
-                  renderMobileSearchResults([mappedProduct], trimmedQuery);
-                } else {
-                  if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
-                }
-              });
+          Promise.allSettled([
+            fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=8`, { signal }).then(res => res.json()),
+            fetch(`{{ routes.search_url }}?q=${encodeURIComponent(trimmedQuery)}&type=product&view=count`, { signal }).then(res => res.json()).catch(() => null)
+          ]).then(([suggestResult, countResult]) => {
+            if (searchSeq !== mobileSearchSeq) return;
+            const data = suggestResult.status === 'fulfilled' ? suggestResult.value : null;
+            const countData = countResult.status === 'fulfilled' ? countResult.value : null;
+            const products = data && data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
+            const totalCount = countData && typeof countData.results_count === 'number' ? countData.results_count : products.length;
+
+            if (products.length > 0) {
+              renderMobileSearchResults(products, trimmedQuery, totalCount);
             } else {
               if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
             }
-            return;
-          }
+          }).catch(err => {
+            if (searchSeq !== mobileSearchSeq) return;
+            if (err.name !== 'AbortError') {
+              if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
+            }
+          });
+        }
+      });
+    } else {
+      // Normal keyword predictive search + actual total count in parallel
+      Promise.allSettled([
+        fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=8`, { signal }).then(res => res.json()),
+        fetch(`{{ routes.search_url }}?q=${encodeURIComponent(trimmedQuery)}&type=product&view=count`, { signal }).then(res => res.json()).catch(() => null)
+      ]).then(([suggestResult, countResult]) => {
+        if (searchSeq !== mobileSearchSeq) return;
+        const data = suggestResult.status === 'fulfilled' ? suggestResult.value : null;
+        const countData = countResult.status === 'fulfilled' ? countResult.value : null;
+        const products = data && data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
+        const totalCount = countData && typeof countData.results_count === 'number' ? countData.results_count : products.length;
 
-          renderMobileSearchResults(products, trimmedQuery);
-        })
-        .catch(err => {
-          if (searchSeq !== mobileSearchSeq) return;
-          if (err.name !== 'AbortError') {
-            if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">Error loading suggestions. Please hit enter to search.</div>`;
+        if (products.length === 0) {
+          if (window.searchSkuStorefront) {
+            window.searchSkuStorefront(trimmedQuery, signal).then(skuProduct => {
+              if (searchSeq !== mobileSearchSeq) return;
+              if (skuProduct) {
+                const mappedProduct = {
+                  title: skuProduct.title,
+                  url: `/products/${skuProduct.handle}`,
+                  image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
+                  price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
+                };
+                renderMobileSearchResults([mappedProduct], trimmedQuery, 1);
+              } else {
+                if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
+              }
+            });
+          } else {
+            if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
           }
-        });
+          return;
+        }
+
+        renderMobileSearchResults(products, trimmedQuery, totalCount);
+      }).catch(err => {
+        if (searchSeq !== mobileSearchSeq) return;
+        if (err.name !== 'AbortError') {
+          if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">Error loading suggestions. Please hit enter to search.</div>`;
+        }
+      });
     }
   }
 
@@ -740,6 +769,30 @@ document.addEventListener('DOMContentLoaded', () => {
       searchInput.value = '';
       performSearch('');
       searchInput.focus();
+    });
+  }
+
+  const mobileSearchForm = document.getElementById('MobileCategorySearchForm');
+  if (mobileSearchForm) {
+    mobileSearchForm.addEventListener('submit', (e) => {
+      const input = mobileSearchForm.querySelector('input[type="search"]');
+      if (!input) return;
+      const rawVal = input.value.trim();
+      if (rawVal.length > 0) {
+        e.preventDefault();
+        const isSkuCandidate = /^[a-zA-Z0-9_-]+$/.test(rawVal) && /\d/.test(rawVal);
+        if (isSkuCandidate && window.searchSkuStorefront) {
+          window.searchSkuStorefront(rawVal).then(skuProduct => {
+            if (skuProduct && skuProduct.handle) {
+              window.location.href = `/products/${skuProduct.handle}`;
+            } else {
+              window.location.href = `${mobileSearchForm.action || '{{ routes.search_url }}'}?q=${encodeURIComponent(rawVal)}`;
+            }
+          });
+        } else {
+          window.location.href = `${mobileSearchForm.action || '{{ routes.search_url }}'}?q=${encodeURIComponent(rawVal)}`;
+        }
+      }
     });
   }
 });

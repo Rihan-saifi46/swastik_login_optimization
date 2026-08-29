@@ -7,78 +7,189 @@
 {% enddoc %}
 
 <style>
-  /* Toast Notification Styling */
+  /* Premium Toast Notification Styling (Swastik Jewels Luxury) */
   .toast-container {
     position: fixed;
-    top: 2rem;
-    right: 2rem;
-    z-index: 1000;
+    top: 24px;
+    right: 24px;
+    z-index: 9999999;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 12px;
     pointer-events: none;
+    max-width: calc(100vw - 32px);
   }
 
   .toast-item {
-    background: rgba(1, 63, 62, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(212, 175, 55, 0.3);
+    background: radial-gradient(circle at 10% 10%, rgba(18, 64, 55, 0.96) 0%, rgba(3, 28, 24, 0.98) 100%);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(135, 195, 165, 0.28);
     color: #FFFFFF;
-    padding: 1.6rem 2.4rem;
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    padding: 18px 20px;
+    border-radius: 18px;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.42), 0 0 24px rgba(1, 63, 62, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
     display: flex;
-    align-items: center;
-    gap: 1.6rem;
-    width: 360px;
+    align-items: flex-start;
+    gap: 14px;
+    width: 390px;
+    max-width: 100%;
     pointer-events: auto;
-    transform: translateX(120%);
-    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.5s ease;
+    box-sizing: border-box;
+    transform: translateX(40px) scale(0.96);
     opacity: 0;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
   }
 
   .toast-item.show {
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
     opacity: 1;
+  }
+
+  .toast-left {
+    flex-shrink: 0;
+  }
+
+  .toast-icon-wrap {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .toast-status-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 7px;
+    height: 7px;
+    background-color: #00E676;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #00E676, 0 0 2px #FFFFFF;
+    z-index: 2;
   }
 
   .toast-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.8rem;
-    height: 2.8rem;
-    border-radius: 50%;
-    background: rgba(212, 175, 55, 0.15);
-    color: #D4AF37;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: rgba(4, 40, 34, 0.85);
+    border: 1px solid rgba(130, 200, 160, 0.3);
+    color: #E2CE9F;
     flex-shrink: 0;
   }
 
   .toast-content {
-    flex-grow: 1;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .toast-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
   }
 
   .toast-title {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 1.4rem;
+    font-family: 'Outfit', 'Montserrat', sans-serif;
+    font-size: 15.5px;
     font-weight: 600;
-    margin-bottom: 0.2rem;
-    letter-spacing: 0.05em;
+    color: #FFFFFF;
+    margin: 0;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  .toast-close {
+    background: transparent;
+    border: none;
+    color: #FFFFFF;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    border-radius: 4px;
+    margin-top: -2px;
+    margin-right: -4px;
+  }
+
+  .toast-close:hover {
+    opacity: 1;
+    transform: scale(1.1);
   }
 
   .toast-message {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 1.2rem;
-    opacity: 0.8;
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px;
+    color: #D6E4E0;
+    margin: 0 0 3px 0;
+    line-height: 1.42;
+    font-weight: 400;
   }
 
-  .toast-action {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 1.2rem;
-    color: #D4AF37;
-    text-decoration: underline;
-    font-weight: 500;
+  .toast-hint {
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px;
+    color: #8DA89F;
+    margin: 0 0 10px 0;
+    line-height: 1.35;
+    font-weight: 400;
+  }
+
+  .toast-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-top: 6px;
+  }
+
+  .toast-link-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #E2BF7D;
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(226, 191, 125, 0.45);
+    padding-bottom: 1px;
+    transition: all 0.2s ease;
     cursor: pointer;
+  }
+
+  .toast-link-action:hover {
+    color: #FFFFFF;
+    border-color: #FFFFFF;
+    transform: translateX(2px);
+  }
+
+  @media (max-width: 600px) {
+    .toast-container {
+      top: 16px;
+      right: 14px;
+      left: 14px;
+      align-items: center;
+    }
+
+    .toast-item {
+      width: 100%;
+      max-width: 400px;
+      padding: 16px;
+      border-radius: 16px;
+      transform: translateY(-20px) scale(0.96);
+    }
+
+    .toast-item.show {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
   }
 
   /* Add cursor styles to cards */
@@ -199,8 +310,8 @@
 
 
 
-    // 2. Global Toast Notification Generator
-    window.showSwastikToast = function(title, message, isCart = false) {
+    // 2. Global Toast Notification Generator (Swastik Jewels Luxury)
+    window.showSwastikToast = function(title, message, isCart = false, extraHint = '', ctaText = 'View Cart & Checkout >') {
       const container = document.getElementById('toast-container');
       if (!container) return;
 
@@ -208,34 +319,81 @@
       toast.className = 'toast-item';
       
       const iconSVG = isCart 
-        ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>`
-        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`;
+        ? `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2CE9F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`
+        : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E2CE9F" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>`;
 
       toast.innerHTML = `
-        <div class="toast-icon">
-          ${iconSVG}
+        <div class="toast-left">
+          <div class="toast-icon-wrap">
+            <span class="toast-status-dot"></span>
+            <div class="toast-icon">
+              ${iconSVG}
+            </div>
+          </div>
         </div>
         <div class="toast-content">
-          <div class="toast-title">${title}</div>
-          <div class="toast-message">${message}</div>
+          <div class="toast-header-row">
+            <h4 class="toast-title">${title}</h4>
+            <button type="button" class="toast-close" aria-label="Dismiss notification">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          ${message ? `<p class="toast-message">${message}</p>` : ''}
+          ${extraHint ? `<p class="toast-hint">${extraHint}</p>` : ''}
+          ${isCart ? `
+            <div class="toast-action-row">
+              <a href="/cart" class="toast-link-action">
+                <span>${ctaText || 'View Cart & Checkout >'}</span>
+              </a>
+            </div>
+          ` : ''}
         </div>
-        ${isCart ? `<a href="/cart" class="toast-action">View Cart</a>` : ''}
       `;
+
+      let autoRemoveTimer = null;
+      let cleanupTimer = null;
+
+      function dismissToast(immediate = false) {
+        if (autoRemoveTimer) clearTimeout(autoRemoveTimer);
+        if (cleanupTimer) clearTimeout(cleanupTimer);
+        if (immediate) {
+          if (toast.parentElement) toast.remove();
+          return;
+        }
+        toast.classList.remove('show');
+        cleanupTimer = setTimeout(() => {
+          if (toast.parentElement) toast.remove();
+        }, 300);
+      }
+
+      // Close handler
+      const closeBtn = toast.querySelector('.toast-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          dismissToast(false);
+        });
+      }
+
+      // Action link click (e.g. "View Cart & Checkout >")
+      const actionLink = toast.querySelector('.toast-link-action');
+      if (actionLink) {
+        actionLink.addEventListener('click', () => {
+          dismissToast(true);
+        });
+      }
 
       container.appendChild(toast);
 
       // Trigger animation
       setTimeout(() => {
         toast.classList.add('show');
-      }, 50);
+      }, 40);
 
-      // Remove after 4 seconds
-      setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => {
-          toast.remove();
-        }, 500);
-      }, 4000);
+      // Remove after 5 seconds
+      autoRemoveTimer = setTimeout(() => {
+        dismissToast(false);
+      }, 5000);
     };
 
     // 3. (Removed JS card-wide click interceptor in favor of native title link pseudo-element for better performance)
@@ -303,7 +461,7 @@
       }
     });
 
-    // 5. AJAX Add to Cart interceptor — uses the REAL Shopify cart.
+    // 5. AJAX Add to Cart interceptor — uses the REAL Shopify cart with duplicate prevention.
     document.addEventListener('submit', (e) => {
       const form = e.target;
 
@@ -313,34 +471,72 @@
 
       e.preventDefault();
 
-      const submitBtn = form.querySelector('[type="submit"], .btn-add-cart');
+      const submitBtn = e.submitter || form.querySelector('[type="submit"], .btn-add-cart, .pp-btn-add') || (form.id ? document.querySelector('button[form="' + form.id + '"]') : null);
+
+      // Prevent concurrent/rapid duplicate requests
+      if (form.dataset.submitting === 'true' || (submitBtn && submitBtn.classList.contains('btn-loading'))) {
+        return;
+      }
+
+      const formData = new FormData(form);
+      const variantId = formData.get('id');
+
+      form.dataset.submitting = 'true';
       if (submitBtn) submitBtn.classList.add('btn-loading');
 
       const rootUrl = (window.Shopify && window.Shopify.routes && window.Shopify.routes.root) || '/';
 
-      fetch(rootUrl + 'cart/add.js', {
-        method: 'POST',
-        headers: { 'Accept': 'application/json' },
-        body: new FormData(form)
-      })
-      .then(response => response.json().then(data => ({ ok: response.ok, data: data })))
-      .then(result => {
-        // If Shopify rejected the add (e.g. sold out, no variant selected),
-        // surface the real reason. Do NOT fabricate a success.
-        if (!result.ok) throw result.data;
-        // Re-read the real cart so the badge and drawer always match checkout.
-        return fetch(rootUrl + 'cart.js', { cache: 'no-store' }).then(r => r.json());
-      })
-      .then(cart => {
-        if (submitBtn) submitBtn.classList.remove('btn-loading');
-        if (window.updateGlobalCartCount) window.updateGlobalCartCount(cart.item_count);
-        if (window.openCartDrawer) window.openCartDrawer();
-      })
-      .catch(err => {
-        if (submitBtn) submitBtn.classList.remove('btn-loading');
-        const message = (err && err.description) ? err.description : 'Sorry, this item could not be added. Please try again.';
-        showSwastikToast('Unable to add', message, false);
-      });
+      // Verify current cart state from server to prevent duplicate variant additions
+      fetch(rootUrl + 'cart.js', { cache: 'no-store' })
+        .then(res => res.json())
+        .then(cart => {
+          const isAlreadyInCart = variantId && cart.items && cart.items.some(item => String(item.variant_id || item.id) === String(variantId));
+
+          if (isAlreadyInCart) {
+            form.dataset.submitting = 'false';
+            if (submitBtn) submitBtn.classList.remove('btn-loading');
+            if (window.updateGlobalCartCount) window.updateGlobalCartCount(cart.item_count);
+            
+            if (window.showSwastikToast) {
+              window.showSwastikToast(
+                'Already Added to Cart',
+                '',
+                true,
+                '',
+                'View Cart & Checkout >'
+              );
+            }
+            return;
+          }
+
+          // Not present in cart — proceed with standard add
+          return fetch(rootUrl + 'cart/add.js', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' },
+            body: formData
+          })
+          .then(response => response.json().then(data => ({ ok: response.ok, data: data })))
+          .then(result => {
+            // If Shopify rejected the add (e.g. sold out, no variant selected), surface the real reason.
+            if (!result.ok) throw result.data;
+            // Re-read the real cart so the badge and drawer always match checkout.
+            return fetch(rootUrl + 'cart.js', { cache: 'no-store' }).then(r => r.json());
+          })
+          .then(newCart => {
+            form.dataset.submitting = 'false';
+            if (submitBtn) submitBtn.classList.remove('btn-loading');
+            if (window.updateGlobalCartCount) window.updateGlobalCartCount(newCart.item_count);
+            if (window.openCartDrawer) window.openCartDrawer();
+          });
+        })
+        .catch(err => {
+          form.dataset.submitting = 'false';
+          if (submitBtn) submitBtn.classList.remove('btn-loading');
+          const message = (err && err.description) ? err.description : 'Sorry, this item could not be added. Please try again.';
+          if (window.showSwastikToast) {
+            showSwastikToast('Unable to add', message, false);
+          }
+        });
     });
 
     // 6. Header and Mobile Triggers for Drawer (using event delegation for reliability)

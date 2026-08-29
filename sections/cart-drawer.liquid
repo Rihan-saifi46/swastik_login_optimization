@@ -488,6 +488,8 @@
   }
 
   window.openCartDrawer = function() {
+    const activeToasts = document.querySelectorAll('#toast-container .toast-item');
+    activeToasts.forEach(t => t.remove());
     document.getElementById('CartDrawer').classList.add('is-open');
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
     document.body.classList.add('drawer-open');

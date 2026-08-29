@@ -2979,105 +2979,24 @@
     return Array.from(uniqueMap.values());
   }
 
-  function renderCouponCards(coupons) {
-    const listContainer = document.getElementById('pp-coupon-list');
-    if (!listContainer) return;
-    
-    if (!coupons || coupons.length === 0) {
-      listContainer.innerHTML = '<div class="pp-coupon-empty">No coupons available for this item.</div>';
-      return;
-    }
-    
-    let html = '';
-    coupons.forEach(coupon => {
-      const minOrderFormatted = coupon.min_order_value ? 'above ₹' + parseFloat(coupon.min_order_value).toLocaleString('en-IN') : 'all orders';
-      const discountText = coupon.type === 'percentage' ? `${coupon.value}% OFF` : `₹${parseFloat(coupon.value).toLocaleString('en-IN')} OFF`;
-      const descText = coupon.short_description || `Get ${discountText} on orders ${minOrderFormatted}`;
-      const expiryText = coupon.expiry_date ? `Valid till ${coupon.expiry_date}` : '';
-      
-      html += `
-        <div class="pp-coupon-card">
-          <div class="pp-coupon-card-left">
-            <div class="pp-coupon-discount">${discountText}</div>
-            <div class="pp-coupon-desc">${descText}</div>
-            ${expiryText ? `<div class="pp-coupon-expiry">${expiryText}</div>` : ''}
-          </div>
-          <div class="pp-coupon-card-right">
-            <div class="pp-coupon-code-label">CODE</div>
-            <div class="pp-coupon-code">${coupon.code}</div>
-            <button type="button" class="pp-coupon-copy-btn" data-code="${coupon.code}">
-              <span>COPY</span>
-            </button>
-          </div>
-        </div>
-      `;
-    });
-    listContainer.innerHTML = html;
-  }
-  
-  function openCoupons() {
-    const overlay = document.getElementById('pp-coupon-overlay');
-    if (!overlay) return;
-    
+  window.getCouponsForCurrentVariant = function() {
     const variantIdInput = document.getElementById('pp-variant-id');
     const variantId = variantIdInput ? variantIdInput.value : null;
-    const currentCoupons = getCouponsForVariant(variantId);
-    
-    renderCouponCards(currentCoupons);
-    
-    overlay.classList.add('is-active');
-    document.body.style.overflow = 'hidden';
-    
-    const trigger = document.getElementById('pp-coupon-trigger');
-    if (trigger) trigger.setAttribute('aria-expanded', 'true');
-  }
-  
-  function closeCoupons() {
-    const overlay = document.getElementById('pp-coupon-overlay');
-    if (!overlay) return;
-    
-    overlay.classList.remove('is-active');
-    document.body.style.overflow = '';
-    
-    const trigger = document.getElementById('pp-coupon-trigger');
-    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    return getCouponsForVariant(variantId);
+  };
+
+  function openCoupons() {
+    const currentCoupons = window.getCouponsForCurrentVariant();
+    if (typeof window.openSiteCouponPopup === 'function') {
+      window.openSiteCouponPopup(currentCoupons);
+    }
   }
 
   // Handle Dynamic Interactions via Event Delegation
   document.addEventListener('click', function(e) {
-    // 1. Open coupons overlay
     if (e.target.closest('#pp-coupon-trigger')) {
       e.preventDefault();
       openCoupons();
-      return;
-    }
-    
-    // 2. Close coupons overlay
-    if (e.target.closest('#pp-coupon-close') || e.target.closest('#pp-coupon-backdrop')) {
-      e.preventDefault();
-      closeCoupons();
-      return;
-    }
-
-    // 3. Copy coupon code
-    const copyBtn = e.target.closest('.pp-coupon-copy-btn');
-    if (copyBtn) {
-      e.preventDefault();
-      const code = copyBtn.getAttribute('data-code');
-      if (code) {
-        navigator.clipboard.writeText(code).then(() => {
-          const btnText = copyBtn.querySelector('span') || copyBtn;
-          const origText = btnText.textContent;
-          copyBtn.classList.add('copied');
-          btnText.textContent = 'COPIED ✓';
-          setTimeout(() => {
-            copyBtn.classList.remove('copied');
-            btnText.textContent = origText;
-          }, 2000);
-        }).catch(err => {
-          console.error('Clipboard copy failed:', err);
-        });
-      }
     }
   });
 
@@ -3100,7 +3019,7 @@
 </script>
 
 <style>
-  /* Coupons Available Badge & Modal Styles */
+  /* Coupons Available Badge Styles */
   .pp-stock-indicator {
     display: flex !important;
     align-items: center !important;
@@ -3138,278 +3057,7 @@
   .pp-coupon-icon {
     flex-shrink: 0;
   }
-
-  .pp-coupon-drawer-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10000;
-    visibility: hidden;
-    pointer-events: none;
-    transition: visibility 0.3s;
-  }
-  .pp-coupon-drawer-overlay.is-active {
-    visibility: visible;
-    pointer-events: auto;
-  }
-  .pp-coupon-drawer-backdrop {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(1, 39, 38, 0.4);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .pp-coupon-drawer-overlay.is-active .pp-coupon-drawer-backdrop {
-    opacity: 1;
-  }
-
-  .pp-coupon-drawer-content {
-    position: fixed;
-    background: #fff;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background-color: #FCFBF9;
-  }
-
-  /* Mobile Bottom Sheet */
-  @media (max-width: 767px) {
-    .pp-coupon-drawer-content {
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      max-height: 70vh;
-      border-radius: 20px 20px 0 0;
-      padding: 24px;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 -10px 30px rgba(0,0,0,0.08);
-    }
-    .pp-coupon-drawer-overlay.is-active .pp-coupon-drawer-content {
-      transform: translateY(0);
-    }
-  }
-
-  /* Desktop Modal */
-  @media (min-width: 768px) {
-    .pp-coupon-drawer-content {
-      top: 50%;
-      left: 50%;
-      width: 90%;
-      max-width: 460px;
-      max-height: 80vh;
-      border-radius: 16px;
-      padding: 28px;
-      transform: translate(-50%, -50%) scale(0.9);
-      opacity: 0;
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
-      box-shadow: 0 15px 50px rgba(1, 39, 38, 0.15);
-      border: 1px solid rgba(1, 39, 38, 0.06);
-    }
-    .pp-coupon-drawer-overlay.is-active .pp-coupon-drawer-content {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 1;
-    }
-  }
-
-  .pp-coupon-drawer-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(1, 39, 38, 0.08);
-    margin-bottom: 20px;
-  }
-  .pp-coupon-drawer-title {
-    font-family: 'Outfit', sans-serif;
-    font-size: 20px;
-    font-weight: 600;
-    color: #013F3E;
-    margin: 0 0 4px 0;
-  }
-  .pp-coupon-drawer-subtitle {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    color: #666;
-    margin: 0;
-  }
-  .pp-coupon-drawer-close {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: #013F3E;
-    opacity: 0.6;
-    padding: 4px;
-    transition: opacity 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .pp-coupon-drawer-close:hover {
-    opacity: 1;
-  }
-
-  .pp-coupon-drawer-body {
-    flex: 1;
-    overflow-y: auto;
-    max-height: calc(80vh - 120px);
-    padding-right: 4px;
-  }
-
-  /* Coupon Card Stub Design */
-  .pp-coupon-card {
-    display: flex;
-    align-items: stretch;
-    background: #fff;
-    border: 1px solid rgba(1, 39, 38, 0.08);
-    border-radius: 12px;
-    margin-bottom: 16px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.01);
-  }
-  
-  /* Ticket Notches */
-  .pp-coupon-card::before, .pp-coupon-card::after {
-    content: "";
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    background: #FCFBF9;
-    border-radius: 50%;
-    z-index: 2;
-  }
-  .pp-coupon-card::before {
-    top: -6px;
-    right: 28%;
-    box-shadow: inset 0 -1px 1px rgba(0,0,0,0.05);
-  }
-  .pp-coupon-card::after {
-    bottom: -6px;
-    right: 28%;
-    box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);
-  }
-
-  .pp-coupon-card-left {
-    flex: 3;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 4px;
-    background-color: #ffffff;
-  }
-  .pp-coupon-card-right {
-    flex: 1.2;
-    padding: 16px 12px;
-    background: rgba(212, 175, 55, 0.03);
-    border-left: 1px dashed rgba(1, 39, 38, 0.12);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    gap: 8px;
-    position: relative;
-  }
-
-  .pp-coupon-discount {
-    font-family: 'Outfit', sans-serif;
-    font-size: 18px;
-    font-weight: 700;
-    color: #013F3E;
-    letter-spacing: -0.02em;
-  }
-  .pp-coupon-desc {
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    color: #444;
-    font-weight: 500;
-    line-height: 1.3;
-  }
-  .pp-coupon-expiry {
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    color: #888;
-    margin-top: 2px;
-  }
-
-  .pp-coupon-code-label {
-    font-family: 'Inter', sans-serif;
-    font-size: 8px;
-    font-weight: 700;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .pp-coupon-code {
-    font-family: 'Outfit', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    color: #b38245;
-    padding: 3px 6px;
-    background: #fff;
-    border: 1px solid rgba(212, 175, 55, 0.25);
-    border-radius: 4px;
-    width: 90%;
-    box-sizing: border-box;
-    word-break: break-all;
-  }
-  .pp-coupon-copy-btn {
-    width: 100%;
-    padding: 6px 4px !important;
-    border-radius: 6px !important;
-    border: none !important;
-    background: #013F3E !important;
-    color: #fff !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 10px !important;
-    font-weight: 700 !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    text-align: center !important;
-    line-height: 1 !important;
-    letter-spacing: 0.05em;
-  }
-  .pp-coupon-copy-btn:hover {
-    background: #012b2a !important;
-  }
-  .pp-coupon-copy-btn.copied {
-    background: #2E7D32 !important;
-  }
-  .pp-coupon-empty {
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    color: #666;
-    text-align: center;
-    padding: 30px 0;
-  }
 </style>
-
-<!-- COUPON POP OVER (DESKTOP) & BOTTOM SHEET (MOBILE) -->
-<div class="pp-coupon-drawer-overlay" id="pp-coupon-overlay" aria-hidden="true">
-  <div class="pp-coupon-drawer-backdrop" id="pp-coupon-backdrop"></div>
-  <div class="pp-coupon-drawer-content">
-    <div class="pp-coupon-drawer-header">
-      <div class="pp-coupon-drawer-title-wrap">
-        <h3 class="pp-coupon-drawer-title">Available Coupons</h3>
-        <p class="pp-coupon-drawer-subtitle">Select and copy coupon code at checkout</p>
-      </div>
-      <button type="button" class="pp-coupon-drawer-close" id="pp-coupon-close" aria-label="Close coupons">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
-    </div>
-    <div class="pp-coupon-drawer-body" id="pp-coupon-list">
-      <!-- Coupon Cards will be dynamically injected via JavaScript -->
-    </div>
-  </div>
-</div>
 
     }
   });

@@ -388,49 +388,73 @@
     btn.innerText = 'Adding...';
     btn.style.pointerEvents = 'none';
 
-    let formData = {
-      'items': [{
-        'id': variantId,
-        'quantity': 1
-      }]
-    };
+    const rootUrl = (window.Shopify && window.Shopify.routes && window.Shopify.routes.root) || '/';
 
-    fetch(window.Shopify.routes.root + 'cart/add.js', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(formData)
-    })
-    .then(response => {
-      btn.innerText = originalText;
-      btn.style.pointerEvents = 'auto';
-      if (!response.ok) {
-        throw new Error('Failed to add to cart');
-      }
-      return response.json();
-    })
-    .then(data => {
-      fetch(window.Shopify.routes.root + 'cart.js', { cache: 'no-store' })
-      .then(r => r.json())
+    fetch(rootUrl + 'cart.js', { cache: 'no-store' })
+      .then(res => res.json())
       .then(cart => {
-        if (window.updateGlobalCartCount) window.updateGlobalCartCount(cart.item_count);
-        if (window.openCartDrawer) {
-            closeWishlistDrawer();
-            window.openCartDrawer();
-        } else if (window.showSwastikToast) {
-            window.showSwastikToast('Added to Cart', 'Item added to your cart from wishlist.', true);
+        const isAlreadyInCart = cart.items && cart.items.some(item => String(item.variant_id || item.id) === String(variantId));
+
+        if (isAlreadyInCart) {
+          btn.innerText = originalText;
+          btn.style.pointerEvents = 'auto';
+          if (window.updateGlobalCartCount) window.updateGlobalCartCount(cart.item_count);
+          if (window.showSwastikToast) {
+            window.showSwastikToast(
+              'Already Added to Cart',
+              '',
+              true,
+              '',
+              'View Cart & Checkout >'
+            );
+          }
+          return;
+        }
+
+        let formData = {
+          'items': [{
+            'id': variantId,
+            'quantity': 1
+          }]
+        };
+
+        return fetch(rootUrl + 'cart/add.js', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(formData)
+        })
+        .then(response => {
+          btn.innerText = originalText;
+          btn.style.pointerEvents = 'auto';
+          if (!response.ok) {
+            throw new Error('Failed to add to cart');
+          }
+          return response.json();
+        })
+        .then(data => {
+          return fetch(rootUrl + 'cart.js', { cache: 'no-store' })
+          .then(r => r.json())
+          .then(newCart => {
+            if (window.updateGlobalCartCount) window.updateGlobalCartCount(newCart.item_count);
+            if (window.openCartDrawer) {
+                closeWishlistDrawer();
+                window.openCartDrawer();
+            } else if (window.showSwastikToast) {
+                window.showSwastikToast('Added to Cart', 'Item added to your cart from wishlist.', true);
+            }
+          });
+        });
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        btn.innerText = originalText;
+        btn.style.pointerEvents = 'auto';
+        if (window.showSwastikToast) {
+           window.showSwastikToast('Error', 'Could not add to cart.', false);
         }
       });
-    })
-    .catch((error) => {
-      console.error('Error:', error);
-      btn.innerText = originalText;
-      btn.style.pointerEvents = 'auto';
-      if (window.showSwastikToast) {
-         window.showSwastikToast('Error', 'Could not add to cart.', false);
-      }
-    });
   };
 
   window.buyNowFromWishlist = function(variantId) {
