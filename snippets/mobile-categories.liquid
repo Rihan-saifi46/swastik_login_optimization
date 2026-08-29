@@ -576,225 +576,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchClear = document.getElementById('MobileCategorySearchClear');
   const searchResults = document.getElementById('MobileCategorySearchResults');
   let searchTimeout;
-
-  // Reusable Luxury Image Interceptor (Catches all Shopify sample drawings like product-1.png to product-6.png)
-  function getLuxuryImageUrl(imgUrl, categoryKey = 'rings') {
-    let isFallback = !imgUrl || 
-        imgUrl.includes('no-image') || 
-        imgUrl.includes('placeholder') || 
-        imgUrl.includes('.gif') || 
-        imgUrl.includes('product-1') || 
-        imgUrl.includes('product-2') || 
-        imgUrl.includes('product-3') || 
-        imgUrl.includes('product-4') || 
-        imgUrl.includes('product-5') || 
-        imgUrl.includes('product-6') || 
-        imgUrl.includes('s/images/themes') || 
-        imgUrl.includes('empty-state');
-
-    // If it's a predictive search result, prod.image might be an object { url: ... } in some API versions
-    if (imgUrl && typeof imgUrl === 'object' && imgUrl.url) {
-      imgUrl = imgUrl.url;
-      // Re-evaluate fallback with the string URL
-      isFallback = !imgUrl || 
-          imgUrl.includes('no-image') || 
-          imgUrl.includes('placeholder') || 
-          imgUrl.includes('.gif') || 
-          imgUrl.includes('product-1') || 
-          imgUrl.includes('product-2') || 
-          imgUrl.includes('product-3') || 
-          imgUrl.includes('product-4') || 
-          imgUrl.includes('product-5') || 
-          imgUrl.includes('product-6') || 
-          imgUrl.includes('s/images/themes') || 
-          imgUrl.includes('empty-state');
-    }
-
-    if (isFallback) {
-      const key = String(categoryKey).toLowerCase();
-      if (key.includes('earring') || key.includes('stud') || key.includes('jhumka')) {
-        return '{{ "earring_placeholder.png" | asset_url }}';
-      } else if (key.includes('bracelet') || key.includes('bangle') || key.includes('wrist') || key.includes('classic')) {
-        return '{{ "bangle_placeholder.png" | asset_url }}';
-      } else if (key.includes('necklace') || key.includes('choker') || key.includes('jewel')) {
-        return '{{ "necklace_placeholder.png" | asset_url }}';
-      } else if (key.includes('pendant')) {
-        return '{{ "pendant_placeholder.png" | asset_url }}';
-      } else {
-        return '{{ "ring_placeholder.png" | asset_url }}';
-      }
-    }
-    return imgUrl;
-  }
-
-  // Category Subcategories & Links Data (Dynamic from Menu)
-  const categoriesData = {
-    {%- for link in mobile_menu.links -%}
-      {%- assign link_handle = link.title | handleize -%}
-      "{{ link_handle }}": {
-        name: {{ link.title | json }},
-        url: {{ link.url | json }},
-        subcategories: [
-          {%- for childlink in link.links -%}
-            { title: {{ childlink.title | json }}, url: {{ childlink.url | json }} }
-            {%- unless forloop.last -%},{%- endunless -%}
-          {%- endfor -%}
-        ]
-      }
-      {%- unless forloop.last -%},{%- endunless -%}
-    {%- endfor -%}
-  };
-
-  // Open / Close Drawer Logic
-  function openDrawer() {
-    if (!drawer) return;
-    drawer.classList.add('open');
-    drawer.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
-    
-    // Default to the first key in categoriesData
-    const keys = Object.keys(categoriesData);
-    if (keys.length > 0) {
-      renderCategoryContent(keys[0]);
-    } else {
-      if (bodyArea) bodyArea.innerHTML = '<div style="padding: 2rem 0; text-align: center; color: #7a6f66;">No categories configured.</div>';
-    }
-  }
-
-  function closeDrawer() {
-    if (!drawer) return;
-    drawer.classList.remove('open');
-    drawer.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
-  }
-
-  toggles.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      openDrawer();
-    });
-  });
-
-  if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
-  if (backdrop) backdrop.addEventListener('click', closeDrawer);
-
-  // Tab Selection & Dynamic Content Rendering
-  function renderCategoryContent(categoryKey) {
-    if (!bodyArea) return;
-    const cat = categoriesData[categoryKey] || categoriesData['rings'];
-
-    // Update active tab styling
-    tabPills.forEach(pill => {
-      if (pill.getAttribute('data-category') === categoryKey) {
-        pill.classList.add('active');
-      } else {
-        pill.classList.remove('active');
-      }
-    });
-
-    // 1. Build Subcategories HTML with Luxury Diamond Bullets
-    let subcatsHtml = '';
-    if (cat.subcategories && cat.subcategories.length > 0) {
-      subcatsHtml = `
-        <div>
-          <div class="category-section-title">
-            <span>Shop ${cat.name} By</span>
-            <a href="${cat.url}">View All ↗</a>
-          </div>
-          <div class="subcategories-list">
-      `;
-
-      cat.subcategories.forEach(sub => {
-        subcatsHtml += `
-          <a href="${sub.url}" class="subcategory-item">
-            <span class="subcategory-item__label"><span class="subcategory-item__diamond">◈</span> ${sub.title}</span>
-            <span class="subcategory-item__arrow">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </span>
-          </a>
-        `;
-      });
-      subcatsHtml += `</div></div>`;
-    }
-
-    // 2. Build Featured Products Container (Will be populated via fetch)
-    const productsContainerId = `FeaturedProducts_${categoryKey}`;
-    let productsHtml = `
-      <div>
-        <div class="category-section-title">
-          <span>Featured in ${cat.name}</span>
-        </div>
-        <div id="${productsContainerId}" class="category-products-grid">
-          <div class="live-search-loading" style="grid-column: span 2; padding: 1.5rem 0;">Loading luxury jewelry...</div>
-        </div>
-      </div>
-    `;
-
-    bodyArea.innerHTML = subcatsHtml + productsHtml;
-
-    // 3. Dynamically Fetch Real Store Products for this Category!
-    fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(cat.name)}&resources[type]=product&resources[limit]=4`)
-      .then(res => res.json())
-      .then(data => {
-        const container = document.getElementById(productsContainerId);
-        if (!container) return;
-        const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
-        
-        if (products.length === 0) {
-          container.innerHTML = `<div style="grid-column: span 2; color: #7A6F66; font-size: 0.88rem; padding: 1rem 0;">No featured products found. <a href="${cat.url}" style="color: #00352A; text-decoration: underline; font-weight: 600;">Browse Collection ↗</a></div>`;
-          return;
-        }
-
-        let gridHtml = '';
-        products.forEach(prod => {
-          // Pass through luxury image interceptor to catch any Shopify sample briefcase/luggage sketches
-          const imgUrl = getLuxuryImageUrl(prod.image, categoryKey);
-          const fallbackUrl = getLuxuryImageUrl(null, categoryKey);
-          const priceFormatted = prod.price ? '₹' + (parseFloat(prod.price) / 100).toLocaleString('en-IN') : '';
-          const compareFormatted = prod.compare_at_price && parseFloat(prod.compare_at_price) > parseFloat(prod.price) ? '₹' + (parseFloat(prod.compare_at_price) / 100).toLocaleString('en-IN') : '';
-
-          gridHtml += `
-            <a href="${prod.url}" class="category-product-card">
-              <div class="category-product-card__img-wrap">
-                <img src="${imgUrl}" alt="${prod.title}" class="category-product-card__img" loading="lazy" onerror="this.src='${fallbackUrl}'">
-              </div>
-              <div class="category-product-card__info">
-                <div class="category-product-card__title">${prod.title}</div>
-              </div>
-            </a>
-          `;
-        });
-        container.innerHTML = gridHtml;
-      })
-      .catch(err => {
-        const container = document.getElementById(productsContainerId);
-        if (container) container.innerHTML = '';
-      });
-  }
-
-  // Bind Category Tabs Click
-  tabPills.forEach(pill => {
-    pill.addEventListener('click', () => {
-      const catKey = pill.getAttribute('data-category');
-      renderCategoryContent(catKey);
-    });
-  });
-
-  // Also bind any secondary buttons that might try to open category sheets
-  document.querySelectorAll('.js-open-category-sheet').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const cat = btn.getAttribute('data-category');
-      openDrawer();
-      if (cat) renderCategoryContent(cat);
-    });
-  });
+  let mobileSearchSeq = 0;
+  let mobileSearchAbort = null;
 
   function renderMobileSearchResults(products, query) {
-    const regex = new RegExp(`(${query.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+    const safeTerm = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = safeTerm ? new RegExp(`(${safeTerm})`, 'gi') : null;
     let html = '';
     products.forEach(product => {
-      const highlightedTitle = product.title.replace(regex, '<mark class="search-highlight">$1</mark>');
+      const highlightedTitle = regex && product.title ? product.title.replace(regex, '<mark class="search-highlight">$1</mark>') : (product.title || '');
       
       // Determine category key based on product title/type to show correct placeholder if fallback is triggered
       let categoryKey = 'rings';
@@ -825,16 +615,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     html += `<a href="{{ routes.search_url }}?q=${encodeURIComponent(query)}" class="live-search-view-all">View all results for "${query}" ↗</a>`;
-    searchResults.innerHTML = html;
+    if (searchResults) searchResults.innerHTML = html;
   }
 
   // Predictive Search Logic
   function performSearch(query) {
-    if (!query || query.trim().length < 2) {
-      if (searchResults) searchResults.style.display = 'none';
+    const trimmedQuery = query ? query.trim() : '';
+    if (trimmedQuery.length < 2) {
+      if (searchResults) {
+        searchResults.style.display = 'none';
+        searchResults.innerHTML = '';
+      }
       if (tabsBar) tabsBar.style.display = 'flex';
       if (bodyArea) bodyArea.style.display = 'flex';
       if (searchClear) searchClear.style.display = 'none';
+      if (mobileSearchAbort) {
+        mobileSearchAbort.abort();
+        mobileSearchAbort = null;
+      }
       return;
     }
 
@@ -842,41 +640,91 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tabsBar) tabsBar.style.display = 'none';
     if (bodyArea) bodyArea.style.display = 'none';
     
+    const searchSeq = ++mobileSearchSeq;
+    if (mobileSearchAbort) {
+      mobileSearchAbort.abort();
+    }
+    mobileSearchAbort = new AbortController();
+    const signal = mobileSearchAbort.signal;
+
     if (searchResults) {
       searchResults.style.display = 'block';
       searchResults.innerHTML = '<div class="live-search-loading">Searching Swastik Jewels...</div>';
     }
 
-    fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(query)}&resources[type]=product&resources[limit]=8`)
-      .then(res => res.json())
-      .then(data => {
-        const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
-        if (products.length === 0) {
-          if (window.searchSkuStorefront) {
-            window.searchSkuStorefront(query).then(skuProduct => {
-              if (skuProduct) {
-                const mappedProduct = {
-                  title: skuProduct.title,
-                  url: `/products/${skuProduct.handle}`,
-                  image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
-                  price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
-                };
-                renderMobileSearchResults([mappedProduct], query);
+    const isSkuCandidate = /^[a-zA-Z0-9_-]+$/.test(trimmedQuery) && /\d/.test(trimmedQuery);
+
+    if (isSkuCandidate && window.searchSkuStorefront) {
+      // Dedicated SKU lookup with top priority for SKU patterns
+      window.searchSkuStorefront(trimmedQuery, signal).then(skuProduct => {
+        if (searchSeq !== mobileSearchSeq) return;
+        if (skuProduct) {
+          const mappedProduct = {
+            title: skuProduct.title,
+            url: `/products/${skuProduct.handle}`,
+            image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
+            price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
+          };
+          renderMobileSearchResults([mappedProduct], trimmedQuery);
+        } else {
+          // Check predictive search as fallback if SKU wasn't found
+          fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=8`, { signal })
+            .then(res => res.json())
+            .then(data => {
+              if (searchSeq !== mobileSearchSeq) return;
+              const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
+              if (products.length > 0) {
+                renderMobileSearchResults(products, trimmedQuery);
               } else {
-                searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${query}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
+                if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
+              }
+            })
+            .catch(err => {
+              if (searchSeq !== mobileSearchSeq) return;
+              if (err.name !== 'AbortError') {
+                if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
               }
             });
-          } else {
-            searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${query}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
-          }
-          return;
         }
-
-        renderMobileSearchResults(products, query);
-      })
-      .catch(err => {
-        searchResults.innerHTML = `<div class="live-search-loading">Error loading suggestions. Please hit enter to search.</div>`;
       });
+    } else {
+      // Normal keyword predictive search
+      fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=8`, { signal })
+        .then(res => res.json())
+        .then(data => {
+          if (searchSeq !== mobileSearchSeq) return;
+          const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
+          if (products.length === 0) {
+            if (window.searchSkuStorefront) {
+              window.searchSkuStorefront(trimmedQuery, signal).then(skuProduct => {
+                if (searchSeq !== mobileSearchSeq) return;
+                if (skuProduct) {
+                  const mappedProduct = {
+                    title: skuProduct.title,
+                    url: `/products/${skuProduct.handle}`,
+                    image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
+                    price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
+                  };
+                  renderMobileSearchResults([mappedProduct], trimmedQuery);
+                } else {
+                  if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
+                }
+              });
+            } else {
+              if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings", "diamonds", or "jhumkas".</div>`;
+            }
+            return;
+          }
+
+          renderMobileSearchResults(products, trimmedQuery);
+        })
+        .catch(err => {
+          if (searchSeq !== mobileSearchSeq) return;
+          if (err.name !== 'AbortError') {
+            if (searchResults) searchResults.innerHTML = `<div class="live-search-loading">Error loading suggestions. Please hit enter to search.</div>`;
+          }
+        });
+    }
   }
 
   if (searchInput) {

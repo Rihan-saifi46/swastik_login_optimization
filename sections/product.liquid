@@ -375,6 +375,63 @@
                     <span>Sold Out</span>
                   </div>
                 {%- endif -%}
+
+                <!-- COUPONS AVAILABLE BADGE -->
+                {%- assign product_coupon_metafield = product.metafields.custom.coupons -%}
+                {%- assign shop_coupon_metafield = shop.metafields.custom.coupons | default: shop.metafields.custom.global_coupons -%}
+
+                {%- assign has_any_coupon = false -%}
+                {%- if product_coupon_metafield != blank or shop_coupon_metafield != blank -%}
+                  {%- assign has_any_coupon = true -%}
+                {%- endif -%}
+                {%- for variant in product.variants -%}
+                  {%- if variant.metafields.custom.coupons != blank -%}
+                    {%- assign has_any_coupon = true -%}
+                  {%- endif -%}
+                {%- endfor -%}
+                {%- for collection in product.collections -%}
+                  {%- if collection.metafields.custom.coupons != blank -%}
+                    {%- assign has_any_coupon = true -%}
+                  {%- endif -%}
+                {%- endfor -%}
+
+                {%- if has_any_coupon -%}
+                  <button type="button" class="pp-coupon-status" id="pp-coupon-trigger" style="display: none;" aria-haspopup="dialog" aria-expanded="false">
+                    <svg class="pp-coupon-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                      <line x1="12" y1="4" x2="12" y2="20" stroke-dasharray="3 3"></line>
+                    </svg>
+                    <span>Coupons Available</span>
+                  </button>
+                  <script id="pp-coupons-data-json" type="application/json">
+                    {{ product_coupon_metafield | default: '[]' }}
+                  </script>
+
+                  <script id="pp-shop-coupons-json" type="application/json">
+                    {{ shop_coupon_metafield | default: '[]' }}
+                  </script>
+
+                  <script id="pp-collection-coupons-json" type="application/json">
+                    [
+                      {%- assign c_count = 0 -%}
+                      {%- for collection in product.collections -%}
+                        {%- if collection.metafields.custom.coupons != blank -%}
+                          {%- if c_count > 0 -%},{%- endif -%}
+                          {{ collection.metafields.custom.coupons }}
+                          {%- assign c_count = c_count | plus: 1 -%}
+                        {%- endif -%}
+                      {%- endfor -%}
+                    ]
+                  </script>
+                  
+                  <script id="pp-variant-coupons-json" type="application/json">
+                    {
+                      {% for variant in product.variants %}
+                        "{{ variant.id }}": {{ variant.metafields.custom.coupons | default: '[]' }}{% unless forloop.last %},{% endunless %}
+                      {% endfor %}
+                    }
+                  </script>
+                {%- endif -%}
               </div>
 
               <!-- ROW 1: QUANTITY + ADD TO CART -->
@@ -2592,6 +2649,10 @@
               
               const elTotal = document.getElementById('ui-price-total');
               if(elTotal) elTotal.textContent = priceFormatted;
+              
+              if (window.updateVariantCoupons) {
+                window.updateVariantCoupons(matched.id);
+              }
             }
           }
         } catch (err) {
@@ -2767,6 +2828,589 @@
           console.error('Error initializing stock status:', err);
         }
       }
+    }
+  });
+
+  // ==========================================
+  // PREMIUM COUPONS DRAWER / MODAL CONTROLLER
+  // Driven exclusively by real CRM/Shopify Discount data
+  // ==========================================
+  let globalShopCoupons = [];
+  let collectionCoupons = [];
+  let productCoupons = [];
+  let variantCouponsMap = {};
+  let isCouponsDataLoaded = false;
+  
+  function normalizeCoupon(c) {
+    if (!c || typeof c !== 'object') return null;
+    const code = c.code || c.promo_code || '';
+    if (!code || typeof code !== 'string') return null;
+    
+    // Check expiry timestamp
+    const expiryRaw = c.expiry_date || c.endsAt || c.end_date || null;
+    if (expiryRaw) {
+      const expDate = new Date(expiryRaw);
+      if (!isNaN(expDate.getTime()) && expDate.getTime() < Date.now()) {
+        return null; // Filter out expired discount
+      }
+    }
+
+    // Format human-friendly expiry date
+    let formattedExpiry = '';
+    if (expiryRaw) {
+      const expDate = new Date(expiryRaw);
+      if (!isNaN(expDate.getTime())) {
+        formattedExpiry = expDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      } else {
+        formattedExpiry = String(expiryRaw).replace('Valid till ', '');
+      }
+    }
+
+    // Determine discount type and value
+    let type = c.type || c.discount_type || 'percentage';
+    let value = c.value !== undefined ? c.value : (c.discount_value !== undefined ? c.discount_value : (c.customerGets?.value?.percentage ? c.customerGets.value.percentage * 100 : (c.customerGets?.value?.discountAmount?.amount || 0)));
+    
+    if (type === 'percentage' && value > 0 && value < 1) {
+      value = Math.round(value * 100);
+    }
+
+    const minOrder = c.min_order_value || c.minimum_order_value || c.minimumRequirement?.subtotal?.greaterThanOrEqualToSubtotal || null;
+    const desc = c.short_description || c.campaign_name || c.title || '';
+
+    return {
+      code: code.trim().toUpperCase(),
+      type: type,
+      value: value,
+      min_order_value: minOrder,
+      expiry_date: formattedExpiry,
+      short_description: desc
+    };
+  }
+
+  function loadCouponsData() {
+    if (isCouponsDataLoaded) return;
+    
+    globalShopCoupons = [];
+    collectionCoupons = [];
+    productCoupons = [];
+    variantCouponsMap = {};
+    
+    const shopJsonEl = document.getElementById('pp-shop-coupons-json');
+    const colJsonEl = document.getElementById('pp-collection-coupons-json');
+    const prodJsonEl = document.getElementById('pp-coupons-data-json');
+    const varJsonEl = document.getElementById('pp-variant-coupons-json');
+    
+    if (shopJsonEl) {
+      try {
+        const raw = JSON.parse(shopJsonEl.textContent || '[]');
+        if (Array.isArray(raw)) globalShopCoupons = raw;
+      } catch(e) {
+        console.error('Error parsing shop coupons:', e);
+      }
+    }
+
+    if (colJsonEl) {
+      try {
+        const raw = JSON.parse(colJsonEl.textContent || '[]');
+        if (Array.isArray(raw)) {
+          raw.forEach(item => {
+            if (Array.isArray(item)) collectionCoupons.push(...item);
+            else if (item && typeof item === 'object') collectionCoupons.push(item);
+          });
+        }
+      } catch(e) {
+        console.error('Error parsing collection coupons:', e);
+      }
+    }
+
+    if (prodJsonEl) {
+      try {
+        const raw = JSON.parse(prodJsonEl.textContent || '[]');
+        if (Array.isArray(raw)) productCoupons = raw;
+      } catch(e) {
+        console.error('Error parsing product coupons:', e);
+      }
+    }
+
+    if (varJsonEl) {
+      try {
+        variantCouponsMap = JSON.parse(varJsonEl.textContent || '{}');
+      } catch(e) {
+        console.error('Error parsing variant coupons map:', e);
+      }
+    }
+
+    isCouponsDataLoaded = true;
+  }
+  
+  function getCouponsForVariant(variantId) {
+    loadCouponsData();
+    const rawList = [];
+    
+    // 1. Add global storewide coupons
+    if (globalShopCoupons && globalShopCoupons.length > 0) {
+      rawList.push(...globalShopCoupons);
+    }
+    
+    // 2. Add collection-level coupons
+    if (collectionCoupons && collectionCoupons.length > 0) {
+      rawList.push(...collectionCoupons);
+    }
+    
+    // 3. Add product-level coupons
+    if (productCoupons && productCoupons.length > 0) {
+      rawList.push(...productCoupons);
+    }
+    
+    // 4. Add variant-specific coupons
+    if (variantId && variantCouponsMap[variantId] && Array.isArray(variantCouponsMap[variantId])) {
+      rawList.push(...variantCouponsMap[variantId]);
+    }
+
+    // Normalize, filter expired, and deduplicate by code
+    const uniqueMap = new Map();
+    rawList.forEach(raw => {
+      const normalized = normalizeCoupon(raw);
+      if (normalized && normalized.code && !uniqueMap.has(normalized.code)) {
+        uniqueMap.set(normalized.code, normalized);
+      }
+    });
+
+    return Array.from(uniqueMap.values());
+  }
+
+  function renderCouponCards(coupons) {
+    const listContainer = document.getElementById('pp-coupon-list');
+    if (!listContainer) return;
+    
+    if (!coupons || coupons.length === 0) {
+      listContainer.innerHTML = '<div class="pp-coupon-empty">No coupons available for this item.</div>';
+      return;
+    }
+    
+    let html = '';
+    coupons.forEach(coupon => {
+      const minOrderFormatted = coupon.min_order_value ? 'above ₹' + parseFloat(coupon.min_order_value).toLocaleString('en-IN') : 'all orders';
+      const discountText = coupon.type === 'percentage' ? `${coupon.value}% OFF` : `₹${parseFloat(coupon.value).toLocaleString('en-IN')} OFF`;
+      const descText = coupon.short_description || `Get ${discountText} on orders ${minOrderFormatted}`;
+      const expiryText = coupon.expiry_date ? `Valid till ${coupon.expiry_date}` : '';
+      
+      html += `
+        <div class="pp-coupon-card">
+          <div class="pp-coupon-card-left">
+            <div class="pp-coupon-discount">${discountText}</div>
+            <div class="pp-coupon-desc">${descText}</div>
+            ${expiryText ? `<div class="pp-coupon-expiry">${expiryText}</div>` : ''}
+          </div>
+          <div class="pp-coupon-card-right">
+            <div class="pp-coupon-code-label">CODE</div>
+            <div class="pp-coupon-code">${coupon.code}</div>
+            <button type="button" class="pp-coupon-copy-btn" data-code="${coupon.code}">
+              <span>COPY</span>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+    listContainer.innerHTML = html;
+  }
+  
+  function openCoupons() {
+    const overlay = document.getElementById('pp-coupon-overlay');
+    if (!overlay) return;
+    
+    const variantIdInput = document.getElementById('pp-variant-id');
+    const variantId = variantIdInput ? variantIdInput.value : null;
+    const currentCoupons = getCouponsForVariant(variantId);
+    
+    renderCouponCards(currentCoupons);
+    
+    overlay.classList.add('is-active');
+    document.body.style.overflow = 'hidden';
+    
+    const trigger = document.getElementById('pp-coupon-trigger');
+    if (trigger) trigger.setAttribute('aria-expanded', 'true');
+  }
+  
+  function closeCoupons() {
+    const overlay = document.getElementById('pp-coupon-overlay');
+    if (!overlay) return;
+    
+    overlay.classList.remove('is-active');
+    document.body.style.overflow = '';
+    
+    const trigger = document.getElementById('pp-coupon-trigger');
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  // Handle Dynamic Interactions via Event Delegation
+  document.addEventListener('click', function(e) {
+    // 1. Open coupons overlay
+    if (e.target.closest('#pp-coupon-trigger')) {
+      e.preventDefault();
+      openCoupons();
+      return;
+    }
+    
+    // 2. Close coupons overlay
+    if (e.target.closest('#pp-coupon-close') || e.target.closest('#pp-coupon-backdrop')) {
+      e.preventDefault();
+      closeCoupons();
+      return;
+    }
+
+    // 3. Copy coupon code
+    const copyBtn = e.target.closest('.pp-coupon-copy-btn');
+    if (copyBtn) {
+      e.preventDefault();
+      const code = copyBtn.getAttribute('data-code');
+      if (code) {
+        navigator.clipboard.writeText(code).then(() => {
+          const btnText = copyBtn.querySelector('span') || copyBtn;
+          const origText = btnText.textContent;
+          copyBtn.classList.add('copied');
+          btnText.textContent = 'COPIED ✓';
+          setTimeout(() => {
+            copyBtn.classList.remove('copied');
+            btnText.textContent = origText;
+          }, 2000);
+        }).catch(err => {
+          console.error('Clipboard copy failed:', err);
+        });
+      }
+    }
+  });
+
+  window.updateVariantCoupons = function(variantId) {
+    const coupons = getCouponsForVariant(variantId);
+    const trigger = document.getElementById('pp-coupon-trigger');
+    if (trigger) {
+      if (coupons && coupons.length > 0) {
+        trigger.style.display = 'inline-flex';
+      } else {
+        trigger.style.display = 'none';
+      }
+    }
+  };
+
+  // Initial update
+  const initialVariantId = document.getElementById('pp-variant-id')?.value;
+  window.updateVariantCoupons(initialVariantId);
+})();
+</script>
+
+<style>
+  /* Coupons Available Badge & Modal Styles */
+  .pp-stock-indicator {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+    flex-wrap: wrap !important;
+  }
+  .pp-coupon-status {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 6px 14px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    line-height: 1 !important;
+    background: rgba(212, 175, 55, 0.08) !important;
+    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    color: #b38245 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    gap: 6px !important;
+    font-family: 'Inter', sans-serif !important;
+  }
+  .pp-coupon-status:hover {
+    background: rgba(212, 175, 55, 0.15) !important;
+    border-color: rgba(212, 175, 55, 0.45) !important;
+    transform: translateY(-1px);
+  }
+  .pp-coupon-status:active {
+    transform: scale(0.97);
+  }
+  .pp-coupon-icon {
+    flex-shrink: 0;
+  }
+
+  .pp-coupon-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    visibility: hidden;
+    pointer-events: none;
+    transition: visibility 0.3s;
+  }
+  .pp-coupon-drawer-overlay.is-active {
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .pp-coupon-drawer-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(1, 39, 38, 0.4);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .pp-coupon-drawer-overlay.is-active .pp-coupon-drawer-backdrop {
+    opacity: 1;
+  }
+
+  .pp-coupon-drawer-content {
+    position: fixed;
+    background: #fff;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: #FCFBF9;
+  }
+
+  /* Mobile Bottom Sheet */
+  @media (max-width: 767px) {
+    .pp-coupon-drawer-content {
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      max-height: 70vh;
+      border-radius: 20px 20px 0 0;
+      padding: 24px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.08);
+    }
+    .pp-coupon-drawer-overlay.is-active .pp-coupon-drawer-content {
+      transform: translateY(0);
+    }
+  }
+
+  /* Desktop Modal */
+  @media (min-width: 768px) {
+    .pp-coupon-drawer-content {
+      top: 50%;
+      left: 50%;
+      width: 90%;
+      max-width: 460px;
+      max-height: 80vh;
+      border-radius: 16px;
+      padding: 28px;
+      transform: translate(-50%, -50%) scale(0.9);
+      opacity: 0;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+      box-shadow: 0 15px 50px rgba(1, 39, 38, 0.15);
+      border: 1px solid rgba(1, 39, 38, 0.06);
+    }
+    .pp-coupon-drawer-overlay.is-active .pp-coupon-drawer-content {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+  }
+
+  .pp-coupon-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(1, 39, 38, 0.08);
+    margin-bottom: 20px;
+  }
+  .pp-coupon-drawer-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #013F3E;
+    margin: 0 0 4px 0;
+  }
+  .pp-coupon-drawer-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #666;
+    margin: 0;
+  }
+  .pp-coupon-drawer-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #013F3E;
+    opacity: 0.6;
+    padding: 4px;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .pp-coupon-drawer-close:hover {
+    opacity: 1;
+  }
+
+  .pp-coupon-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(80vh - 120px);
+    padding-right: 4px;
+  }
+
+  /* Coupon Card Stub Design */
+  .pp-coupon-card {
+    display: flex;
+    align-items: stretch;
+    background: #fff;
+    border: 1px solid rgba(1, 39, 38, 0.08);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.01);
+  }
+  
+  /* Ticket Notches */
+  .pp-coupon-card::before, .pp-coupon-card::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #FCFBF9;
+    border-radius: 50%;
+    z-index: 2;
+  }
+  .pp-coupon-card::before {
+    top: -6px;
+    right: 28%;
+    box-shadow: inset 0 -1px 1px rgba(0,0,0,0.05);
+  }
+  .pp-coupon-card::after {
+    bottom: -6px;
+    right: 28%;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);
+  }
+
+  .pp-coupon-card-left {
+    flex: 3;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    background-color: #ffffff;
+  }
+  .pp-coupon-card-right {
+    flex: 1.2;
+    padding: 16px 12px;
+    background: rgba(212, 175, 55, 0.03);
+    border-left: 1px dashed rgba(1, 39, 38, 0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 8px;
+    position: relative;
+  }
+
+  .pp-coupon-discount {
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #013F3E;
+    letter-spacing: -0.02em;
+  }
+  .pp-coupon-desc {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #444;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .pp-coupon-expiry {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  .pp-coupon-code-label {
+    font-family: 'Inter', sans-serif;
+    font-size: 8px;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .pp-coupon-code {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #b38245;
+    padding: 3px 6px;
+    background: #fff;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 4px;
+    width: 90%;
+    box-sizing: border-box;
+    word-break: break-all;
+  }
+  .pp-coupon-copy-btn {
+    width: 100%;
+    padding: 6px 4px !important;
+    border-radius: 6px !important;
+    border: none !important;
+    background: #013F3E !important;
+    color: #fff !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-align: center !important;
+    line-height: 1 !important;
+    letter-spacing: 0.05em;
+  }
+  .pp-coupon-copy-btn:hover {
+    background: #012b2a !important;
+  }
+  .pp-coupon-copy-btn.copied {
+    background: #2E7D32 !important;
+  }
+  .pp-coupon-empty {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #666;
+    text-align: center;
+    padding: 30px 0;
+  }
+</style>
+
+<!-- COUPON POP OVER (DESKTOP) & BOTTOM SHEET (MOBILE) -->
+<div class="pp-coupon-drawer-overlay" id="pp-coupon-overlay" aria-hidden="true">
+  <div class="pp-coupon-drawer-backdrop" id="pp-coupon-backdrop"></div>
+  <div class="pp-coupon-drawer-content">
+    <div class="pp-coupon-drawer-header">
+      <div class="pp-coupon-drawer-title-wrap">
+        <h3 class="pp-coupon-drawer-title">Available Coupons</h3>
+        <p class="pp-coupon-drawer-subtitle">Select and copy coupon code at checkout</p>
+      </div>
+      <button type="button" class="pp-coupon-drawer-close" id="pp-coupon-close" aria-label="Close coupons">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div class="pp-coupon-drawer-body" id="pp-coupon-list">
+      <!-- Coupon Cards will be dynamically injected via JavaScript -->
+    </div>
+  </div>
+</div>
+
     }
   });
 })();

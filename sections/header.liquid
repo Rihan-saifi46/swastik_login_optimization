@@ -2832,6 +2832,7 @@
   })();
 
   // Storefront GraphQL SKU Search fallback
+  // Storefront GraphQL SKU Search
   function getStorefrontToken() {
     const el = document.getElementById('shopify-features');
     if (el) {
@@ -2843,13 +2844,14 @@
     return '5422b84fa740e56c9ce9aaa844c88ac5';
   }
 
-  window.searchSkuStorefront = function(sku) {
+  window.searchSkuStorefront = function(sku, signal) {
     if (!sku || sku.trim().length < 2) return Promise.resolve(null);
+    const cleanSku = sku.replace(/"/g, '').trim().toLowerCase();
     const token = getStorefrontToken();
-    const escapedSku = sku.replace(/"/g, '\\"').trim();
+    const escapedSku = cleanSku.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
     const query = `
       query {
-        products(first: 10, query: "sku:${escapedSku}") {
+        products(first: 10, query: "${escapedSku}") {
           edges {
             node {
               id
@@ -2877,21 +2879,24 @@
       }
     `;
 
-    return fetch('/api/2023-04/graphql', {
+    const fetchOptions = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Shopify-Storefront-Access-Token': token
       },
       body: JSON.stringify({ query: query })
-    })
+    };
+    if (signal) {
+      fetchOptions.signal = signal;
+    }
+
+    return fetch('/api/2023-04/graphql', fetchOptions)
     .then(res => res.json())
     .then(json => {
       if (!json.data || !json.data.products || !json.data.products.edges) return null;
       
-      const cleanSku = sku.replace(/"/g, '').trim().toLowerCase();
-      
-      // Find the product that has an exact matching variant SKU
+      // Find the product that strictly has an exact matching variant SKU
       for (const edge of json.data.products.edges) {
         const product = edge.node;
         if (product.variants && product.variants.edges) {
@@ -2903,20 +2908,18 @@
         }
       }
       
-      // Fallback: If no exact variant SKU matches but there are results, check if title contains it or return the first
-      if (json.data.products.edges.length > 0) {
-        return json.data.products.edges[0].node;
-      }
-      
+      // Strict exact match only: No fallback to first product
       return null;
     })
     .catch(err => {
-      console.error('Storefront SKU search error:', err);
+      if (err.name !== 'AbortError') {
+        console.error('Storefront SKU search error:', err);
+      }
       return null;
     });
   };
 
-  // Desktop Search Dropdown Panel Toggle
+  // Desktop Search Dropdown Panel Toggle & Logic
   document.addEventListener('DOMContentLoaded', function() {
     const searchTrigger = document.getElementById('HeaderSearchTrigger');
     const searchPanel = document.getElementById('HeaderSearchPanel');
@@ -2926,33 +2929,50 @@
     const desktopSearchResults = document.getElementById('DesktopSearchResults');
 
     if (searchTrigger && searchPanel) {
+      let desktopSearchTimeout;
+      let desktopSearchSeq = 0;
+      let desktopSearchAbort = null;
+
+      function closeDesktopSearch() {
+        searchPanel.style.display = 'none';
+        searchTrigger.setAttribute('aria-expanded', 'false');
+        searchPanel.setAttribute('aria-hidden', 'true');
+        clearTimeout(desktopSearchTimeout);
+        if (desktopSearchAbort) {
+          desktopSearchAbort.abort();
+          desktopSearchAbort = null;
+        }
+        if (searchInput) searchInput.value = '';
+        if (desktopSearchResults) {
+          desktopSearchResults.style.display = 'none';
+          desktopSearchResults.innerHTML = '';
+        }
+        if (suggestionsBlock) suggestionsBlock.style.display = 'grid';
+      }
+
+      function openDesktopSearch() {
+        searchPanel.style.display = 'flex';
+        searchTrigger.setAttribute('aria-expanded', 'true');
+        searchPanel.setAttribute('aria-hidden', 'false');
+        if (searchInput) {
+          setTimeout(() => searchInput.focus(), 50);
+        }
+      }
+
       searchTrigger.addEventListener('click', function(e) {
         e.preventDefault();
         const isExpanded = searchTrigger.getAttribute('aria-expanded') === 'true';
         if (isExpanded) {
-          searchPanel.style.display = 'none';
-          searchTrigger.setAttribute('aria-expanded', 'false');
-          searchPanel.setAttribute('aria-hidden', 'true');
+          closeDesktopSearch();
         } else {
-          searchPanel.style.display = 'flex';
-          searchTrigger.setAttribute('aria-expanded', 'true');
-          searchPanel.setAttribute('aria-hidden', 'false');
-          if (searchInput) {
-            setTimeout(() => searchInput.focus(), 50);
-          }
+          openDesktopSearch();
         }
       });
 
       if (searchClose) {
         searchClose.addEventListener('click', function(e) {
           e.preventDefault();
-          searchPanel.style.display = 'none';
-          searchTrigger.setAttribute('aria-expanded', 'false');
-          searchPanel.setAttribute('aria-hidden', 'true');
-          // Reset search states on close
-          if (searchInput) searchInput.value = '';
-          if (desktopSearchResults) desktopSearchResults.style.display = 'none';
-          if (suggestionsBlock) suggestionsBlock.style.display = 'grid';
+          closeDesktopSearch();
         });
       }
 
@@ -2960,14 +2980,16 @@
       document.addEventListener('click', function(e) {
         const searchPanelContainer = document.querySelector('.header__search-panel-container');
         if (searchPanel.style.display === 'flex' && searchPanelContainer && !searchPanelContainer.contains(e.target) && !searchTrigger.contains(e.target)) {
-          searchPanel.style.display = 'none';
-          searchTrigger.setAttribute('aria-expanded', 'false');
-          searchPanel.setAttribute('aria-hidden', 'true');
+          closeDesktopSearch();
         }
       });
 
-      // Desktop Predictive Search JS
-      let desktopSearchTimeout;
+      // Close on Escape key press
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && searchPanel.style.display === 'flex') {
+          closeDesktopSearch();
+        }
+      });
 
       function getDesktopLuxuryImageUrl(imgUrl, categoryKey = 'rings') {
         let isFallback = !imgUrl || 
@@ -3017,10 +3039,11 @@
       }
 
       function renderDesktopSearchResults(products, query) {
-        const regex = new RegExp(`(${query.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+        const safeTerm = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = safeTerm ? new RegExp(`(${safeTerm})`, 'gi') : null;
         let html = '';
         products.forEach(product => {
-          const highlightedTitle = product.title.replace(regex, '<mark class="search-highlight">$1</mark>');
+          const highlightedTitle = regex && product.title ? product.title.replace(regex, '<mark class="search-highlight">$1</mark>') : (product.title || '');
           
           let categoryKey = 'rings';
           if (product.title) {
@@ -3056,47 +3079,105 @@
       }
 
       function performDesktopSearch(query) {
-        if (!query || query.trim().length < 2) {
-          if (desktopSearchResults) desktopSearchResults.style.display = 'none';
+        const trimmedQuery = query ? query.trim() : '';
+        if (trimmedQuery.length < 2) {
+          if (desktopSearchResults) {
+            desktopSearchResults.style.display = 'none';
+            desktopSearchResults.innerHTML = '';
+          }
           if (suggestionsBlock) suggestionsBlock.style.display = 'grid';
           return;
         }
+
+        const searchSeq = ++desktopSearchSeq;
+        if (desktopSearchAbort) {
+          desktopSearchAbort.abort();
+        }
+        desktopSearchAbort = new AbortController();
+        const signal = desktopSearchAbort.signal;
 
         if (desktopSearchResults) {
           desktopSearchResults.style.display = 'block';
           desktopSearchResults.innerHTML = '<div class="desktop-live-search-loading">Searching Swastik Jewels...</div>';
         }
+        if (suggestionsBlock) {
+          suggestionsBlock.style.display = 'none';
+        }
 
-        fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(query)}&resources[type]=product&resources[limit]=6`)
-          .then(res => res.json())
-          .then(data => {
-            const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
-            if (products.length === 0) {
-              if (window.searchSkuStorefront) {
-                window.searchSkuStorefront(query).then(skuProduct => {
-                  if (skuProduct) {
-                    const mappedProduct = {
-                      title: skuProduct.title,
-                      url: `/products/${skuProduct.handle}`,
-                      image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
-                      price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
-                    };
-                    renderDesktopSearchResults([mappedProduct], query);
+        const isSkuCandidate = /^[a-zA-Z0-9_-]+$/.test(trimmedQuery) && /\d/.test(trimmedQuery);
+
+        if (isSkuCandidate) {
+          // Dedicated SKU lookup with top priority for SKU patterns
+          window.searchSkuStorefront(trimmedQuery, signal).then(skuProduct => {
+            if (searchSeq !== desktopSearchSeq) return;
+            if (skuProduct) {
+              const mappedProduct = {
+                title: skuProduct.title,
+                url: `/products/${skuProduct.handle}`,
+                image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
+                price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
+              };
+              renderDesktopSearchResults([mappedProduct], trimmedQuery);
+            } else {
+              // Check predictive search as fallback if SKU wasn't found
+              fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=6`, { signal })
+                .then(res => res.json())
+                .then(data => {
+                  if (searchSeq !== desktopSearchSeq) return;
+                  const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
+                  if (products.length > 0) {
+                    renderDesktopSearchResults(products, trimmedQuery);
                   } else {
-                    if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${query}". Try searching "rings" or "diamonds".</div>`;
+                    if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
+                  }
+                })
+                .catch(err => {
+                  if (searchSeq !== desktopSearchSeq) return;
+                  if (err.name !== 'AbortError') {
+                    if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
                   }
                 });
-              } else {
-                if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${query}". Try searching "rings" or "diamonds".</div>`;
-              }
-              return;
             }
-
-            renderDesktopSearchResults(products, query);
-          })
-          .catch(err => {
-            if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">Error loading suggestions. Please hit enter to search.</div>`;
           });
+        } else {
+          // Normal keyword predictive search
+          fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=6`, { signal })
+            .then(res => res.json())
+            .then(data => {
+              if (searchSeq !== desktopSearchSeq) return;
+              const products = data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
+              if (products.length === 0) {
+                // Secondary check for exact variant SKU
+                if (window.searchSkuStorefront) {
+                  window.searchSkuStorefront(trimmedQuery, signal).then(skuProduct => {
+                    if (searchSeq !== desktopSearchSeq) return;
+                    if (skuProduct) {
+                      const mappedProduct = {
+                        title: skuProduct.title,
+                        url: `/products/${skuProduct.handle}`,
+                        image: skuProduct.featuredImage ? skuProduct.featuredImage.url : null,
+                        price: skuProduct.priceRange && skuProduct.priceRange.minVariantPrice ? parseFloat(skuProduct.priceRange.minVariantPrice.amount) * 100 : 0
+                      };
+                      renderDesktopSearchResults([mappedProduct], trimmedQuery);
+                    } else {
+                      if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
+                    }
+                  });
+                } else {
+                  if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
+                }
+                return;
+              }
+
+              renderDesktopSearchResults(products, trimmedQuery);
+            })
+            .catch(err => {
+              if (searchSeq !== desktopSearchSeq) return;
+              if (err.name !== 'AbortError') {
+                if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">Error loading suggestions. Please hit enter to search.</div>`;
+              }
+            });
+        }
       }
 
       if (searchInput) {
@@ -3107,7 +3188,10 @@
             if (suggestionsBlock) suggestionsBlock.style.display = 'none';
             desktopSearchTimeout = setTimeout(() => performDesktopSearch(val), 250);
           } else {
-            if (desktopSearchResults) desktopSearchResults.style.display = 'none';
+            if (desktopSearchResults) {
+              desktopSearchResults.style.display = 'none';
+              desktopSearchResults.innerHTML = '';
+            }
             if (suggestionsBlock) suggestionsBlock.style.display = 'grid';
           }
         });
@@ -3146,16 +3230,14 @@
           
           if (window.searchSkuStorefront) {
             window.searchSkuStorefront(rawVal).then(skuProduct => {
-              if (skuProduct) {
+              if (skuProduct && skuProduct.handle) {
                 window.location.href = `/products/${skuProduct.handle}`;
               } else {
-                const targetQuery = `${rawVal} OR sku:"${rawVal}"`;
-                window.location.href = `${form.action || '/search'}?q=${encodeURIComponent(targetQuery)}&options[prefix]=last`;
+                window.location.href = `${form.action || '/search'}?q=${encodeURIComponent(rawVal)}&options[prefix]=last`;
               }
             });
           } else {
-            const targetQuery = `${rawVal} OR sku:"${rawVal}"`;
-            window.location.href = `${form.action || '/search'}?q=${encodeURIComponent(targetQuery)}&options[prefix]=last`;
+            window.location.href = `${form.action || '/search'}?q=${encodeURIComponent(rawVal)}&options[prefix]=last`;
           }
         }
       }
