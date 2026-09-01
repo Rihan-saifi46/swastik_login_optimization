@@ -3,6 +3,26 @@
   luxury collection-like product grid layout, reusing existing styling and snippets.
 {% endcomment %}
 {%- assign clean_terms = search.terms | split: ' OR sku:' | first -%}
+{%- assign query_sku = clean_terms | strip | downcase -%}
+
+{%- comment -%}
+  Exact SKU Detection: If any returned product has a variant with an exact matching SKU,
+  narrow results exclusively to products matching that exact SKU.
+{%- endcomment -%}
+{%- assign exact_sku_count = 0 -%}
+{%- if search.performed and search.results_count > 0 and query_sku != blank -%}
+  {%- for item in search.results -%}
+    {%- if item.object_type == 'product' -%}
+      {%- for variant in item.variants -%}
+        {%- assign v_sku = variant.sku | strip | downcase -%}
+        {%- if v_sku == query_sku -%}
+          {%- assign exact_sku_count = exact_sku_count | plus: 1 -%}
+          {%- break -%}
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
 
 <div class="collection-page" style="background-color: #ffffff; padding: 3rem 0 6rem;">
   
@@ -27,6 +47,34 @@
 
   <div class="collection-page__container" style="max-width: 1600px; margin: 0 auto; padding: 0 4rem; box-sizing: border-box;">
     
+    <!-- Dedicated Search Form (Desktop & Mobile) -->
+    <div class="search-page__form-wrapper">
+      <form action="{{ routes.search_url }}" method="get" class="search-page__form" role="search">
+        <div class="search-page__input-container">
+          <svg class="search-page__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input 
+            type="search" 
+            name="q" 
+            class="search-page__input" 
+            placeholder="Search for rings, earrings, necklaces and more..." 
+            value="{{ clean_terms | escape }}" 
+            autocomplete="off" 
+            autocorrect="off" 
+            required
+            aria-label="Search Swastik Jewels"
+          >
+          <input type="hidden" name="type" value="product">
+          <input type="hidden" name="options[prefix]" value="last">
+          <button type="submit" class="search-page__submit-button">
+            Search
+          </button>
+        </div>
+      </form>
+    </div>
+
     <!-- Toolbar -->
     <div class="collection-toolbar" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,46,40,0.08); padding-bottom: 1rem;">
       <h1 style="color: #013F3E; font-family: 'Outfit', sans-serif; font-size: 1.75rem; font-weight: 600; margin: 0;">
@@ -38,7 +86,11 @@
       </h1>
       <div class="collection-toolbar__count" style="font-family: 'Inter', sans-serif; font-size: 0.95rem; color: #013F3E; font-weight: 500;">
         {% if search.performed %}
-          {{ search.results_count }} Products Found
+          {% if exact_sku_count > 0 %}
+            {{ exact_sku_count }} {% if exact_sku_count == 1 %}Product{% else %}Products{% endif %} Found
+          {% else %}
+            {{ search.results_count }} Products Found
+          {% endif %}
         {% endif %}
       </div>
     </div>
@@ -49,13 +101,27 @@
         <div class="collection-grid">
           {% for item in search.results %}
             {% if item.object_type == 'product' %}
-              {% render 'product-card', product: item, class_prefix: 'best-sellers' %}
+              {% if exact_sku_count > 0 %}
+                {% assign is_exact_sku = false %}
+                {% for variant in item.variants %}
+                  {% assign v_sku = variant.sku | strip | downcase %}
+                  {% if v_sku == query_sku %}
+                    {% assign is_exact_sku = true %}
+                    {% break %}
+                  {% endif %}
+                {% endfor %}
+                {% if is_exact_sku %}
+                  {% render 'product-card', product: item, class_prefix: 'best-sellers' %}
+                {% endif %}
+              {% else %}
+                {% render 'product-card', product: item, class_prefix: 'best-sellers' %}
+              {% endif %}
             {% endif %}
           {% endfor %}
         </div>
         
         <!-- Pagination -->
-        {% if paginate.pages > 1 %}
+        {% if exact_sku_count == 0 and paginate.pages > 1 %}
           <div class="collection-pagination" style="margin-top: 4rem; display: flex; justify-content: center; gap: 0.5rem;">
             {% if paginate.previous %}
               <a href="{{ paginate.previous.url }}" style="padding: 0.5rem 1rem; background: #faf7f2; color: #333; text-decoration: none; border-radius: 4px;">&laquo; Previous</a>
@@ -97,7 +163,168 @@
   </div>
 </div>
 
+<script>
+  (function() {
+    function initSearchPageAutoSubmit() {
+      const searchForm = document.querySelector('.search-page__form');
+      if (!searchForm) return;
+
+      const searchInput = searchForm.querySelector('.search-page__input');
+      if (!searchInput) return;
+
+      let debounceTimer = null;
+      const initialQuery = (searchInput.value || '').trim();
+
+      searchInput.addEventListener('input', function(e) {
+        clearTimeout(debounceTimer);
+        const currentQuery = e.target.value.trim();
+
+        // Do not auto-submit if the field is empty or unchanged from currently loaded page query
+        if (currentQuery.length === 0 || currentQuery.toLowerCase() === initialQuery.toLowerCase()) {
+          return;
+        }
+
+        // Auto-submit after 500ms of typing inactivity
+        debounceTimer = setTimeout(function() {
+          if (typeof searchForm.requestSubmit === 'function') {
+            searchForm.requestSubmit();
+          } else {
+            searchForm.submit();
+          }
+        }, 500);
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSearchPageAutoSubmit);
+    } else {
+      initSearchPageAutoSubmit();
+    }
+  })();
+</script>
+
 {% stylesheet %}
+  /* Search Page Form Styling */
+  .search-page__form-wrapper {
+    max-width: 680px;
+    margin: 0 auto 2.5rem;
+    box-sizing: border-box;
+  }
+  
+  .search-page__form {
+    width: 100%;
+  }
+  
+  .search-page__input-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    background: #FAF8F2;
+    border: 1px solid rgba(1, 63, 62, 0.15);
+    border-radius: 30px;
+    padding: 4px 6px 4px 18px;
+    transition: all 0.25s ease;
+    box-sizing: border-box;
+  }
+  
+  .search-page__input-container:focus-within {
+    border-color: #013F3E;
+    background: #FFFFFF;
+    box-shadow: 0 0 0 3px rgba(1, 63, 62, 0.08);
+  }
+  
+  .search-page__icon {
+    width: 20px;
+    height: 20px;
+    color: #013F3E;
+    opacity: 0.6;
+    flex-shrink: 0;
+    margin-right: 12px;
+  }
+  
+  .search-page__input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 1rem;
+    color: #013F3E;
+    padding: 11px 8px 11px 0;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  
+  .search-page__input::placeholder {
+    color: #888888;
+    font-size: 0.95rem;
+  }
+  
+  .search-page__submit-button {
+    background: #013F3E;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 24px;
+    padding: 10px 22px;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease, transform 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .search-page__submit-button:hover {
+    background: #022B2A;
+    transform: translateY(-1px);
+  }
+  
+  .search-page__submit-button:active {
+    transform: translateY(0);
+  }
+
+  @media screen and (max-width: 768px) {
+    .collection-page__container {
+      padding: 0 1.2rem !important;
+    }
+    .search-page__form-wrapper {
+      margin-bottom: 2rem;
+    }
+    .search-page__input-container {
+      padding: 3px 4px 3px 14px;
+    }
+    .search-page__icon {
+      width: 18px;
+      height: 18px;
+      margin-right: 8px;
+    }
+    .search-page__input {
+      font-size: 0.95rem;
+      padding: 9px 6px 9px 0;
+    }
+    .search-page__input::placeholder {
+      font-size: 0.85rem;
+    }
+    .search-page__submit-button {
+      padding: 9px 18px;
+      font-size: 0.88rem;
+    }
+  }
+
+  @media screen and (max-width: 360px) {
+    .search-page__input::placeholder {
+      font-size: 0.78rem;
+    }
+    .search-page__submit-button {
+      padding: 8px 14px;
+      font-size: 0.82rem;
+    }
+  }
+
   /* Reusing the collection grid layout styling specifically for search pages */
   .collection-grid {
     display: grid;
