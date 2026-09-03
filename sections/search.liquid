@@ -204,11 +204,26 @@
 </script>
 
 {% stylesheet %}
+<<<<<<< HEAD
   /* Search Page Form Styling */
   .search-page__form-wrapper {
     max-width: 680px;
     margin: 0 auto 2.5rem;
     box-sizing: border-box;
+=======
+  /* Search Page Form Styling - Mobile / Tablet Only (<=1150px) */
+  .search-page__form-wrapper {
+    display: none;
+  }
+
+  @media screen and (max-width: 1150px) {
+    .search-page__form-wrapper {
+      display: block;
+      max-width: 680px;
+      margin: 0 auto 2rem;
+      box-sizing: border-box;
+    }
+>>>>>>> 16a80c3 (mobile search fixed)
   }
   
   .search-page__form {
