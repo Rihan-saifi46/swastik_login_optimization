@@ -9,6 +9,7 @@
   <div
     id="SiteCouponOverlay"
     class="site-coupon-overlay"
+    style="display: none;"
     role="dialog"
     aria-modal="true"
     aria-hidden="true"
@@ -83,7 +84,7 @@
       width: 100vw;
       height: 100vh;
       z-index: 999999;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       visibility: hidden;
@@ -94,6 +95,7 @@
     }
 
     .site-coupon-overlay.is-active {
+      display: flex !important;
       visibility: visible;
       opacity: 1;
       pointer-events: auto;
@@ -658,13 +660,16 @@
 
         renderSiteCouponCards(coupons, isCustom);
 
+        overlay.style.display = 'flex';
+        void overlay.offsetWidth;
         overlay.classList.add('is-active');
         overlay.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
 
-        // Set session storage flag to avoid re-prompting visitor auto-modal
+        // Set storage flags to avoid re-prompting visitor auto-modal
         try {
           sessionStorage.setItem(SESSION_STORAGE_KEY, 'true');
+          localStorage.setItem(SESSION_STORAGE_KEY, 'true');
         } catch (e) {}
 
         // Focus close button for accessibility
@@ -678,9 +683,19 @@
         const overlay = document.getElementById('SiteCouponOverlay');
         if (!overlay) return;
 
+        try {
+          sessionStorage.setItem(SESSION_STORAGE_KEY, 'true');
+          localStorage.setItem(SESSION_STORAGE_KEY, 'true');
+        } catch (e) {}
+
         overlay.classList.remove('is-active');
         overlay.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        setTimeout(() => {
+          if (!overlay.classList.contains('is-active')) {
+            overlay.style.display = 'none';
+          }
+        }, 350);
       }
 
       // Clipboard copy helper with fallback
@@ -792,11 +807,11 @@
         });
       }
 
-      // Auto-trigger on visitor arrival (honoring sessionStorage)
+      // Auto-trigger on visitor arrival (honoring sessionStorage and localStorage)
       function scheduleAutoPopup() {
         let seen = false;
         try {
-          seen = sessionStorage.getItem(SESSION_STORAGE_KEY) === 'true';
+          seen = sessionStorage.getItem(SESSION_STORAGE_KEY) === 'true' || localStorage.getItem(SESSION_STORAGE_KEY) === 'true';
         } catch (e) {}
 
         if (seen) return;

@@ -1,4 +1,4 @@
-<div id="WishlistDrawer" class="wishlist-drawer" aria-hidden="true">
+<div id="WishlistDrawer" class="wishlist-drawer" style="display: none;" aria-hidden="true">
   <div class="wishlist-drawer__overlay" onclick="closeWishlistDrawer()"></div>
   <div class="wishlist-drawer__content">
     <div class="wishlist-drawer__header">
@@ -31,13 +31,14 @@
     width: 100vw;
     height: 100vh;
     z-index: 1000000 !important;
-    display: flex;
+    display: none;
     justify-content: flex-end;
     visibility: hidden;
     pointer-events: none;
     font-family: 'Montserrat', sans-serif;
   }
   .wishlist-drawer.is-open {
+    display: flex !important;
     visibility: visible;
     pointer-events: auto;
   }
@@ -356,17 +357,27 @@
     wishlistIds = wishlistIds.filter(i => i !== id);
     localStorage.setItem('wishlist', JSON.stringify(wishlistIds));
 
-    // Optional: uncheck the heart icon on the main product grid if it's visible on the page
-    const heartBtn = document.querySelector(`[data-product-id="${id}"] .active`);
-    if (heartBtn) {
-       heartBtn.classList.remove('active');
+    if (window.syncWishlistUI) {
+      window.syncWishlistUI();
+    } else {
+      const heartBtn = document.querySelector(`[data-product-id="${id}"] .active`);
+      if (heartBtn) {
+         heartBtn.classList.remove('active');
+      }
+    }
+    if (window.updateWishlistBadge) {
+      window.updateWishlistBadge();
     }
 
     renderWishlistDrawer();
   };
 
   window.openWishlistDrawer = function() {
-    document.getElementById('WishlistDrawer').classList.add('is-open');
+    const drawer = document.getElementById('WishlistDrawer');
+    if (!drawer) return;
+    drawer.style.display = 'flex';
+    void drawer.offsetWidth;
+    drawer.classList.add('is-open');
     document.body.style.overflow = 'hidden';
     document.body.classList.add('drawer-open');
     document.body.classList.add('body-lock');
@@ -374,10 +385,17 @@
   };
 
   window.closeWishlistDrawer = function() {
-    document.getElementById('WishlistDrawer').classList.remove('is-open');
+    const drawer = document.getElementById('WishlistDrawer');
+    if (!drawer) return;
+    drawer.classList.remove('is-open');
     document.body.style.overflow = '';
     document.body.classList.remove('drawer-open');
     document.body.classList.remove('body-lock');
+    setTimeout(() => {
+      if (!drawer.classList.contains('is-open')) {
+        drawer.style.display = 'none';
+      }
+    }, 400);
   };
 
   window.addToCartFromWishlist = function(variantId, btn) {

@@ -1,4 +1,4 @@
-<div id="CartDrawer" class="cart-drawer" aria-hidden="true">
+<div id="CartDrawer" class="cart-drawer" style="display: none;" aria-hidden="true">
   <div class="cart-drawer__overlay" onclick="closeCartDrawer()"></div>
   <div class="cart-drawer__content">
     <div class="cart-drawer__header">
@@ -51,8 +51,13 @@
       </div>
       <p class="cart-drawer__tax-note">Taxes and shipping calculated at checkout</p>
       
+      <div class="cart-drawer__terms-line">
+        By proceeding, you agree to our <a href="{{ pages['term-and-condition'].url | default: '/pages/term-and-condition' }}" class="cart-drawer__terms-link">Terms &amp; Conditions</a>.
+      </div>
+      
       <div class="cart-drawer__actions">
-        <form action="{{ routes.cart_url }}" method="post" id="cart-drawer-form" style="width: 100%; margin: 0;">
+        <a href="{{ routes.cart_url }}" class="btn-view-cart">View Cart</a>
+        <form action="{{ routes.cart_url }}" method="post" id="cart-drawer-form" style="flex: 1; margin: 0;">
           <button type="submit" name="checkout" class="btn-checkout">Checkout</button>
         </form>
       </div>
@@ -68,13 +73,14 @@
     width: 100vw;
     height: 100vh;
     z-index: 1000000 !important;
-    display: flex;
+    display: none;
     justify-content: flex-end;
     visibility: hidden;
     pointer-events: none;
     font-family: 'Montserrat', sans-serif;
   }
   .cart-drawer.is-open {
+    display: flex !important;
     visibility: visible;
     pointer-events: auto;
   }
@@ -367,6 +373,24 @@
     opacity: 0.5;
     pointer-events: none;
   }
+  
+  .cart-drawer__terms-line {
+    font-size: 1.15rem;
+    color: #666666;
+    text-align: center;
+    margin-bottom: 1.2rem;
+    line-height: 1.4;
+  }
+  .cart-drawer__terms-link {
+    color: var(--color-primary, #013F3E);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  .cart-drawer__terms-link:hover {
+    color: var(--color-accent, #D4AF37);
+  }
 {% endstyle %}
 
 <script>
@@ -490,7 +514,11 @@
   window.openCartDrawer = function() {
     const activeToasts = document.querySelectorAll('#toast-container .toast-item');
     activeToasts.forEach(t => t.remove());
-    document.getElementById('CartDrawer').classList.add('is-open');
+    const drawer = document.getElementById('CartDrawer');
+    if (!drawer) return;
+    drawer.style.display = 'flex';
+    void drawer.offsetWidth;
+    drawer.classList.add('is-open');
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
     document.body.classList.add('drawer-open');
     document.body.classList.add('body-lock');
@@ -498,30 +526,19 @@
   };
 
   window.closeCartDrawer = function() {
-    document.getElementById('CartDrawer').classList.remove('is-open');
+    const drawer = document.getElementById('CartDrawer');
+    if (!drawer) return;
+    drawer.classList.remove('is-open');
     document.body.style.overflow = '';
     document.body.classList.remove('drawer-open');
     document.body.classList.remove('body-lock');
+    setTimeout(() => {
+      if (!drawer.classList.contains('is-open')) {
+        drawer.style.display = 'none';
+      }
+    }, 400);
   };
 
-  // Auto-open cart drawer if redirected from /cart
-  (function() {
-    function tryOpenDrawer() {
-      try {
-        if (sessionStorage.getItem('swastik_open_cart_drawer')) {
-          sessionStorage.removeItem('swastik_open_cart_drawer');
-          if (typeof window.openCartDrawer === 'function') {
-            window.openCartDrawer();
-          }
-        }
-      } catch(e) {}
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', tryOpenDrawer);
-    } else {
-      tryOpenDrawer();
-    }
-  })();
 </script>
 
 {% schema %}

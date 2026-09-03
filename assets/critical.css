@@ -16,6 +16,8 @@
 html {
   font-size: 62.5%; /* 10px base for easier rem calculation */
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
@@ -25,6 +27,28 @@ body {
   color: var(--color-foreground, #1A1A1A);
   background-color: var(--color-background, #FFFFFF);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Ensure closed drawer overlays and modals remain completely hidden and transition-free during page navigation/load */
+.cart-drawer:not(.is-open),
+.wishlist-drawer:not(.is-open),
+.mobile-categories-drawer:not(.open),
+.mobile-menu-drawer:not(.mobile-menu-drawer--open),
+.video-call-modal:not(.is-open),
+.site-coupon-overlay:not(.is-active) {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition: none !important;
+}
+
+.cart-drawer:not(.is-open) *,
+.wishlist-drawer:not(.is-open) *,
+.mobile-categories-drawer:not(.open) *,
+.mobile-menu-drawer:not(.mobile-menu-drawer--open) * {
+  transition: none !important;
 }
 
 /* Typography */

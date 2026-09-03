@@ -1,3 +1,32 @@
+{%- assign active_min_price = null -%}
+{%- assign active_max_price = null -%}
+{%- for filter in collection.filters -%}
+  {%- if filter.type == 'price_range' -%}
+    {%- if filter.min_value.value -%}
+      {%- assign active_min_price = filter.min_value.value | divided_by: 100.0 | floor -%}
+    {%- endif -%}
+    {%- if filter.max_value.value -%}
+      {%- assign active_max_price = filter.max_value.value | divided_by: 100.0 | ceil -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endfor -%}
+
+{%- capture cfh -%}{{ content_for_header }}{%- endcapture -%}
+{%- assign pageurl = cfh | split: '"pageurl":"' | last | split: '"' | first | replace: '\/', '/' | replace: '\u0026', '&' | replace: '%20', '+' -%}
+
+{%- if active_min_price == null and pageurl contains 'filter.v.price.gte=' -%}
+  {%- assign gte_part = pageurl | split: 'filter.v.price.gte=' | last | split: '&' | first | url_decode -%}
+  {%- if gte_part != blank -%}
+    {%- assign active_min_price = gte_part | plus: 0 -%}
+  {%- endif -%}
+{%- endif -%}
+{%- if active_max_price == null and pageurl contains 'filter.v.price.lte=' -%}
+  {%- assign lte_part = pageurl | split: 'filter.v.price.lte=' | last | split: '&' | first | url_decode -%}
+  {%- if lte_part != blank -%}
+    {%- assign active_max_price = lte_part | plus: 0 -%}
+  {%- endif -%}
+{%- endif -%}
+
 {%- assign active_filter_count = 0 -%}
 {%- for filter in collection.filters -%}
   {%- if filter.label == 'Gender' -%}
@@ -13,6 +42,18 @@
     {%- assign active_filter_count = active_filter_count | plus: filter.active_values.size -%}
   {%- endif -%}
 {%- endfor -%}
+
+{%- if active_min_price or active_max_price -%}
+  {%- assign has_native_price_filter = false -%}
+  {%- for filter in collection.filters -%}
+    {%- if filter.type == 'price_range' and filter.min_value.value or filter.max_value.value -%}
+      {%- assign has_native_price_filter = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- unless has_native_price_filter -%}
+    {%- assign active_filter_count = active_filter_count | plus: 1 -%}
+  {%- endunless -%}
+{%- endif -%}
 
 <div class="collection-page" style="background-color: {{ section.settings.bg_color }};">
   
@@ -129,7 +170,11 @@
             {%- endif -%}
           {%- endif -%}
 
+            {%- assign has_price_filter_in_loop = false -%}
             {%- for filter in collection.filters -%}
+              {%- if filter.type == 'price_range' -%}
+                {%- assign has_price_filter_in_loop = true -%}
+              {%- endif -%}
               {%- if filter.label == 'Gender' -%}
                 {%- if collection.handle == 'everyday-sparkle' or collection.handle == 'close-to-heart' -%}
                   {%- continue -%}
@@ -140,16 +185,7 @@
               
               {%- if filter.type == 'boolean' or filter.type == 'list' -%}
                 {%- for filter_value in filter.values -%}
-                  {%- assign value_is_present = false -%}
-                  {%- if filter_value.active -%}
-                    {%- assign value_is_present = true -%}
-                  {%- else -%}
-                    {%- assign value_is_present = true -%}
-                  {%- endif -%}
-                  
-                  {%- if value_is_present -%}
-                    {%- assign valid_values_count = valid_values_count | plus: 1 -%}
-                  {%- endif -%}
+                  {%- assign valid_values_count = valid_values_count | plus: 1 -%}
                 {%- endfor -%}
               {%- else -%}
                 {%- assign show_filter_group = true -%}
@@ -160,10 +196,10 @@
               {%- endif -%}
 
               {%- if show_filter_group -%}
-                <div class="filter-group">
+                <div class="filter-group filter-group--{{ filter.type }}">
                   <details class="filter-group__details" open>
                     <summary class="filter-group__summary">
-                      <span class="filter-group__name">{{ filter.label }}</span>
+                      <span class="filter-group__name">{% if filter.type == 'price_range' %}PRICE{% else %}{{ filter.label }}{% endif %}</span>
                       <svg class="icon-caret" width="12" height="7" viewBox="0 0 12 7" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M1 1L6 6L11 1" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                       </svg>
@@ -174,50 +210,56 @@
                         {%- when 'boolean' or 'list' -%}
                           <ul class="filter-group__list">
                             {%- for filter_value in filter.values -%}
-                              {%- assign value_is_present = false -%}
-                              {%- if filter_value.active -%}
-                                {%- assign value_is_present = true -%}
-                              {%- else -%}
-                                {%- assign value_is_present = true -%}
-                              {%- endif -%}
-                              
-                              {%- if value_is_present -%}
-                                <li class="filter-group__list-item">
-                                  <label for="Filter-{{ filter.param_name }}-{{ forloop.index }}" class="filter-checkbox">
-                                    <input type="checkbox" 
-                                      name="{{ filter_value.param_name }}"
-                                      value="{{ filter_value.value }}"
-                                      id="Filter-{{ filter.param_name }}-{{ forloop.index }}"
-                                      {% if filter_value.active -%}checked{%- endif %}>
-                                    <span class="filter-checkbox__box"></span>
-                                    <span class="filter-checkbox__label">{{ filter_value.label }}</span>
-                                  </label>
-                                </li>
-                              {%- endif -%}
+                              <li class="filter-group__list-item">
+                                <label for="Filter-{{ filter.param_name }}-{{ forloop.index }}" class="filter-checkbox">
+                                  <input type="checkbox" 
+                                    name="{{ filter_value.param_name }}"
+                                    value="{{ filter_value.value }}"
+                                    id="Filter-{{ filter.param_name }}-{{ forloop.index }}"
+                                    {% if filter_value.active -%}checked{%- endif %}>
+                                  <span class="filter-checkbox__box"></span>
+                                  <span class="filter-checkbox__label">{{ filter_value.label }}</span>
+                                </label>
+                              </li>
                             {%- endfor -%}
                           </ul>
                           
                         {%- when 'price_range' -%}
-                          <div class="filter-group__price-range">
-                            <div class="price-slider-container">
-                              <div class="price-slider">
-                                <div class="price-slider__track" id="slider-track-{{ filter.label | handleize }}"></div>
-                                <input type="range" min="0" max="{{ filter.range_max | divided_by: 100.0 | ceil }}" 
-                                       value="{{ filter.min_value.value | default: 0 | divided_by: 100.0 | floor }}" 
-                                       class="price-slider__range price-slider__range--min" id="slider-min-{{ filter.label | handleize }}">
-                                <input type="range" min="0" max="{{ filter.range_max | divided_by: 100.0 | ceil }}" 
-                                       value="{{ filter.max_value.value | default: filter.range_max | divided_by: 100.0 | ceil }}" 
-                                       class="price-slider__range price-slider__range--max" id="slider-max-{{ filter.label | handleize }}">
+                          <div class="filter-group__price-inputs">
+                            <div class="price-inputs-row">
+                              <div class="price-input-field">
+                                <span class="price-input-currency">{{ cart.currency.symbol | default: '₹' }}</span>
+                                <input 
+                                  type="number" 
+                                  name="{{ filter.min_value.param_name | default: 'filter.v.price.gte' }}" 
+                                  id="PriceFilterMin" 
+                                  class="price-input" 
+                                  placeholder="Min price" 
+                                  min="0" 
+                                  step="1"
+                                  value="{{ active_min_price }}"
+                                  aria-label="Minimum price"
+                                >
                               </div>
-                              
-                              <div class="price-slider__labels">
-                                <span class="price-slider__label">{{ cart.currency.symbol }} <span id="label-min-{{ filter.label | handleize }}">{{ filter.min_value.value | default: 0 | divided_by: 100.0 | floor }}</span></span>
-                                <span class="price-slider__label">{{ cart.currency.symbol }} <span id="label-max-{{ filter.label | handleize }}">{{ filter.max_value.value | default: filter.range_max | divided_by: 100.0 | ceil }}</span>+</span>
+                              <span class="price-input-divider">-</span>
+                              <div class="price-input-field">
+                                <span class="price-input-currency">{{ cart.currency.symbol | default: '₹' }}</span>
+                                <input 
+                                  type="number" 
+                                  name="{{ filter.max_value.param_name | default: 'filter.v.price.lte' }}" 
+                                  id="PriceFilterMax" 
+                                  class="price-input" 
+                                  placeholder="Max price" 
+                                  min="0" 
+                                  step="1"
+                                  value="{{ active_max_price }}"
+                                  aria-label="Maximum price"
+                                >
                               </div>
-
-                              <input type="hidden" name="{{ filter.min_value.param_name }}" id="Filter-{{ filter.min_value.param_name }}" value="{{ filter.min_value.value | divided_by: 100.0 | floor | default: 0 }}" {% if filter.min_value.value == blank %}disabled{% endif %}>
-                              <input type="hidden" name="{{ filter.max_value.param_name }}" id="Filter-{{ filter.max_value.param_name }}" value="{{ filter.max_value.value | divided_by: 100.0 | ceil | default: '' }}" {% if filter.max_value.value == blank %}disabled{% endif %}>
                             </div>
+                            <button type="submit" class="price-filter-apply-btn">
+                              Apply
+                            </button>
                           </div>
                       {%- endcase -%}
                     </div>
@@ -225,6 +267,59 @@
                 </div>
               {%- endif -%}
             {%- endfor -%}
+
+            {%- unless has_price_filter_in_loop -%}
+              <!-- Dedicated PRICE Filter Section -->
+              <div class="filter-group filter-group--price">
+                <details class="filter-group__details" open>
+                  <summary class="filter-group__summary">
+                    <span class="filter-group__name">PRICE</span>
+                    <svg class="icon-caret" width="12" height="7" viewBox="0 0 12 7" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 1L6 6L11 1" stroke="#D4AF37" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </summary>
+                  
+                  <div class="filter-group__display">
+                    <div class="filter-group__price-inputs">
+                      <div class="price-inputs-row">
+                        <div class="price-input-field">
+                          <span class="price-input-currency">{{ cart.currency.symbol | default: '₹' }}</span>
+                          <input 
+                            type="number" 
+                            name="filter.v.price.gte" 
+                            id="PriceFilterMinStandalone" 
+                            class="price-input" 
+                            placeholder="Min price" 
+                            min="0" 
+                            step="1"
+                            value="{{ active_min_price }}"
+                            aria-label="Minimum price"
+                          >
+                        </div>
+                        <span class="price-input-divider">-</span>
+                        <div class="price-input-field">
+                          <span class="price-input-currency">{{ cart.currency.symbol | default: '₹' }}</span>
+                          <input 
+                            type="number" 
+                            name="filter.v.price.lte" 
+                            id="PriceFilterMaxStandalone" 
+                            class="price-input" 
+                            placeholder="Max price" 
+                            min="0" 
+                            step="1"
+                            value="{{ active_max_price }}"
+                            aria-label="Maximum price"
+                          >
+                        </div>
+                      </div>
+                      <button type="submit" class="price-filter-apply-btn">
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            {%- endunless -%}
           </div>
           
           {%- if collection.sort_by -%}
@@ -289,6 +384,32 @@
               {% endif %}
             {% endif %}
           {% endfor %}
+
+          {% if active_min_price or active_max_price %}
+            {%- assign has_native_price_chip = false -%}
+            {%- for filter in collection.filters -%}
+              {%- if filter.type == 'price_range' and filter.min_value.value or filter.max_value.value -%}
+                {%- assign has_native_price_chip = true -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- unless has_native_price_chip -%}
+              <a href="#" class="active-filter-chip js-remove-price-chip" data-remove-price="true">
+                <span>Price: 
+                  {% if active_min_price and active_max_price %}
+                    {{ cart.currency.symbol | default: '₹' }}{{ active_min_price | round }} - {{ cart.currency.symbol | default: '₹' }}{{ active_max_price | round }}
+                  {% elsif active_min_price %}
+                    &ge; {{ cart.currency.symbol | default: '₹' }}{{ active_min_price | round }}
+                  {% elsif active_max_price %}
+                    &le; {{ cart.currency.symbol | default: '₹' }}{{ active_max_price | round }}
+                  {% endif %}
+                </span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </a>
+            {%- endunless -%}
+          {% endif %}
           <a href="{{ collection.url }}" class="active-filter-chip active-filter-chip--clear-all">Clear All</a>
         </div>
       {% endif %}
@@ -304,9 +425,21 @@
       
       {% paginate collection.products by 24 %}
         <div class="collection-grid">
+          {%- assign rendered_product_count = 0 -%}
           {%- for product in collection.products -%}
+            {%- assign current_card_variant = product.selected_or_first_available_variant -%}
+            {%- assign prod_selling_price = current_card_variant.price | default: product.price | divided_by: 100.0 -%}
+            {%- if active_min_price and prod_selling_price < active_min_price -%}
+              {%- continue -%}
+            {%- endif -%}
+            {%- if active_max_price and prod_selling_price > active_max_price -%}
+              {%- continue -%}
+            {%- endif -%}
+            {%- assign rendered_product_count = rendered_product_count | plus: 1 -%}
             {% render 'product-card', product: product, class_prefix: 'best-sellers' %}
-          {%- else -%}
+          {%- endfor -%}
+
+          {%- if rendered_product_count == 0 -%}
             {%- if section.settings.show_coming_soon -%}
               {{ 'component-product-card.css' | asset_url | stylesheet_tag }}
               {%- for i in (1..8) -%}
@@ -335,7 +468,7 @@
                 <a href="{{ collection.url }}" class="btn">Clear Filters</a>
               </div>
             {%- endif -%}
-          {%- endfor -%}
+          {%- endif -%}
         </div>
         
         {%- if paginate.pages > 1 -%}
@@ -563,91 +696,94 @@
     color: #013F3E;
   }
   
-  /* Price Range Slider */
-  .filter-group__price-range {
+  /* Luxury Price Filter Inputs (Swastik Jewels) */
+  .filter-group__price-inputs {
     width: 100%;
+    padding: 4px 0 2px;
   }
-  .price-slider-container {
-    padding: 10px 0;
-    width: 100%;
-  }
-  .price-slider {
-    position: relative;
-    width: 100%;
-    height: 6px;
-    background-color: #EFE8DF;
-    border-radius: 6px;
-    margin: 24px 0 20px;
-  }
-  .price-slider__track {
-    position: absolute;
-    height: 100%;
-    background: linear-gradient(90deg, #013F3E 0%, #025553 100%);
-    border-radius: 6px;
-    z-index: 1;
-  }
-  .price-slider__range {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 6px;
-    position: absolute;
-    background: transparent;
-    pointer-events: none;
-    z-index: 2;
-    outline: none;
-    margin: 0;
-  }
-  .price-slider__range::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: #ffffff;
-    border: 2.5px solid #013F3E;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    cursor: pointer;
-    pointer-events: auto;
-    transition: transform 0.2s ease, border-color 0.2s ease;
-  }
-  .price-slider__range::-webkit-slider-thumb:hover {
-    transform: scale(1.1);
-    border-color: #D4AF37;
-  }
-  .price-slider__range::-moz-range-thumb {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: #ffffff;
-    border: 2.5px solid #013F3E;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    cursor: pointer;
-    pointer-events: auto;
-    transition: transform 0.2s ease, border-color 0.2s ease;
-  }
-  .price-slider__range::-moz-range-thumb:hover {
-    transform: scale(1.1);
-    border-color: #D4AF37;
-  }
-  .price-slider__labels {
+  .price-inputs-row {
     display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-  .price-slider__label {
-    display: inline-flex;
     align-items: center;
-    background-color: #FAF4F0;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .price-input-field {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: #FAF8F5;
     border: 1px solid #EAE0D5;
-    padding: 6px 14px;
-    border-radius: 20px;
+    border-radius: 10px;
+    padding: 0 10px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  }
+  .price-input-field:focus-within {
+    border-color: #013F3E;
+    box-shadow: 0 0 0 2px rgba(1, 63, 62, 0.12);
+    background: #FFFFFF;
+  }
+  .price-input-currency {
     font-family: 'Montserrat', sans-serif;
     font-size: 0.85rem;
-    font-weight: 700;
+    font-weight: 600;
+    color: #8C7A6B;
+    margin-right: 4px;
+    user-select: none;
+  }
+  .price-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
     color: #013F3E;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    padding: 9px 0;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+  .price-input::-webkit-outer-spin-button,
+  .price-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .price-input::placeholder {
+    color: #A39688;
+    font-size: 0.82rem;
+    font-weight: 400;
+  }
+  .price-input-divider {
+    color: #A39688;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .price-filter-apply-btn {
+    width: 100%;
+    background-color: #013F3E;
+    color: #FFFFFF;
+    border: 1px solid #013F3E;
+    border-radius: 10px;
+    padding: 9px 16px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .price-filter-apply-btn:hover {
+    background-color: #025A58;
+    border-color: #025A58;
+    box-shadow: 0 4px 12px rgba(1, 63, 62, 0.2);
+    transform: translateY(-1px);
+  }
+  .price-filter-apply-btn:active {
+    transform: translateY(0);
   }
   
   /* Mobile Bar & Overlay */
@@ -1098,15 +1234,8 @@
       document.addEventListener('change', (e) => {
         const form = e.target.closest('#CollectionFiltersForm');
         if (form) {
-          if (e.target.type === 'range') return;
+          if (e.target.type === 'range' || e.target.classList.contains('price-input')) return;
           this.onSubmit(e, form);
-        }
-      });
-
-      document.addEventListener('input', (e) => {
-        const form = e.target.closest('#CollectionFiltersForm');
-        if (form && e.target.type === 'range') {
-          this.debouncedSubmit(e, form);
         }
       });
 
@@ -1123,6 +1252,17 @@
         }
         if (e.target.closest('#CollectionFiltersClose') || e.target.closest('#CollectionFiltersOverlay')) {
           this.closeFilters();
+        }
+
+        const removePriceChip = e.target.closest('.js-remove-price-chip');
+        if (removePriceChip) {
+          e.preventDefault();
+          const currentUrl = new URL(window.location.href);
+          currentUrl.searchParams.delete('filter.v.price.gte');
+          currentUrl.searchParams.delete('filter.v.price.lte');
+          const finalUrl = `${currentUrl.pathname}${currentUrl.search ? currentUrl.search : ''}`;
+          this.renderPage(finalUrl);
+          return;
         }
 
         const link = e.target.closest('a');
@@ -1150,14 +1290,36 @@
       form = form || (e.target ? e.target.closest('form') : null);
       if (!form) return;
 
+      const minInput = form.querySelector('input[name*="price.gte"], #PriceFilterMin, #PriceFilterMinStandalone');
+      const maxInput = form.querySelector('input[name*="price.lte"], #PriceFilterMax, #PriceFilterMaxStandalone');
+
+      if (minInput && maxInput) {
+        let minRaw = minInput.value ? minInput.value.toString().replace(/[^0-9.]/g, '') : '';
+        let maxRaw = maxInput.value ? maxInput.value.toString().replace(/[^0-9.]/g, '') : '';
+        let minVal = parseFloat(minRaw);
+        let maxVal = parseFloat(maxRaw);
+
+        if (!isNaN(minVal) && minVal < 0) minVal = 0;
+        if (!isNaN(maxVal) && maxVal < 0) maxVal = 0;
+
+        if (!isNaN(minVal) && !isNaN(maxVal) && minVal > maxVal) {
+          const temp = minVal;
+          minVal = maxVal;
+          maxVal = temp;
+        }
+
+        minInput.value = !isNaN(minVal) && minVal > 0 ? minVal : '';
+        maxInput.value = !isNaN(maxVal) && maxVal > 0 ? maxVal : '';
+      }
+
       const formData = new FormData(form);
       const searchParams = new URLSearchParams(formData);
 
       for (const [key, value] of Array.from(searchParams.entries())) {
-        if (!value) searchParams.delete(key);
+        if (!value || value.trim() === '') searchParams.delete(key);
       }
 
-      const url = `${window.location.pathname}?${searchParams.toString()}`;
+      const url = `${window.location.pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`;
       this.renderPage(url);
     }
 

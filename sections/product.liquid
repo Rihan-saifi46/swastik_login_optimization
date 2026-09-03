@@ -434,11 +434,23 @@
                 {%- endif -%}
               </div>
 
-              <!-- ROW 1: QUANTITY + ADD TO CART -->
+              <!-- ROW 1: ADD TO CART + ADD TO WISHLIST -->
               <div class="pp-actions-top-row">
                 <button type="submit" form="pp-product-form" class="pp-btn-add" {% unless current_variant.available %}disabled{% endunless %}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                   <span>{% if current_variant.available %}ADD TO CART{% else %}SOLD OUT{% endif %}</span>
+                </button>
+                <button type="button" class="pp-btn-wishlist product-single__wishlist-btn" aria-label="Add to Wishlist" 
+                  data-product-id="{{ product.id }}" 
+                  data-variant-id="{{ current_variant.id }}" 
+                  data-product-title="{{ product.title | escape }}" 
+                  data-product-price="{{ current_variant.price }}" 
+                  data-product-image="{% if product.featured_image %}{{ product.featured_image | image_url: width: 400 }}{% else %}{{ 'fallback-image.png' | asset_url }}{% endif %}" 
+                  data-product-url="{{ product.url }}">
+                  <svg class="icon icon-wishlist pp-wishlist-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+                  </svg>
+                  <span class="pp-wishlist-text">ADD TO WISHLIST</span>
                 </button>
               </div>
 
@@ -1280,12 +1292,26 @@
   .pp-btn-add {
     flex: 1 !important; width: 100% !important; background: #013F3E !important; color: #ffffff !important;
     border: none !important; border-radius: 10px !important; min-height: 56px !important; height: 56px !important;
-    font-family: var(--pp-font-sans) !important; font-size: 16px !important; font-weight: 700 !important; line-height: 1 !important;
-    letter-spacing: 0.06em !important; text-transform: uppercase !important; display: flex !important; align-items: center !important; justify-content: center !important;
-    gap: 10px !important; cursor: pointer !important; transition: all 0.25s ease !important; box-shadow: 0 6px 20px rgba(1, 63, 62, 0.2) !important;
-    padding: 0 20px !important;
+    font-family: var(--pp-font-sans) !important; font-size: 15px !important; font-weight: 700 !important; line-height: 1 !important;
+    letter-spacing: 0.05em !important; text-transform: uppercase !important; display: flex !important; align-items: center !important; justify-content: center !important;
+    gap: 8px !important; cursor: pointer !important; transition: all 0.25s ease !important; box-shadow: 0 6px 20px rgba(1, 63, 62, 0.2) !important;
+    padding: 0 16px !important;
   }
   .pp-btn-add:hover { background: #012B2A !important; transform: translateY(-2px) !important; box-shadow: 0 8px 26px rgba(1, 63, 62, 0.35) !important; }
+  
+  .pp-btn-wishlist {
+    flex: 1 !important; width: 100% !important; background: #FFFFFF !important; color: #013F3E !important;
+    border: 1.5px solid #013F3E !important; border-radius: 10px !important; min-height: 56px !important; height: 56px !important;
+    font-family: var(--pp-font-sans) !important; font-size: 15px !important; font-weight: 700 !important; line-height: 1 !important;
+    letter-spacing: 0.05em !important; text-transform: uppercase !important; display: flex !important; align-items: center !important; justify-content: center !important;
+    gap: 8px !important; cursor: pointer !important; transition: all 0.25s ease !important; box-shadow: 0 4px 14px rgba(1, 63, 62, 0.06) !important;
+    padding: 0 16px !important;
+  }
+  .pp-btn-wishlist:hover { background: #FAF7F0 !important; border-color: #012B2A !important; color: #012B2A !important; transform: translateY(-2px) !important; box-shadow: 0 8px 20px rgba(1, 63, 62, 0.12) !important; }
+  .pp-btn-wishlist.active { background: #FFF5F5 !important; border-color: #E25C5C !important; color: #E25C5C !important; }
+  .pp-btn-wishlist.active svg { fill: #E25C5C !important; stroke: #E25C5C !important; }
+  .pp-btn-wishlist svg { transition: all 0.25s ease !important; flex-shrink: 0 !important; }
+
   .pp-btn-buy {
     width: 100% !important; background: #C89234 !important; color: #ffffff !important;
     border: none !important; border-radius: 10px !important; min-height: 56px !important; height: 56px !important;
@@ -2433,6 +2459,12 @@
             const variantIdInput = document.getElementById('pp-variant-id');
             if (variantIdInput) variantIdInput.value = matched.id;
             
+            const wishlistBtn = document.querySelector('.pp-btn-wishlist');
+            if (wishlistBtn) {
+              wishlistBtn.setAttribute('data-variant-id', matched.id);
+              if (matched.price) wishlistBtn.setAttribute('data-product-price', matched.price);
+            }
+            
             // Stock Indicator Logic
             const elStockStatus = document.querySelector('.pp-stock-status');
             const elBtnAdd = document.querySelector('.pp-btn-add');
@@ -3058,11 +3090,6 @@
     flex-shrink: 0;
   }
 </style>
-
-    }
-  });
-})();
-</script>
 
 <div class="pp-zoom-overlay" id="pp-zoom-overlay" role="dialog" aria-modal="true" aria-label="Fullscreen Zoom Gallery">
   <button class="pp-zoom-close" id="pp-zoom-close" aria-label="Close Zoom">

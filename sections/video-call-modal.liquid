@@ -3,7 +3,7 @@
 {% endcomment %}
 
 <!-- Video Call Modal -->
-<div class="video-call-modal js-video-call-modal">
+<div class="video-call-modal js-video-call-modal" style="display: none;">
   <div class="video-call-modal__overlay js-close-video-call-modal"></div>
   <div class="video-call-modal__content">
     <button class="video-call-modal__close js-close-video-call-modal" aria-label="Close">
@@ -136,28 +136,34 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 9999;
-    display: flex;
+    z-index: 1000002 !important;
+    display: none;
     align-items: center;
     justify-content: center;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
   }
 
   .video-call-modal.is-open {
+    display: flex !important;
     opacity: 1;
     visibility: visible;
   }
 
   .video-call-modal__overlay {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(10, 42, 38, 0.6);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
   .video-call-modal__content {
@@ -170,9 +176,14 @@
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     transform: translateY(20px);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    max-height: 90vh;
+    max-height: calc(100vh - 60px);
+    max-height: calc(100dvh - 60px);
     overflow-y: auto;
-    margin: 20px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    touch-action: pan-y;
+    margin: auto;
+    box-sizing: border-box;
   }
 
   .video-call-modal.is-open .video-call-modal__content {
@@ -575,8 +586,119 @@
   
   .video-call-form__pill.js-time-pill {
     padding: 12px 18px;
-    font-size: 14px;
-    font-weight: 500;
+  }
+
+  @media screen and (max-width: 1024px) {
+    .video-call-modal {
+      padding: max(20px, env(safe-area-inset-top, 20px)) 16px max(24px, env(safe-area-inset-bottom, 24px));
+      align-items: center;
+      justify-content: center;
+    }
+    .video-call-modal__content {
+      max-height: calc(100vh - 48px);
+      max-height: calc(100dvh - 48px);
+      padding: 28px 24px 24px;
+      border-radius: 20px;
+      margin: auto;
+      width: 100%;
+      max-width: 580px;
+    }
+    .video-call-modal__title {
+      font-size: 24px;
+    }
+    .video-call-modal__subtitle {
+      font-size: 14px;
+    }
+    .video-call-form__fields {
+      gap: 16px;
+    }
+    .video-call-form__row {
+      gap: 16px;
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    .video-call-modal {
+      padding: max(16px, env(safe-area-inset-top, 16px)) 12px max(20px, env(safe-area-inset-bottom, 20px));
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+    .video-call-modal__content {
+      max-height: calc(100vh - 32px);
+      max-height: calc(100dvh - 32px);
+      padding: 22px 16px 20px;
+      border-radius: 18px;
+      margin: auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .video-call-modal__close {
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+    }
+    .video-call-modal__close svg {
+      width: 18px;
+      height: 18px;
+    }
+    .video-call-modal__header {
+      margin-bottom: 14px;
+      padding-right: 32px;
+      text-align: left;
+    }
+    .video-call-modal__title {
+      font-size: 20px;
+      margin: 0 0 4px 0;
+    }
+    .video-call-modal__subtitle {
+      font-size: 12.5px;
+      line-height: 1.4;
+    }
+    .video-call-form__fields {
+      gap: 12px;
+    }
+    .video-call-form__row {
+      gap: 12px;
+    }
+    .video-call-form__group {
+      gap: 5px;
+    }
+    .video-call-form__label {
+      font-size: 12px;
+    }
+    .video-call-form__input {
+      padding: 9px 12px;
+      font-size: 13.5px;
+      border-radius: 8px;
+    }
+    .video-call-form__timing-options {
+      gap: 10px;
+    }
+    .video-call-form__timing-card {
+      padding: 10px;
+      font-size: 12px;
+    }
+    .video-call-form__pill {
+      padding: 8px 14px;
+    }
+    .video-call-form__pill .day {
+      font-size: 10px;
+    }
+    .video-call-form__pill .date {
+      font-size: 13px;
+    }
+    .video-call-form__pill.js-time-pill {
+      padding: 9px 14px;
+      font-size: 12.5px;
+    }
+    .video-call-form__submit {
+      padding: 12px;
+      font-size: 14px;
+      margin-top: 4px;
+      border-radius: 8px;
+    }
   }
 {% endstylesheet %}
 
@@ -599,17 +721,44 @@
         document.body.classList.remove('drawer-open');
       }
 
-      modals.forEach(m => m.classList.add('is-open'));
+      modals.forEach(m => {
+        m.style.display = 'flex';
+        void m.offsetWidth;
+        m.classList.add('is-open');
+        const content = m.querySelector('.video-call-modal__content');
+        if (content) content.scrollTop = 0;
+      });
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('body-lock');
     };
 
     const closeModal = () => {
-      modals.forEach(m => m.classList.remove('is-open'));
+      modals.forEach(m => {
+        m.classList.remove('is-open');
+        setTimeout(() => {
+          if (!m.classList.contains('is-open')) {
+            m.style.display = 'none';
+          }
+        }, 300);
+      });
       document.body.style.overflow = '';
+      document.body.classList.remove('body-lock');
+      document.documentElement.style.overflow = '';
     };
+
+    // Expose globally
+    window.openVideoCallModal = openModal;
+    window.closeVideoCallModal = closeModal;
 
     openBtns.forEach(btn => btn.addEventListener('click', (e) => { e.preventDefault(); openModal(); }));
     closeBtns.forEach(btn => btn.addEventListener('click', closeModal));
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        closeModal();
+      }
+    });
 
     // ---- Date picker: generate next 7 days ----
     const dateContainer = document.querySelector('.js-date-options');

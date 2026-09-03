@@ -388,12 +388,20 @@
     // Handle "Shop via Video Call" option
     videoCallTriggers.forEach(trigger => {
       trigger.addEventListener('click', (e) => {
-        const videoCallModals = document.querySelectorAll('.js-video-call-modal');
-        if (videoCallModals.length > 0) {
-          e.preventDefault(); // Stop navigation if modal exists on this page
-          closeWhatsappMenu();
-          videoCallModals.forEach(modal => modal.classList.add('is-open'));
-          document.body.style.overflow = 'hidden';
+        e.preventDefault(); // Stop navigation if modal exists on this page
+        closeWhatsappMenu();
+        if (typeof window.openVideoCallModal === 'function') {
+          window.openVideoCallModal();
+        } else {
+          const videoCallModals = document.querySelectorAll('.js-video-call-modal');
+          if (videoCallModals.length > 0) {
+            videoCallModals.forEach(modal => {
+              modal.style.display = 'flex';
+              modal.classList.add('is-open');
+            });
+            document.body.style.overflow = 'hidden';
+            document.body.classList.add('body-lock');
+          }
         }
       });
     });

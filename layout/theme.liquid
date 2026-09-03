@@ -183,31 +183,29 @@
     {% section 'whatsapp-widget' %}
     {% section 'video-call-modal' %}
     {% section 'coupon-popup' %}
+
+    <!-- WhatsApp Click Tracking for Meta Pixel - Swastik Jewels -->
     <script>
-      // Global interceptor: catch ANY click going to /cart and open sidebar instead
-      document.addEventListener('click', function(e) {
-        var link = e.target.closest('a[href]');
-        if (!link) return;
-        var href = link.getAttribute('href') || '';
-        var cartPath = (window.Shopify && window.Shopify.routes && window.Shopify.routes.root)
-          ? window.Shopify.routes.root + 'cart'
-          : '/cart';
-        // Match /cart exactly or as a path segment
-        if (href === '/cart' || href === cartPath || href.match(/^\/cart(\?|$)/)) {
-          e.preventDefault();
-          e.stopPropagation();
-          if (typeof window.openCartDrawer === 'function') {
-            window.openCartDrawer();
-          } else {
-            // Fallback: directly open drawer DOM (same as wishlist fallback)
-            var drawer = document.getElementById('CartDrawer');
-            if (drawer) {
-              drawer.classList.add('is-open');
-              document.body.style.overflow = 'hidden';
+      document.addEventListener('DOMContentLoaded', function () {
+        document.body.addEventListener('click', function (e) {
+          var link = e.target.closest('a');
+          if (!link) return;
+
+          var href = link.getAttribute('href') || '';
+
+          // Detects any WhatsApp link: wa.me or api.whatsapp.com
+          if (href.indexOf('wa.me') !== -1 || href.indexOf('api.whatsapp.com') !== -1) {
+            if (typeof fbq !== 'undefined') {
+              fbq('track', 'Lead', {
+                content_name: 'WhatsApp Click',
+                content_category: 'WhatsApp Button'
+              });
+              console.log('Meta Pixel: WhatsApp Lead event fired');
             }
           }
-        }
-      }, true); // capture phase = runs before ALL other handlers
+        });
+      });
     </script>
+
   </body>
 </html>

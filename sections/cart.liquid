@@ -1,23 +1,1399 @@
-<script>
-  (function() {
-    // Set a flag so the cart drawer auto-opens after redirect
-    try { sessionStorage.setItem('swastik_open_cart_drawer', '1'); } catch(e) {}
+{% comment %}
+  Swastik Jewels — Full Dedicated Luxury Cart Page
+  Includes live cart items, real-time AJAX quantity/remove management,
+  Available Coupons section with one-click apply, order summary, and seamless checkout.
+{% endcomment %}
 
-    // Go back to where the user came from, or homepage
-    var ref = document.referrer;
-    var here = window.location.href;
-    var destination = (ref && ref !== here && ref.indexOf('/cart') === -1) ? ref : '/';
-    window.location.replace(destination);
-  })();
+{%- assign shop_coupon_metafield = shop.metafields.custom.coupons | default: shop.metafields.custom.global_coupons -%}
+
+<div class="swastik-cart-page" id="SwastikCartPage">
+  <!-- Breadcrumb -->
+  <div class="cart-breadcrumb-wrapper">
+    <div class="cart-container">
+      <nav class="cart-breadcrumb" aria-label="Breadcrumb">
+        <a href="{{ routes.root_url }}">Home</a>
+        <span class="cart-breadcrumb__sep">/</span>
+        <span class="cart-breadcrumb__current">Shopping Bag</span>
+      </nav>
+    </div>
+  </div>
+
+  <div class="cart-container">
+    <!-- Page Header -->
+    <div class="cart-header">
+      <h1 class="cart-title">Your Shopping Bag</h1>
+      <p class="cart-subtitle" id="cart-item-count-label">
+        {% if cart.item_count > 0 %}
+          You have <strong id="cart-header-count">{{ cart.item_count }}</strong> handcrafted {% if cart.item_count == 1 %}piece{% else %}pieces{% endif %} in your bag
+        {% else %}
+          Your luxury shopping bag is empty
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Empty Cart State -->
+    <div class="cart-empty-state" id="cart-empty-state" style="display: {% if cart.item_count == 0 %}flex{% else %}none{% endif %};">
+      <div class="cart-empty-card">
+        <div class="cart-empty-icon-wrap">
+          <svg class="cart-empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007Z" />
+          </svg>
+        </div>
+        <h2 class="cart-empty-title">Your Bag is Empty</h2>
+        <p class="cart-empty-text">Explore our exquisite collections and find your perfect piece of certified jewellery.</p>
+        <a href="{{ routes.all_products_collection_url | default: '/collections/all' }}" class="cart-btn-primary cart-empty-btn">
+          <span>EXPLORE JEWELLERY</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Cart Content (Grid Layout) -->
+    <div class="cart-layout-grid" id="cart-layout-grid" style="display: {% if cart.item_count > 0 %}grid{% else %}none{% endif %};">
+      
+      <!-- LEFT COLUMN: Cart Items -->
+      <div class="cart-main-col">
+        <div class="cart-items-card">
+          <div class="cart-table-head">
+            <span class="th-product">PRODUCT</span>
+            <span class="th-price">PRICE</span>
+            <span class="th-quantity">QUANTITY</span>
+            <span class="th-total">TOTAL</span>
+          </div>
+
+          <div class="cart-items-list" id="cart-items-list">
+            {% for item in cart.items %}
+              <div class="cart-line-item" data-key="{{ item.key }}" data-variant-id="{{ item.variant_id }}" data-product-id="{{ item.product_id }}">
+                
+                <!-- Product Thumbnail -->
+                <div class="cart-item__media">
+                  <a href="{{ item.url }}">
+                    {% if item.image %}
+                      <img src="{{ item.image | image_url: width: 240 }}" alt="{{ item.title | escape }}" class="cart-item__img" width="120" height="120" loading="lazy">
+                    {% else %}
+                      <img src="{{ 'fallback-image.png' | asset_url }}" alt="{{ item.title | escape }}" class="cart-item__img" width="120" height="120" loading="lazy">
+                    {% endif %}
+                  </a>
+                </div>
+
+                <!-- Product Info -->
+                <div class="cart-item__info">
+                  <a href="{{ item.url }}" class="cart-item__name">{{ item.product.title | default: item.title }}</a>
+                  
+                  {% unless item.product.has_only_default_variant %}
+                    <div class="cart-item__variant-pills">
+                      {% for option in item.options_with_values %}
+                        {% if option.value != 'Default Title' and option.value != blank %}
+                          <span class="cart-variant-badge">{{ option.value }}</span>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  {% endunless %}
+
+                  <div class="cart-item__mobile-price">
+                    <span class="cart-mobile-price-val">{{ item.final_price | money }}</span>
+                  </div>
+
+                  <!-- Mobile Quantity + Remove Row -->
+                  <div class="cart-item__mobile-controls">
+                    <span class="cart-item__qty-val">Qty: {{ item.quantity }}</span>
+
+                    <button type="button" class="cart-item-remove-btn" onclick="handleCartQtyChange('{{ item.key }}', 0)" aria-label="Remove {{ item.title | escape }}">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                      <span>Remove</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Desktop Unit Price -->
+                <div class="cart-item__unit-price">
+                  <span class="cart-price-num">{{ item.final_price | money }}</span>
+                  {% if item.original_price > item.final_price %}
+                    <span class="cart-price-orig">{{ item.original_price | money }}</span>
+                  {% endif %}
+                </div>
+
+                <!-- Desktop Quantity Display (Static, no +/- editing controls) -->
+                <div class="cart-item__quantity">
+                  <span class="cart-item__qty-val">{{ item.quantity }}</span>
+                  <button type="button" class="cart-item-remove-link" onclick="handleCartQtyChange('{{ item.key }}', 0)">Remove</button>
+                </div>
+
+                <!-- Desktop Line Total -->
+                <div class="cart-item__line-total">
+                  <span class="cart-line-total-num">{{ item.final_line_price | money }}</span>
+                </div>
+
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Trust Badges Bar -->
+        <div class="cart-trust-bar">
+          <div class="cart-trust-item">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C89234" stroke-width="1.8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div>
+              <strong>100% Certified</strong>
+              <span>BIS Hallmarked & IGI/SGL Certified</span>
+            </div>
+          </div>
+          <div class="cart-trust-item">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C89234" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <div>
+              <strong>Lifetime Exchange</strong>
+              <span>Transparent Buyback Policy</span>
+            </div>
+          </div>
+          <div class="cart-trust-item">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C89234" stroke-width="1.8"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            <div>
+              <strong>Insured Shipping</strong>
+              <span>Free & Safe Doorstep Delivery</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Coupons & Order Summary -->
+      <div class="cart-sidebar-col">
+        
+        <!-- AVAILABLE COUPONS CARD -->
+        <div class="cart-coupons-card" id="CartCouponsCard">
+          <div class="cart-card-header">
+            <div class="cart-card-title-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C89234" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="12" y1="4" x2="12" y2="20" stroke-dasharray="3 3"/></svg>
+              <h3 class="cart-card-title">AVAILABLE COUPONS</h3>
+            </div>
+          </div>
+
+          <!-- Coupon Input Form -->
+          <div class="cart-coupon-input-wrap">
+            <input type="text" id="cart-manual-coupon-input" class="cart-coupon-input" placeholder="ENTER COUPON CODE" autocomplete="off" autocapitalize="characters">
+            <button type="button" id="cart-apply-coupon-btn" class="cart-coupon-apply-btn" onclick="applyManualCoupon()">APPLY</button>
+          </div>
+          <div id="cart-coupon-message" class="cart-coupon-msg" style="display: none;"></div>
+
+          <!-- Applied Coupon Banner (Shown when active) -->
+          <div class="cart-applied-coupon-banner" id="cart-applied-banner" style="display: none;">
+            <div class="cart-applied-left">
+              <div class="cart-applied-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span id="cart-applied-code-label">CODE</span>
+              </div>
+              <div class="cart-applied-desc" id="cart-applied-desc-label">Discount applied</div>
+            </div>
+            <button type="button" class="cart-remove-coupon-btn" onclick="removeAppliedCoupon()" title="Remove coupon">Remove</button>
+          </div>
+
+          <!-- Available Coupon Cards List -->
+          <div class="cart-coupons-list" id="cart-coupons-list">
+            <!-- Dynamically populated from shop/metafields/fallback coupons -->
+          </div>
+        </div>
+
+        <!-- ORDER SUMMARY CARD -->
+        <div class="cart-summary-card">
+          <div class="cart-card-header">
+            <h3 class="cart-card-title">ORDER SUMMARY</h3>
+          </div>
+
+          <div class="cart-summary-rows">
+            <div class="cart-sum-row">
+              <span class="sum-label">Bag Subtotal</span>
+              <span class="sum-val" id="summary-subtotal-val">{{ cart.total_price | money }}</span>
+            </div>
+
+            <div class="cart-sum-row cart-sum-row--discount" id="summary-discount-row" style="display: none;">
+              <span class="sum-label">
+                <span>Coupon Discount</span>
+                <span class="cart-discount-tag" id="summary-discount-tag">CODE</span>
+              </span>
+              <span class="sum-val sum-val--green" id="summary-discount-val">-₹0</span>
+            </div>
+
+            <div class="cart-sum-row">
+              <span class="sum-label">Estimated Shipping</span>
+              <span class="sum-val sum-val--green">FREE</span>
+            </div>
+
+            <div class="cart-sum-row">
+              <span class="sum-label">Applicable Taxes</span>
+              <span class="sum-val">Included</span>
+            </div>
+
+            <div class="cart-sum-divider"></div>
+
+            <div class="cart-sum-row cart-sum-row--total">
+              <span class="sum-total-label">Estimated Total</span>
+              <span class="sum-total-val" id="summary-total-val">{{ cart.total_price | money }}</span>
+            </div>
+          </div>
+
+          <!-- Terms & Conditions Line -->
+          <div class="cart-terms-condition-line">
+            <p class="cart-terms-text">
+              By proceeding, you agree to our 
+              <a href="{{ pages['term-and-condition'].url | default: '/pages/term-and-condition' }}" class="cart-terms-link" target="_blank" rel="noopener">Terms &amp; Conditions</a>
+            </p>
+          </div>
+
+          <!-- Checkout Action -->
+          <div class="cart-checkout-action-wrap">
+            <form action="{{ routes.cart_url }}" method="post" id="cart-checkout-form">
+              <button type="button" id="cart-proceed-checkout-btn" class="cart-btn-primary cart-checkout-btn" onclick="handleProceedToCheckout()">
+                <span>PROCEED TO CHECKOUT</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+            </form>
+          </div>
+
+          <div class="cart-summary-footer-note">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Safe & Secure 256-Bit SSL Checkout</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Raw Coupons JSON Data for client-side controller -->
+<script id="cart-shop-coupons-json" type="application/json">
+  {{ shop_coupon_metafield | default: '[]' }}
 </script>
 
-<noscript>
-  <meta http-equiv="refresh" content="0;url=/">
-</noscript>
+<script id="cart-items-coupons-json" type="application/json">
+  [
+    {%- assign c_added = 0 -%}
+    {%- for item in cart.items -%}
+      {%- if item.product.metafields.custom.coupons != blank -%}
+        {%- if c_added > 0 -%},{%- endif -%}
+        {{ item.product.metafields.custom.coupons }}
+        {%- assign c_added = c_added | plus: 1 -%}
+      {%- endif -%}
+    {%- endfor -%}
+  ]
+</script>
+
+<style>
+  /* =========================================================
+     SWASTIK JEWELS — LUXURY CART PAGE STYLES
+     ========================================================= */
+  .swastik-cart-page {
+    background-color: #FAF8F5;
+    min-height: 80vh;
+    padding-bottom: 70px;
+    color: #1A1A1A;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .cart-container {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 24px;
+    box-sizing: border-box;
+  }
+
+  /* Breadcrumbs */
+  .cart-breadcrumb-wrapper {
+    background: #FFFFFF;
+    border-bottom: 1px solid #ECE6DA;
+    padding: 14px 0;
+    margin-bottom: 30px;
+  }
+  .cart-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #7B6A58;
+  }
+  .cart-breadcrumb a {
+    color: #013F3E;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .cart-breadcrumb a:hover {
+    color: #C89234;
+  }
+  .cart-breadcrumb__sep {
+    color: #C5BAA8;
+    font-size: 12px;
+  }
+  .cart-breadcrumb__current {
+    color: #7B6A58;
+    font-weight: 500;
+  }
+
+  /* Header */
+  .cart-header {
+    margin-bottom: 32px;
+  }
+  .cart-title {
+    font-family: 'Cormorant Garamond', 'Playfair Display', serif;
+    font-size: 38px;
+    font-weight: 600;
+    color: #013F3E;
+    margin: 0 0 6px 0;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+  .cart-subtitle {
+    font-size: 14.5px;
+    color: #665D52;
+    margin: 0;
+  }
+
+  /* Grid Layout */
+  .cart-layout-grid {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 32px;
+    align-items: flex-start;
+  }
+
+  /* Left Main Column */
+  .cart-items-card {
+    background: #FFFFFF;
+    border: 1px solid #EAE3D5;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(1, 63, 62, 0.03);
+    overflow: hidden;
+  }
+  .cart-table-head {
+    display: grid;
+    grid-template-columns: 1fr 110px 140px 110px;
+    padding: 16px 24px;
+    background: #FAF7F0;
+    border-bottom: 1px solid #EAE3D5;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #7B6A58;
+    text-transform: uppercase;
+  }
+  .th-product { text-align: left; }
+  .th-price { text-align: center; }
+  .th-quantity { text-align: center; }
+  .th-total { text-align: right; }
+
+  /* Line Items */
+  .cart-line-item {
+    display: grid;
+    grid-template-columns: 96px 1fr 110px 140px 110px;
+    gap: 20px;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid #F0EAE1;
+    transition: background-color 0.2s;
+  }
+  .cart-line-item:last-child {
+    border-bottom: none;
+  }
+  .cart-item__media {
+    width: 96px;
+    height: 96px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #FAF8F5;
+    border: 1px solid #ECE6DA;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .cart-item__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  .cart-item__media:hover .cart-item__img {
+    transform: scale(1.05);
+  }
+
+  .cart-item__info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+  }
+  .cart-item__name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 19px;
+    font-weight: 600;
+    color: #013F3E;
+    text-decoration: none;
+    line-height: 1.3;
+    transition: color 0.2s;
+  }
+  .cart-item__name:hover {
+    color: #C89234;
+  }
+  .cart-item__variant-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+  }
+  .cart-variant-badge {
+    background: #F4EFE6;
+    color: #5A4628;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.02em;
+  }
+
+  .cart-item__mobile-price,
+  .cart-item__mobile-controls {
+    display: none;
+  }
+
+  .cart-item__unit-price {
+    text-align: center;
+  }
+  .cart-price-num {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1A1A1A;
+    display: block;
+  }
+  .cart-price-orig {
+    font-size: 12px;
+    color: #999;
+    text-decoration: line-through;
+    display: block;
+    margin-top: 2px;
+  }
+
+  .cart-item__quantity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .cart-item__qty-val {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #013F3E;
+  }
+  .cart-qty-selector {
+    display: inline-flex;
+    align-items: center;
+    border: 1.5px solid #DED8CE;
+    border-radius: 8px;
+    background: #FFFFFF;
+    overflow: hidden;
+    height: 38px;
+  }
+  .cart-qty-btn {
+    width: 34px;
+    height: 100%;
+    background: none;
+    border: none;
+    color: #013F3E;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    user-select: none;
+  }
+  .cart-qty-btn:hover {
+    background: #F5F1E8;
+  }
+  .cart-qty-input {
+    width: 38px;
+    height: 100%;
+    border: none;
+    border-left: 1px solid #ECE6DA;
+    border-right: 1px solid #ECE6DA;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #013F3E;
+    background: transparent;
+    pointer-events: none;
+  }
+  .cart-item-remove-link {
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: #887E72;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s;
+  }
+  .cart-item-remove-link:hover {
+    color: #C62828;
+  }
+
+  .cart-item__line-total {
+    text-align: right;
+  }
+  .cart-line-total-num {
+    font-size: 16.5px;
+    font-weight: 700;
+    color: #013F3E;
+  }
+
+  /* Trust Bar */
+  .cart-trust-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+    background: #FFFFFF;
+    border: 1px solid #EAE3D5;
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .cart-trust-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .cart-trust-item strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #013F3E;
+  }
+  .cart-trust-item span {
+    display: block;
+    font-size: 11.5px;
+    color: #7B6A58;
+    margin-top: 1px;
+  }
+
+  /* Right Sidebar Cards */
+  .cart-sidebar-col {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .cart-coupons-card,
+  .cart-summary-card {
+    background: #FFFFFF;
+    border: 1px solid #EAE3D5;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(1, 63, 62, 0.03);
+  }
+
+  .cart-card-header {
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #F0EAE1;
+  }
+  .cart-card-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .cart-card-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #013F3E;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  /* Coupon Input */
+  .cart-coupon-input-wrap {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .cart-coupon-input {
+    flex: 1;
+    height: 44px;
+    border: 1.5px solid #DED8CE;
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #013F3E;
+    background: #FAF8F5;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .cart-coupon-input:focus {
+    border-color: #013F3E;
+    background: #FFFFFF;
+  }
+  .cart-coupon-apply-btn {
+    height: 44px;
+    padding: 0 18px;
+    background: #013F3E;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .cart-coupon-apply-btn:hover {
+    background: #012B2A;
+  }
+
+  .cart-coupon-msg {
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+  }
+  .cart-coupon-msg--error {
+    background: #FFEBEE;
+    color: #C62828;
+    border: 1px solid #FFCDD2;
+  }
+  .cart-coupon-msg--success {
+    background: #E8F5E9;
+    color: #2E7D32;
+    border: 1px solid #C8E6C9;
+  }
+
+  /* Applied Banner */
+  .cart-applied-coupon-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #E8F5E9;
+    border: 1px solid #C8E6C9;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+  }
+  .cart-applied-left {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .cart-applied-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #2E7D32;
+    letter-spacing: 0.04em;
+  }
+  .cart-applied-desc {
+    font-size: 11.5px;
+    color: #388E3C;
+  }
+  .cart-remove-coupon-btn {
+    background: none;
+    border: none;
+    color: #C62828;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  /* Available Coupon Cards */
+  .cart-coupons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .cart-coupon-card {
+    border: 1.5px dashed #DED8CE;
+    border-radius: 10px;
+    padding: 14px;
+    background: #FCFBF9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: all 0.2s ease;
+  }
+  .cart-coupon-card:hover {
+    border-color: #C89234;
+    background: #FFFDF9;
+  }
+  .cart-coupon-card.is-active-card {
+    border-color: #2E7D32;
+    background: #F1F8F2;
+  }
+  .cart-coupon-card-info {
+    flex: 1;
+    text-align: left;
+  }
+  .cart-coupon-card-code {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #013F3E;
+    background: #FAF7F0;
+    border: 1px solid #E5DFD3;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 4px;
+  }
+  .cart-coupon-card-disc {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #C89234;
+    margin-bottom: 2px;
+  }
+  .cart-coupon-card-desc {
+    font-size: 11.5px;
+    color: #665D52;
+    line-height: 1.3;
+  }
+  .cart-coupon-card-expiry {
+    font-size: 10.5px;
+    color: #999;
+    margin-top: 3px;
+  }
+  .cart-coupon-apply-action-btn {
+    padding: 8px 14px;
+    background: #FFFFFF;
+    border: 1.5px solid #013F3E;
+    color: #013F3E;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+  .cart-coupon-apply-action-btn:hover {
+    background: #013F3E;
+    color: #FFFFFF;
+  }
+  .cart-coupon-apply-action-btn.is-applied {
+    background: #2E7D32;
+    border-color: #2E7D32;
+    color: #FFFFFF;
+    cursor: default;
+  }
+
+  /* Summary Rows */
+  .cart-summary-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .cart-sum-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14.5px;
+    color: #4A4A4A;
+  }
+  .cart-discount-tag {
+    display: inline-block;
+    background: #E8F5E9;
+    color: #2E7D32;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+  .sum-val {
+    font-weight: 600;
+    color: #1A1A1A;
+  }
+  .sum-val--green {
+    color: #2E7D32 !important;
+  }
+  .cart-sum-divider {
+    height: 1px;
+    background: #EAE3D5;
+    margin: 6px 0;
+  }
+  .cart-sum-row--total {
+    font-size: 17px;
+    margin-top: 4px;
+  }
+  .sum-total-label {
+    font-weight: 700;
+    color: #013F3E;
+  }
+  .sum-total-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #013F3E;
+  }
+
+  /* CTA Buttons */
+  .cart-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 54px;
+    background: #C89234;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(200, 146, 52, 0.25);
+    transition: all 0.25s ease;
+  }
+  .cart-btn-primary:hover {
+    background: #B5822C;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(200, 146, 52, 0.35);
+  }
+  .cart-terms-condition-line {
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .cart-terms-text {
+    font-size: 12px;
+    color: #7B6A58;
+    margin: 0;
+    line-height: 1.4;
+  }
+  .cart-terms-link {
+    color: #013F3E;
+    font-weight: 600;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+  }
+  .cart-terms-link:hover {
+    color: #C89234;
+  }
+  .cart-summary-footer-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: #887E72;
+    margin-top: 14px;
+  }
+
+  /* Empty State Card */
+  .cart-empty-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50vh;
+    padding: 30px 0;
+  }
+  .cart-empty-card {
+    background: #FFFFFF;
+    border: 1px solid #EAE3D5;
+    border-radius: 20px;
+    padding: 50px 40px;
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(1, 63, 62, 0.04);
+  }
+  .cart-empty-icon-wrap {
+    width: 90px;
+    height: 90px;
+    background: #FAF7F0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px auto;
+    color: #C89234;
+  }
+  .cart-empty-icon {
+    width: 46px;
+    height: 46px;
+  }
+  .cart-empty-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: #013F3E;
+    margin: 0 0 10px 0;
+  }
+  .cart-empty-text {
+    font-size: 15px;
+    color: #665D52;
+    line-height: 1.6;
+    margin: 0 0 28px 0;
+  }
+  .cart-empty-btn {
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  /* Overlay Loading State */
+  .cart-loading-overlay {
+    opacity: 0.6;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  /* Mobile Responsive */
+  @media screen and (max-width: 991px) {
+    .cart-layout-grid {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .cart-trust-bar {
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+  }
+
+  @media screen and (max-width: 767px) {
+    .cart-title {
+      font-size: 28px;
+    }
+    .cart-table-head {
+      display: none;
+    }
+    .cart-line-item {
+      grid-template-columns: 80px 1fr;
+      gap: 14px;
+      padding: 16px;
+      position: relative;
+    }
+    .cart-item__media {
+      width: 80px;
+      height: 80px;
+    }
+    .cart-item__name {
+      font-size: 16px;
+    }
+    .cart-item__unit-price,
+    .cart-item__quantity,
+    .cart-item__line-total {
+      display: none;
+    }
+    .cart-item__mobile-price {
+      display: block;
+      margin: 4px 0 8px 0;
+    }
+    .cart-mobile-price-val {
+      font-size: 15px;
+      font-weight: 700;
+      color: #013F3E;
+    }
+    .cart-item__mobile-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .cart-qty-selector {
+      height: 34px;
+    }
+    .cart-qty-btn {
+      width: 30px;
+    }
+    .cart-qty-input {
+      width: 32px;
+      font-size: 13px;
+    }
+    .cart-item-remove-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: #887E72;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .cart-item-remove-btn:hover {
+      color: #C62828;
+    }
+    .cart-coupons-card,
+    .cart-summary-card {
+      padding: 18px;
+    }
+    .cart-empty-card {
+      padding: 36px 20px;
+    }
+  }
+</style>
+
+<script>
+(function() {
+  const APPLIED_COUPON_STORAGE_KEY = 'swastik_applied_coupon';
+  let availableCouponsList = [];
+  let currentSubtotalCents = {{ cart.total_price | default: 0 }};
+
+  function formatMoney(cents) {
+    if (typeof window.formatMoney === 'function') {
+      return window.formatMoney(cents);
+    }
+    return '₹' + (cents / 100).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function normalizeCoupon(c) {
+    if (!c || typeof c !== 'object') return null;
+    const code = c.code || c.promo_code || '';
+    if (!code || typeof code !== 'string') return null;
+
+    const expiryRaw = c.expiry_date || c.endsAt || c.end_date || null;
+    if (expiryRaw) {
+      const expDate = new Date(expiryRaw);
+      if (!isNaN(expDate.getTime()) && expDate.getTime() < Date.now()) {
+        return null;
+      }
+    }
+
+    let formattedExpiry = '';
+    if (expiryRaw) {
+      const expDate = new Date(expiryRaw);
+      if (!isNaN(expDate.getTime())) {
+        formattedExpiry = expDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      } else {
+        formattedExpiry = String(expiryRaw).replace(/^Valid till\s*/i, '');
+      }
+    }
+
+    let type = c.type || c.discount_type || 'percentage';
+    let value = c.value !== undefined ? c.value : (c.discount_value !== undefined ? c.discount_value : (c.customerGets?.value?.percentage ? c.customerGets.value.percentage * 100 : (c.customerGets?.value?.discountAmount?.amount || 0)));
+    if (type === 'percentage' && value > 0 && value < 1) {
+      value = Math.round(value * 100);
+    }
+
+    const minOrder = c.min_order_value || c.minimum_order_value || c.minimumRequirement?.subtotal?.greaterThanOrEqualToSubtotal || null;
+    const desc = c.short_description || c.campaign_name || c.title || '';
+
+    return {
+      code: code.trim().toUpperCase(),
+      type: type,
+      value: value,
+      min_order_value: minOrder ? parseFloat(minOrder) : null,
+      expiry_date: formattedExpiry,
+      short_description: desc
+    };
+  }
+
+  function loadAllCoupons() {
+    const rawList = [];
+    
+    // 1. Shop-level coupons
+    const shopJsonEl = document.getElementById('cart-shop-coupons-json');
+    if (shopJsonEl) {
+      try {
+        const raw = JSON.parse(shopJsonEl.textContent || '[]');
+        if (Array.isArray(raw)) rawList.push(...raw);
+      } catch(e) {}
+    }
+
+    // 2. Product/Item-level coupons
+    const itemsJsonEl = document.getElementById('cart-items-coupons-json');
+    if (itemsJsonEl) {
+      try {
+        const raw = JSON.parse(itemsJsonEl.textContent || '[]');
+        if (Array.isArray(raw)) {
+          raw.forEach(item => {
+            if (Array.isArray(item)) rawList.push(...item);
+            else if (item && typeof item === 'object') rawList.push(item);
+          });
+        }
+      } catch(e) {}
+    }
+
+    // 3. Fallback welcome coupon if none from metafields
+    if (rawList.length === 0) {
+      rawList.push({
+        code: 'WELCOME10',
+        type: 'percentage',
+        value: 10,
+        short_description: 'Welcome 10% discount on handcrafted jewellery',
+        expiry_date: 'Limited time offer'
+      });
+    }
+
+    // Normalize & Deduplicate
+    const uniqueMap = new Map();
+    rawList.forEach(item => {
+      const norm = normalizeCoupon(item);
+      if (norm && norm.code && !uniqueMap.has(norm.code)) {
+        uniqueMap.set(norm.code, norm);
+      }
+    });
+
+    availableCouponsList = Array.from(uniqueMap.values());
+  }
+
+  function calculateDiscount(coupon, subtotalCents) {
+    if (!coupon) return 0;
+    const subtotalRs = subtotalCents / 100;
+    if (coupon.min_order_value && subtotalRs < coupon.min_order_value) {
+      return 0;
+    }
+    if (coupon.type === 'percentage') {
+      const pct = parseFloat(coupon.value) || 0;
+      return Math.round((subtotalCents * pct) / 100);
+    } else {
+      const fixedAmt = (parseFloat(coupon.value) || 0) * 100;
+      return Math.min(fixedAmt, subtotalCents);
+    }
+  }
+
+  function getAppliedCouponCode() {
+    try {
+      return localStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || sessionStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || '';
+    } catch(e) {
+      return '';
+    }
+  }
+
+  function setAppliedCouponCode(code) {
+    try {
+      if (code) {
+        localStorage.setItem(APPLIED_COUPON_STORAGE_KEY, code);
+        sessionStorage.setItem(APPLIED_COUPON_STORAGE_KEY, code);
+      } else {
+        localStorage.removeItem(APPLIED_COUPON_STORAGE_KEY);
+        sessionStorage.removeItem(APPLIED_COUPON_STORAGE_KEY);
+      }
+    } catch(e) {}
+  }
+
+  function renderCouponsList() {
+    const listContainer = document.getElementById('cart-coupons-list');
+    if (!listContainer) return;
+
+    const appliedCode = getAppliedCouponCode();
+    let html = '';
+
+    availableCouponsList.forEach(c => {
+      const isApplied = appliedCode && appliedCode.toUpperCase() === c.code.toUpperCase();
+      let discountText = '';
+      if (c.type === 'percentage') {
+        discountText = `${c.value}% OFF`;
+      } else {
+        discountText = `₹${parseFloat(c.value || 0).toLocaleString('en-IN')} OFF`;
+      }
+
+      const minOrderText = c.min_order_value ? `On orders above ₹${c.min_order_value.toLocaleString('en-IN')}` : '';
+      const descText = c.short_description || `Enjoy ${discountText} on your order`;
+      const expiryText = c.expiry_date ? (c.expiry_date.toLowerCase().includes('offer') ? c.expiry_date : `Valid till ${c.expiry_date}`) : '';
+
+      html += `
+        <div class="cart-coupon-card ${isApplied ? 'is-active-card' : ''}">
+          <div class="cart-coupon-card-info">
+            <span class="cart-coupon-card-code">${c.code}</span>
+            <div class="cart-coupon-card-disc">${discountText}</div>
+            <div class="cart-coupon-card-desc">${descText}${minOrderText ? ` • ${minOrderText}` : ''}</div>
+            ${expiryText ? `<div class="cart-coupon-card-expiry">${expiryText}</div>` : ''}
+          </div>
+          <button type="button" class="cart-coupon-apply-action-btn ${isApplied ? 'is-applied' : ''}" onclick="selectCouponCode('${c.code}')">
+            ${isApplied ? 'APPLIED ✓' : 'APPLY'}
+          </button>
+        </div>
+      `;
+    });
+
+    listContainer.innerHTML = html;
+  }
+
+  function updateOrderSummary() {
+    const subtotalEl = document.getElementById('summary-subtotal-val');
+    const discountRow = document.getElementById('summary-discount-row');
+    const discountTag = document.getElementById('summary-discount-tag');
+    const discountVal = document.getElementById('summary-discount-val');
+    const totalVal = document.getElementById('summary-total-val');
+    const appliedBanner = document.getElementById('cart-applied-banner');
+    const appliedCodeLabel = document.getElementById('cart-applied-code-label');
+    const appliedDescLabel = document.getElementById('cart-applied-desc-label');
+
+    if (subtotalEl) subtotalEl.textContent = formatMoney(currentSubtotalCents);
+
+    const appliedCode = getAppliedCouponCode();
+    let discountCents = 0;
+    let appliedCoupon = null;
+
+    if (appliedCode) {
+      appliedCoupon = availableCouponsList.find(c => c.code.toUpperCase() === appliedCode.toUpperCase()) || {
+        code: appliedCode,
+        type: 'percentage',
+        value: 10,
+        min_order_value: null,
+        short_description: 'Coupon code applied'
+      };
+
+      discountCents = calculateDiscount(appliedCoupon, currentSubtotalCents);
+
+      // Check min order value requirement
+      if (appliedCoupon.min_order_value && (currentSubtotalCents / 100) < appliedCoupon.min_order_value) {
+        showCouponMsg(`Add ₹${(appliedCoupon.min_order_value - (currentSubtotalCents / 100)).toLocaleString('en-IN')} more to use ${appliedCoupon.code}`, 'error');
+        discountCents = 0;
+      }
+    }
+
+    if (appliedCode && discountCents > 0) {
+      if (discountRow) {
+        discountRow.style.display = 'flex';
+        if (discountTag) discountTag.textContent = appliedCoupon.code;
+        if (discountVal) discountVal.textContent = '-' + formatMoney(discountCents);
+      }
+      if (appliedBanner) {
+        appliedBanner.style.display = 'flex';
+        if (appliedCodeLabel) appliedCodeLabel.textContent = appliedCoupon.code;
+        if (appliedDescLabel) appliedDescLabel.textContent = `You saved ${formatMoney(discountCents)} on this order`;
+      }
+    } else {
+      if (discountRow) discountRow.style.display = 'none';
+      if (appliedBanner) appliedBanner.style.display = 'none';
+    }
+
+    const finalTotalCents = Math.max(0, currentSubtotalCents - discountCents);
+    if (totalVal) totalVal.textContent = formatMoney(finalTotalCents);
+
+    renderCouponsList();
+  }
+
+  function showCouponMsg(text, type) {
+    const msgEl = document.getElementById('cart-coupon-message');
+    if (!msgEl) return;
+    msgEl.textContent = text;
+    msgEl.className = 'cart-coupon-msg ' + (type === 'error' ? 'cart-coupon-msg--error' : 'cart-coupon-msg--success');
+    msgEl.style.display = 'block';
+    setTimeout(() => {
+      msgEl.style.display = 'none';
+    }, 4000);
+  }
+
+  window.selectCouponCode = function(code) {
+    const current = getAppliedCouponCode();
+    if (current && current.toUpperCase() === code.toUpperCase()) {
+      return; // Already applied
+    }
+    setAppliedCouponCode(code);
+    showCouponMsg(`Coupon ${code} applied successfully!`, 'success');
+    updateOrderSummary();
+  };
+
+  window.applyManualCoupon = function() {
+    const input = document.getElementById('cart-manual-coupon-input');
+    if (!input || !input.value.trim()) return;
+    const code = input.value.trim().toUpperCase();
+    setAppliedCouponCode(code);
+    input.value = '';
+    showCouponMsg(`Coupon ${code} applied!`, 'success');
+    updateOrderSummary();
+  };
+
+  window.removeAppliedCoupon = function() {
+    setAppliedCouponCode('');
+    showCouponMsg('Coupon removed', 'success');
+    updateOrderSummary();
+  };
+
+  window.handleProceedToCheckout = function() {
+    const appliedCode = getAppliedCouponCode();
+    let checkoutUrl = '/checkout';
+    if (appliedCode) {
+      checkoutUrl += '?discount=' + encodeURIComponent(appliedCode);
+    }
+    window.location.href = checkoutUrl;
+  };
+
+  window.handleCartQtyChange = function(key, quantity) {
+    const cartEl = document.getElementById('SwastikCartPage');
+    if (cartEl) cartEl.classList.add('cart-loading-overlay');
+
+    const rootUrl = (window.Shopify && window.Shopify.routes && window.Shopify.routes.root) || '/';
+
+    fetch(rootUrl + 'cart/change.js', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ id: key, quantity: quantity })
+    })
+    .then(res => res.json())
+    .then(cart => {
+      if (cartEl) cartEl.classList.remove('cart-loading-overlay');
+      currentSubtotalCents = cart.total_price;
+
+      // Update global badges
+      if (window.updateGlobalCartCount) {
+        window.updateGlobalCartCount(cart.item_count);
+      }
+      const headerCountEl = document.getElementById('cart-header-count');
+      if (headerCountEl) headerCountEl.textContent = cart.item_count;
+
+      if (cart.item_count === 0) {
+        document.getElementById('cart-layout-grid').style.display = 'none';
+        document.getElementById('cart-empty-state').style.display = 'flex';
+        document.getElementById('cart-item-count-label').innerHTML = 'Your luxury shopping bag is empty';
+        return;
+      }
+
+      // Re-render items or update matching line item
+      const itemRow = document.querySelector(`.cart-line-item[data-key="${key}"]`);
+      if (quantity === 0 && itemRow) {
+        itemRow.remove();
+      } else if (itemRow) {
+        const updatedItem = cart.items.find(it => it.key === key);
+        if (updatedItem) {
+          const qtyInputs = itemRow.querySelectorAll('.cart-qty-input');
+          qtyInputs.forEach(inp => inp.value = updatedItem.quantity);
+          const lineTotal = itemRow.querySelector('.cart-line-total-num');
+          if (lineTotal) lineTotal.textContent = formatMoney(updatedItem.final_line_price);
+          const mobilePrice = itemRow.querySelector('.cart-mobile-price-val');
+          if (mobilePrice) mobilePrice.textContent = formatMoney(updatedItem.final_line_price);
+        }
+      }
+
+      updateOrderSummary();
+    })
+    .catch(err => {
+      if (cartEl) cartEl.classList.remove('cart-loading-overlay');
+      console.error('Error modifying cart quantity:', err);
+    });
+  };
+
+  // Initialization
+  document.addEventListener('DOMContentLoaded', function() {
+    loadAllCoupons();
+    updateOrderSummary();
+  });
+})();
+</script>
 
 {% schema %}
 {
-  "name": "t:general.cart",
+  "name": "Cart Page",
   "settings": []
 }
 {% endschema %}

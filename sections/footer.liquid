@@ -166,7 +166,7 @@
               {% endfor %}
             {% else %}
               <li><a href="/pages/privacy-policy" class="footer__link">Privacy Policy</a></li>
-              <li><a href="/pages/terms-conditions" class="footer__link">Terms & Conditions</a></li>
+              <li><a href="/pages/term-and-condition" class="footer__link">Terms & Conditions</a></li>
               <li><a href="/pages/return-policy" class="footer__link">Return Policy</a></li>
               <li><a href="/pages/buyback-policy" class="footer__link">Buyback Policy</a></li>
               <li><a href="/pages/shipping-policy" class="footer__link">Shipping Policy</a></li>
@@ -223,9 +223,9 @@
         {% else %}
           <a href="/policies/privacy-policy" class="footer__bottom-link">PRIVACY POLICY</a>
           <span class="footer__bottom-divider">|</span>
-          <a href="/policies/terms-of-service" class="footer__bottom-link">TERMS OF SERVICE</a>
+          <a href="{{ pages['term-and-condition'].url | default: '/pages/term-and-condition' }}" class="footer__bottom-link">TERMS OF SERVICE</a>
           <span class="footer__bottom-divider">|</span>
-          <a href="/policies/shipping-policy" class="footer__bottom-link">SHIPPING POLICY</a>
+          <a href="{{ pages['shipping-policy'].url | default: '/pages/shipping-policy' }}" class="footer__bottom-link">SHIPPING POLICY</a>
         {% endif %}
       </div>
 

@@ -590,7 +590,7 @@
     width: calc(100% + 32px);
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x;
+    touch-action: pan-x pan-y;
     scrollbar-width: none;
   }
 
@@ -695,6 +695,55 @@
 
       grid.addEventListener('scroll', updateControls, { passive: true });
       window.addEventListener('resize', updateControls, { passive: true });
+
+      // Directional gesture handling for mobile touch
+      let startX = 0;
+      let startY = 0;
+      let isTouching = false;
+      let gestureDirection = null;
+
+      grid.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isTouching = true;
+        gestureDirection = null;
+      }, { passive: true });
+
+      grid.addEventListener('touchmove', (e) => {
+        if (!isTouching || e.touches.length !== 1) return;
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const deltaX = currentX - startX;
+        const deltaY = currentY - startY;
+
+        if (!gestureDirection) {
+          const absX = Math.abs(deltaX);
+          const absY = Math.abs(deltaY);
+          if (absX > 6 || absY > 6) {
+            if (absX >= absY) {
+              gestureDirection = 'horizontal';
+            } else {
+              gestureDirection = 'vertical';
+            }
+          }
+        }
+
+        if (gestureDirection === 'vertical') {
+          // Do not interfere with default browser vertical page scroll
+          return;
+        }
+      }, { passive: true });
+
+      grid.addEventListener('touchend', () => {
+        isTouching = false;
+        gestureDirection = null;
+      }, { passive: true });
+
+      grid.addEventListener('touchcancel', () => {
+        isTouching = false;
+        gestureDirection = null;
+      }, { passive: true });
 
       if (prevBtn) {
         prevBtn.addEventListener('click', function(e) {
