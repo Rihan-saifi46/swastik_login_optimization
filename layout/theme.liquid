@@ -1,171 +1,176 @@
 <!doctype html>
 <html lang="{{ request.locale.iso_code }}">
   <head>
-    {% # Social, title, etc. %}
-    {% render 'meta-tags' %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="">
+    <link rel="canonical" href="{{ canonical_url }}">
 
-    {% # Inlined CSS Variables %}
-    {% render 'css-variables' %}
+    {%- if settings.favicon != blank -%}
+      <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 32, height: 32 }}">
+    {%- endif -%}
 
-    {% if customer %}
-      <script>  
-        // Redirect to checkout immediately if intent exists, preventing flash of home page
-        if (sessionStorage.getItem('post_login_redirect') === '/checkout') {
-          sessionStorage.removeItem('post_login_redirect');
-          window.location.replace('/checkout');
-        }
-      </script>
+    <title>
+      {{ page_title }}
+      {%- if current_tags %} &ndash; tagged "{{ current_tags | join: ', ' }}"{% endif -%}
+      {%- if current_page != 1 %} &ndash; Page {{ current_page }}{% endif -%}
+      {%- unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless -%}
+    </title>
+
+    {% if page_description %}
+      <meta name="description" content="{{ page_description | escape }}">
     {% endif %}
 
-    {% comment %}
-      Font preloading:
-      1. Preconnect to font CDN for faster connection
-      2. Preload only the critical font variant (base weight)
-      3. Additional variants load on-demand via @font-face
-    {% endcomment %}
-    {% unless settings.type_primary_font.system? %}
-      <link rel="preconnect" href="https://fonts.shopifycdn.com" crossorigin>
+    {% render 'meta-tags' %}
 
-      {% comment %} Preload the base font variant for initial page render {% endcomment %}
-      {{ settings.type_primary_font | font_url | preload_tag: as: 'font', crossorigin: 'anonymous' }}
-    {% endunless %}
-
-    {% comment %} Google Fonts Preconnect & Stylesheet {% endcomment %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://account.swastikjewel.in" crossorigin>
-    <link rel="dns-prefetch" href="https://account.swastikjewel.in">
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:wght@300..700&family=Montserrat:wght@300..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-      <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:wght@300..700&family=Montserrat:wght@300..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
-    </noscript>
-
-    {% # Load and preload the critical CSS %}
-    {{ 'critical.css' | asset_url | stylesheet_tag: preload: true }}
-
-    <style>
-      /* Hide Shopify's persistent hCaptcha / reCAPTCHA badge. The invisible spam
-         challenge still runs on submit — only the floating badge is suppressed so it
-         cannot overlap the floating WhatsApp CTA (both sit bottom-right). */
-      .grecaptcha-badge,
-      .hcaptcha-badge,
-      .h-captcha {
-        display: none !important;
-        visibility: hidden !important;
-      }
-      /* The badge iframe. The challenge popup (its title contains "content") is left
-         visible so verification still works. */
-      iframe[src*="hcaptcha.com"]:not([title*="content"]) {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-      }
-      /* Hide the badge's positioned wrapper regardless of its inline offset, so an
-         empty box can never sit on top of the WhatsApp button. :has() covers modern
-         browsers; the MutationObserver below covers any that lack it. */
-      div:has(> iframe[src*="hcaptcha.com"]:not([title*="content"])) {
-        display: none !important;
-      }
-      body > div[style*="bottom: 14px"][style*="right: 14px"] {
-        display: none !important;
-      }
-      
-      /* Hide Shopify Inbox and other third-party chat widgets to prevent conflict with custom WhatsApp */
-      #shopify-chat,
-      #dummy-chat-button-iframe,
-      #ShopifyChat,
-      iframe[title*="chat widget" i],
-      iframe[title*="Shopify chat" i],
-      iframe[name="dummy-chat-button-iframe"] {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-      }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {{ 'theme.css' | asset_url | stylesheet_tag }}
+    {{ 'theme-custom.css' | asset_url | stylesheet_tag }}
+    {{ 'custom.css' | asset_url | stylesheet_tag }}
+    {{ 'critical.css' | asset_url | stylesheet_tag }}
+    <script src="{{ 'quick-add.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'custom-cart-drawer.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'predictive-search.js' | asset_url }}" defer="defer"></script>
 
     <script>
-      // Reliably hide Shopify's floating hCaptcha badge — including when it is
-      // injected/populated AFTER a form interaction (e.g. selecting "WhatsApp" in
-      // the video-call modal, which triggers Shopify's lazy captcha loader). Only
-      // the persistent badge is hidden, never the challenge popup, so the store's
-      // spam protection stays fully intact.
-      (function () {
-        // The badge iframe lives on *.hcaptcha.com and is NOT the challenge popup
-        // (whose title contains "content"). This matches both the badge and the
-        // invisible widget while leaving a real challenge solvable.
-        const isBadgeIframe = (el) =>
-          el && el.tagName === 'IFRAME' &&
-          /hcaptcha\.com/.test(el.getAttribute('src') || '') &&
-          !/content/i.test(el.getAttribute('title') || '');
-
-        const hide = (el) => {
-          if (!el) return;
-          el.style.setProperty('display', 'none', 'important');
-          el.style.setProperty('visibility', 'hidden', 'important');
-          el.style.setProperty('opacity', '0', 'important');
-          el.style.setProperty('pointer-events', 'none', 'important');
-        };
-
-        // Hide the badge iframe AND its positioned wrapper so no empty box remains
-        // over the WhatsApp button.
-        const hideBadge = (iframe) => {
-          hide(iframe);
-          hide(iframe.closest('div') || iframe.parentElement);
-        };
-
-        // Inspect an added node and its subtree (the iframe is often injected into
-        // an already-present wrapper a tick later).
-        const scan = (root) => {
-          if (!root || root.nodeType !== 1) return;
-          if (isBadgeIframe(root)) { hideBadge(root); return; }
-          if (root.querySelectorAll) {
-            root.querySelectorAll('iframe[src*="hcaptcha.com"]').forEach((f) => {
-              if (isBadgeIframe(f)) hideBadge(f);
-            });
-          }
-        };
-
-        const start = () => {
-          document.querySelectorAll('iframe[src*="hcaptcha.com"]').forEach((f) => {
-            if (isBadgeIframe(f)) hideBadge(f);
-          });
-          // subtree: true is essential — the badge iframe is injected nested and
-          // late, so watching only body's direct children would miss it.
-          const observer = new MutationObserver((mutations) => {
-            mutations.forEach((m) => m.addedNodes.forEach(scan));
-          });
-          observer.observe(document.documentElement, { childList: true, subtree: true });
-        };
-
-        if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', start);
-        } else {
-          start();
-        }
-      })();
+      window.shopUrl = '{{ request.origin }}';
+      window.routes = {
+        cart_add_url: '{{ routes.cart_add_url }}',
+        cart_change_url: '{{ routes.cart_change_url }}',
+        cart_update_url: '{{ routes.cart_update_url }}',
+        cart_url: '{{ routes.cart_url }}',
+        predictive_search_url: '{{ routes.predictive_search_url }}'
+      };
+      window.cartStrings = {
+        error: `{{ 'sections.cart.cart_error' | t }}`,
+        quantityError: `{{ 'sections.cart.cart_quantity_error_html' | t: quantity: '[quantity]' }}`
+      };
     </script>
-
     <script>
-      // Global money formatting helper that honors current active currency and locale
-      window.formatMoney = function(cents) {
-        if (cents === null || cents === undefined) cents = 0;
-        const currencyCode = {{ cart.currency.iso_code | json }};
-        const currencySymbol = {{ cart.currency.symbol | json }};
-        const locale = currencyCode === 'INR' ? 'en-IN' : 'en-US';
+      // Global Wishlist Functions using native Shopify Customer API / LocalStorage
+      window.wishlist = JSON.parse(localStorage.getItem('swastik_wishlist') || '[]');
+      
+      window.updateWishlistBadge = function() {
+        const badges = document.querySelectorAll('.wishlist-count-badge');
+        const count = window.wishlist.length;
+        badges.forEach(b => {
+          b.textContent = count;
+          if (count > 0) {
+            b.classList.remove('hidden');
+          } else {
+            b.classList.add('hidden');
+          }
+        });
+      };
+
+      window.toggleWishlist = async function(productId, btnElement) {
+        if (!productId) return;
+        productId = String(productId);
+        const index = window.wishlist.indexOf(productId);
         
-        const value = cents / 100;
-        const hasDecimals = value % 1 !== 0;
-        const formatter = new Intl.NumberFormat(locale, {
+        // Optimistic UI toggle
+        const isAdding = index === -1;
+        if (isAdding) {
+          window.wishlist.push(productId);
+        } else {
+          window.wishlist.splice(index, 1);
+        }
+        localStorage.setItem('swastik_wishlist', JSON.stringify(window.wishlist));
+        window.updateWishlistBadge();
+
+        // Update all buttons for this product
+        document.querySelectorAll(`[data-product-id="${productId}"] .product-card-ui__wishlist, [data-product-id="${productId}"].product-card-ui__wishlist, .product-single__wishlist-btn`).forEach(btn => {
+          if (isAdding) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+
+        // Trigger custom event for wishlist drawer to refresh
+        document.dispatchEvent(new CustomEvent('wishlist:updated', { 
+          detail: { wishlist: window.wishlist, productId: productId, action: isAdding ? 'add' : 'remove' } 
+        }));
+      };
+
+      document.addEventListener('DOMContentLoaded', () => {
+        window.updateWishlistBadge();
+        // Initialize active state on product cards
+        window.wishlist.forEach(id => {
+          document.querySelectorAll(`[data-product-id="${id}"] .product-card-ui__wishlist, [data-product-id="${id}"].product-card-ui__wishlist`).forEach(btn => {
+            btn.classList.add('active');
+          });
+        });
+
+        // Global delegated click listener for wishlist buttons
+        document.addEventListener('click', (e) => {
+          const btn = e.target.closest('.product-card-ui__wishlist, .best-sellers__wishlist-btn, .new-arrivals__wishlist-btn, .product-single__wishlist-btn');
+          if (!btn) return;
+          
+          e.preventDefault();
+          e.stopPropagation();
+
+          let card = btn.closest('[data-product-id]');
+          let productId = card ? card.getAttribute('data-product-id') : btn.getAttribute('data-product-id');
+          
+          if (!productId) {
+            const form = btn.closest('form[action*="/cart/add"]');
+            if (form) {
+              const idInput = form.querySelector('input[name="id"]');
+              if (idInput) productId = idInput.value;
+            }
+          }
+
+          if (productId) {
+            window.toggleWishlist(productId, btn);
+          }
+        });
+      });
+    </script>
+    <script>
+      // Global Currency Formatter
+      window.formatMoney = function(cents) {
+        if (typeof cents === 'string') {
+          cents = cents.replace('.', '');
+        }
+        var value = '';
+        var placeholderRegex = /\{\{\s*(\w+)\s*\}\}/;
+        var formatString = '₹ {{amount_no_decimals}}';
+        
+        function formatWithDelimiters(number, precision, thousands, decimal) {
+          precision = precision || 0;
+          thousands = thousands || ',';
+          decimal = decimal || '.';
+          
+          if (isNaN(number) || number == null) {
+            return 0;
+          }
+          
+          number = (number / 100.0).toFixed(precision);
+          
+          var parts = number.split('.');
+          var dollarsAmount = parts[0].replace(/(\d)(?=(\d\d\d)+(?!\d))/g, '$1' + thousands);
+          var centsAmount = parts[1] ? decimal + parts[1] : '';
+          
+          return dollarsAmount + centsAmount;
+        }
+
+        var amount = (cents / 100.0);
+        var formatter = new Intl.NumberFormat('en-IN', {
           style: 'currency',
-          currency: currencyCode,
-          minimumFractionDigits: hasDecimals ? 2 : 0,
+          currency: 'INR',
           maximumFractionDigits: 2
         });
         return formatter.format(value);
       };
     </script>
+
+    <meta name="facebook-domain-verification" content="ha2t4ybzlfsbl0x31lwx852h2wirkk" />
 
     {{ content_for_header }}
   </head>
