@@ -91,7 +91,7 @@
                   {% endunless %}
 
                   <div class="cart-item__mobile-price">
-                    <span class="cart-mobile-price-val">{{ item.final_price | money }}</span>
+                    <span class="cart-mobile-price-val">{{ item.original_price | default: item.price | default: item.final_price | money }}</span>
                   </div>
 
                   <!-- Mobile Quantity + Remove Row -->
@@ -107,7 +107,7 @@
 
                 <!-- Desktop Unit Price -->
                 <div class="cart-item__unit-price">
-                  <span class="cart-price-num">{{ item.final_price | money }}</span>
+                  <span class="cart-price-num">{{ item.original_price | default: item.price | default: item.final_price | money }}</span>
                   {% if item.original_price > item.final_price %}
                     <span class="cart-price-orig">{{ item.original_price | money }}</span>
                   {% endif %}
@@ -121,7 +121,7 @@
 
                 <!-- Desktop Line Total -->
                 <div class="cart-item__line-total">
-                  <span class="cart-line-total-num">{{ item.final_line_price | money }}</span>
+                  <span class="cart-line-total-num">{{ item.original_line_price | default: item.line_price | default: item.final_line_price | money }}</span>
                 </div>
 
               </div>
@@ -201,7 +201,7 @@
           <div class="cart-summary-rows">
             <div class="cart-sum-row">
               <span class="sum-label">Bag Subtotal</span>
-              <span class="sum-val" id="summary-subtotal-val">{{ cart.total_price | money }}</span>
+              <span class="sum-val" id="summary-subtotal-val">{{ cart.original_total_price | default: cart.items_subtotal_price | default: cart.total_price | money }}</span>
             </div>
 
             <div class="cart-sum-row cart-sum-row--discount" id="summary-discount-row" style="display: none;">
@@ -1051,7 +1051,7 @@
 (function() {
   const APPLIED_COUPON_STORAGE_KEY = 'swastik_applied_coupon';
   let availableCouponsList = [];
-  let currentSubtotalCents = {{ cart.total_price | default: 0 }};
+  let currentSubtotalCents = {{ cart.original_total_price | default: cart.items_subtotal_price | default: cart.total_price | default: 0 }};
 
   function formatMoney(cents) {
     if (typeof window.formatMoney === 'function') {
@@ -1343,7 +1343,11 @@
     .then(res => res.json())
     .then(cart => {
       if (cartEl) cartEl.classList.remove('cart-loading-overlay');
-      currentSubtotalCents = cart.total_price;
+      currentSubtotalCents = (typeof cart.original_total_price === 'number' && cart.original_total_price > 0)
+        ? cart.original_total_price
+        : (cart.items && cart.items.length > 0
+            ? cart.items.reduce((sum, it) => sum + (it.original_line_price !== undefined ? it.original_line_price : (it.original_price ? it.original_price * it.quantity : (it.line_price || it.final_line_price))), 0)
+            : cart.total_price);
 
       // Update global badges
       if (window.updateGlobalCartCount) {
@@ -1368,10 +1372,13 @@
         if (updatedItem) {
           const qtyInputs = itemRow.querySelectorAll('.cart-qty-input');
           qtyInputs.forEach(inp => inp.value = updatedItem.quantity);
+          const itemOriginalLinePrice = (updatedItem.original_line_price !== undefined && updatedItem.original_line_price > 0)
+            ? updatedItem.original_line_price
+            : (updatedItem.original_price ? updatedItem.original_price * updatedItem.quantity : (updatedItem.line_price || updatedItem.final_line_price));
           const lineTotal = itemRow.querySelector('.cart-line-total-num');
-          if (lineTotal) lineTotal.textContent = formatMoney(updatedItem.final_line_price);
+          if (lineTotal) lineTotal.textContent = formatMoney(itemOriginalLinePrice);
           const mobilePrice = itemRow.querySelector('.cart-mobile-price-val');
-          if (mobilePrice) mobilePrice.textContent = formatMoney(updatedItem.final_line_price);
+          if (mobilePrice) mobilePrice.textContent = formatMoney(itemOriginalLinePrice);
         }
       }
 

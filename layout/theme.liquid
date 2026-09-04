@@ -135,38 +135,19 @@
     <script>
       // Global Currency Formatter
       window.formatMoney = function(cents) {
+        if (cents === null || cents === undefined || (typeof cents === 'number' && isNaN(cents))) {
+          cents = 0;
+        }
         if (typeof cents === 'string') {
           cents = cents.replace('.', '');
         }
-        var value = '';
-        var placeholderRegex = /\{\{\s*(\w+)\s*\}\}/;
-        var formatString = '₹ {{amount_no_decimals}}';
-        
-        function formatWithDelimiters(number, precision, thousands, decimal) {
-          precision = precision || 0;
-          thousands = thousands || ',';
-          decimal = decimal || '.';
-          
-          if (isNaN(number) || number == null) {
-            return 0;
-          }
-          
-          number = (number / 100.0).toFixed(precision);
-          
-          var parts = number.split('.');
-          var dollarsAmount = parts[0].replace(/(\d)(?=(\d\d\d)+(?!\d))/g, '$1' + thousands);
-          var centsAmount = parts[1] ? decimal + parts[1] : '';
-          
-          return dollarsAmount + centsAmount;
-        }
-
-        var amount = (cents / 100.0);
+        var amount = (Number(cents) / 100.0) || 0;
         var formatter = new Intl.NumberFormat('en-IN', {
           style: 'currency',
           currency: 'INR',
           maximumFractionDigits: 2
         });
-        return formatter.format(value);
+        return formatter.format(amount);
       };
     </script>
 
