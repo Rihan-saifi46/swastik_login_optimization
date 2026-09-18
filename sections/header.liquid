@@ -2533,6 +2533,24 @@
     opacity: 0.8;
   }
   
+  @media (max-width: 1024px) {
+    .header__search-panel-container {
+      width: calc(100% - 2rem);
+      padding: 1.5rem 1rem;
+      gap: 1.5rem;
+    }
+    .header__search-suggestions {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    .header__search-vertical-divider {
+      display: none;
+    }
+    .header__search-trending-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
   @media (max-width: 1150px) {
     .header__search-trigger {
       display: none !important;

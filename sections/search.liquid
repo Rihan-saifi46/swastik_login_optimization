@@ -45,7 +45,7 @@
     </nav>
   </div>
 
-  <div class="collection-page__container" style="max-width: 1600px; margin: 0 auto; padding: 0 4rem; box-sizing: border-box;">
+  <div class="collection-page__container search-page__container" style="max-width: 1600px; margin: 0 auto; box-sizing: border-box;">
     
     <!-- Dedicated Search Form (Desktop & Mobile) -->
     <div class="search-page__form-wrapper">
@@ -204,14 +204,69 @@
 </script>
 
 {% stylesheet %}
+  /* Search Page Isolated Container (Prevents grid leakage from collection sidebar) */
+  .search-page__container {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 4rem;
+    box-sizing: border-box;
+  }
+
+  @media screen and (max-width: 1024px) {
+    .search-page__container {
+      padding: 0 2rem !important;
+    }
+  }
+
+  @media screen and (max-width: 768px) {
+    .search-page__container {
+      padding: 0 1.2rem !important;
+    }
+  }
+
+  /* Search Page Toolbar - Protected from collection-toolbar display:none */
+  .search-page__container .collection-toolbar {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(0,46,40,0.08);
+    padding-bottom: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .search-page__container .collection-toolbar h1 {
+    font-size: 1.75rem;
+    line-height: 1.3;
+    word-break: break-word;
+  }
+
+  @media screen and (max-width: 768px) {
+    .search-page__container .collection-toolbar {
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.75rem;
+    }
+    .search-page__container .collection-toolbar h1 {
+      font-size: 1.4rem;
+    }
+  }
+
   /* Search Page Form Styling - Mobile / Tablet Only (<=1150px) */
   .search-page__form-wrapper {
     display: none;
+    width: 100%;
   }
 
   @media screen and (max-width: 1150px) {
     .search-page__form-wrapper {
       display: block;
+      width: 100%;
       max-width: 680px;
       margin: 0 auto 2rem;
       box-sizing: border-box;
@@ -232,6 +287,7 @@
     padding: 4px 6px 4px 18px;
     transition: all 0.25s ease;
     box-sizing: border-box;
+    width: 100%;
   }
   
   .search-page__input-container:focus-within {
@@ -249,20 +305,26 @@
     margin-right: 12px;
   }
   
-  .search-page__input {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    background: transparent;
+  /* Overrides critical.css input[type="search"] specificity */
+  .search-page__form input[type="search"].search-page__input {
+    flex: 1 1 auto;
+    width: 100% !important;
+    min-width: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: 1rem;
-    color: #013F3E;
-    padding: 11px 8px 11px 0;
-    outline: none;
+    font-size: 1rem !important;
+    color: #013F3E !important;
+    padding: 11px 8px 11px 0 !important;
+    outline: none !important;
     -webkit-appearance: none;
+    box-sizing: border-box !important;
   }
   
-  .search-page__input::placeholder {
+  .search-page__input::placeholder,
+  .search-page__form input[type="search"].search-page__input::placeholder {
     color: #888888;
     font-size: 0.95rem;
   }
@@ -295,9 +357,6 @@
   }
 
   @media screen and (max-width: 768px) {
-    .collection-page__container {
-      padding: 0 1.2rem !important;
-    }
     .search-page__form-wrapper {
       margin-bottom: 2rem;
     }
@@ -309,11 +368,11 @@
       height: 18px;
       margin-right: 8px;
     }
-    .search-page__input {
-      font-size: 0.95rem;
-      padding: 9px 6px 9px 0;
+    .search-page__form input[type="search"].search-page__input {
+      font-size: 0.95rem !important;
+      padding: 9px 6px 9px 0 !important;
     }
-    .search-page__input::placeholder {
+    .search-page__form input[type="search"].search-page__input::placeholder {
       font-size: 0.85rem;
     }
     .search-page__submit-button {
@@ -323,7 +382,7 @@
   }
 
   @media screen and (max-width: 360px) {
-    .search-page__input::placeholder {
+    .search-page__form input[type="search"].search-page__input::placeholder {
       font-size: 0.78rem;
     }
     .search-page__submit-button {
@@ -337,11 +396,14 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 2rem;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   @media screen and (max-width: 1200px) {
     .collection-grid {
       grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
     }
   }
   
