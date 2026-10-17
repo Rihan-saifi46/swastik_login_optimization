@@ -360,19 +360,28 @@
               
               <!-- IN STOCK INDICATOR -->
               <div class="pp-stock-indicator">
-                {%- if current_variant.available -%}
-                  {%- if current_variant.inventory_management and current_variant.inventory_quantity != blank and current_variant.inventory_quantity <= 0 and current_variant.inventory_policy == 'continue' -%}
-                    <div class="pp-stock-status pp-stock-status--made-to-order">
-                      <span>Made to Order</span>
-                    </div>
-                  {%- else -%}
-                    <div class="pp-stock-status pp-stock-status--in-stock">
-                      <span>In Stock</span>
-                    </div>
-                  {%- endif -%}
+                {%- assign prod_is_mto = false -%}
+                {%- if product.tags contains 'Made to Order' or product.tags contains 'made to order' or product.tags contains 'made-to-order' -%}
+                  {%- assign prod_is_mto = true -%}
+                {%- endif -%}
+                {%- assign current_is_out_of_stock = false -%}
+                {%- if current_variant.available == false -%}
+                  {%- assign current_is_out_of_stock = true -%}
+                {%- elsif current_variant.inventory_management != blank and current_variant.inventory_quantity != blank and current_variant.inventory_quantity <= 0 and prod_is_mto == false -%}
+                  {%- assign current_is_out_of_stock = true -%}
+                {%- endif -%}
+
+                {%- if current_is_out_of_stock -%}
+                  <div class="pp-stock-status pp-stock-status--sold-out pp-stock-status--out-of-stock">
+                    <span>Out of Stock</span>
+                  </div>
+                {%- elsif prod_is_mto and current_variant.inventory_policy == 'continue' -%}
+                  <div class="pp-stock-status pp-stock-status--made-to-order">
+                    <span>Made to Order</span>
+                  </div>
                 {%- else -%}
-                  <div class="pp-stock-status pp-stock-status--sold-out">
-                    <span>Sold Out</span>
+                  <div class="pp-stock-status pp-stock-status--in-stock">
+                    <span>In Stock</span>
                   </div>
                 {%- endif -%}
 
@@ -436,9 +445,9 @@
 
               <!-- ROW 1: ADD TO CART + ADD TO WISHLIST -->
               <div class="pp-actions-top-row">
-                <button type="submit" form="pp-product-form" class="pp-btn-add" {% unless current_variant.available %}disabled{% endunless %}>
+                <button type="submit" form="pp-product-form" class="pp-btn-add" {% if current_is_out_of_stock %}disabled{% endif %}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                  <span>{% if current_variant.available %}ADD TO CART{% else %}SOLD OUT{% endif %}</span>
+                  <span>{% if current_is_out_of_stock %}OUT OF STOCK{% else %}ADD TO CART{% endif %}</span>
                 </button>
                 <button type="button" class="pp-btn-wishlist product-single__wishlist-btn" aria-label="Add to Wishlist" 
                   data-product-id="{{ product.id }}" 
@@ -454,10 +463,10 @@
                 </button>
               </div>
 
-              <!-- ROW 2: BUY NOW WITH ARROW -->
-              <button type="button" class="pp-btn-buy" id="pp-buy-now" {% unless current_variant.available %}style="display: none;" disabled{% endunless %}>
+              <!-- ROW 2: BUY NOW WITH ARROW / OUT OF STOCK -->
+              <button type="button" class="pp-btn-buy{% if current_is_out_of_stock %} is-out-of-stock{% endif %}" id="pp-buy-now" {% if current_is_out_of_stock %}disabled{% endif %}>
                 <span class="pp-btn-spacer"></span>
-                <span class="pp-btn-text">BUY NOW</span>
+                <span class="pp-btn-text">{% if current_is_out_of_stock %}OUT OF STOCK{% else %}BUY NOW{% endif %}</span>
                 <svg class="pp-btn-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </button>
 
@@ -837,14 +846,23 @@
                     <h3 class="pp-related-item-title">{{ rel_product.title }}</h3>
                     <div class="pp-related-pills">
                       {%- assign rel_variant = rel_product.selected_or_first_available_variant -%}
-                      {%- if rel_variant.available -%}
-                        {%- if rel_variant.inventory_management and rel_variant.inventory_quantity <= 0 and rel_variant.inventory_policy == 'continue' -%}
-                          <span class="pp-rel-pill pp-rel-pill--made-to-order">Made to Order</span>
-                        {%- else -%}
-                          <span class="pp-rel-pill pp-rel-pill--in-stock">In Stock</span>
-                        {%- endif -%}
+                      {%- assign rel_is_mto = false -%}
+                      {%- if rel_product.tags contains 'Made to Order' or rel_product.tags contains 'made to order' or rel_product.tags contains 'made-to-order' -%}
+                        {%- assign rel_is_mto = true -%}
+                      {%- endif -%}
+                      {%- assign rel_is_out_of_stock = false -%}
+                      {%- if rel_variant.available == false -%}
+                        {%- assign rel_is_out_of_stock = true -%}
+                      {%- elsif rel_variant.inventory_management != blank and rel_variant.inventory_quantity != blank and rel_variant.inventory_quantity <= 0 and rel_is_mto == false -%}
+                        {%- assign rel_is_out_of_stock = true -%}
+                      {%- endif -%}
+
+                      {%- if rel_is_out_of_stock -%}
+                        <span class="pp-rel-pill pp-rel-pill--sold-out pp-rel-pill--out-of-stock">Out of Stock</span>
+                      {%- elsif rel_is_mto and rel_variant.inventory_policy == 'continue' -%}
+                        <span class="pp-rel-pill pp-rel-pill--made-to-order">Made to Order</span>
                       {%- else -%}
-                        <span class="pp-rel-pill pp-rel-pill--sold-out">Sold Out</span>
+                        <span class="pp-rel-pill pp-rel-pill--in-stock">In Stock</span>
                       {%- endif -%}
                     </div>
                     {%- assign rev_count = rel_product.id | modulo: 80 | plus: 48 -%}
@@ -1321,6 +1339,39 @@
     padding: 0 24px !important;
   }
   .pp-btn-buy:hover { background: #B5822C !important; transform: translateY(-2px) !important; box-shadow: 0 8px 26px rgba(200, 146, 52, 0.38) !important; }
+  .pp-btn-buy.is-out-of-stock,
+  .pp-btn-buy:disabled {
+    background: #E8E8E8 !important;
+    color: #888888 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    justify-content: center !important;
+    pointer-events: none !important;
+  }
+  .pp-btn-buy.is-out-of-stock:hover,
+  .pp-btn-buy:disabled:hover {
+    background: #E8E8E8 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .pp-btn-buy.is-out-of-stock .pp-btn-arrow,
+  .pp-btn-buy:disabled .pp-btn-arrow,
+  .pp-btn-buy.is-out-of-stock .pp-btn-spacer,
+  .pp-btn-buy:disabled .pp-btn-spacer {
+    display: none !important;
+  }
+  .pp-btn-add:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .pp-btn-add:disabled:hover {
+    background: #013F3E !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
   .pp-stock-indicator svg { flex-shrink: 0; }
   .pp-stock-shipping { color: #555; }
 
@@ -1859,7 +1910,8 @@
     background: #FFF3E0 !important;
     color: #E65100 !important;
   }
-  .pp-rel-pill--sold-out {
+  .pp-rel-pill--sold-out,
+  .pp-rel-pill--out-of-stock {
     background: #FFEBEE !important;
     color: #C62828 !important;
   }
@@ -2153,7 +2205,8 @@
     background: #FFF3E0 !important;
     color: #E65100 !important;
   }
-  .pp-stock-status--sold-out {
+  .pp-stock-status--sold-out,
+  .pp-stock-status--out-of-stock {
     background: #FFEBEE !important;
     color: #C62828 !important;
   }
@@ -2418,8 +2471,12 @@
     }
 
     // Buy Now Button (Dynamic Checkout)
-    if (e.target.closest('.pp-btn-buy')) {
+    const buyBtn = e.target.closest('.pp-btn-buy');
+    if (buyBtn) {
       e.preventDefault();
+      if (buyBtn.disabled || buyBtn.classList.contains('is-out-of-stock')) {
+        return;
+      }
       const form = document.getElementById('pp-product-form');
       if (form) {
         let retInput = form.querySelector('input[name="return_to"]');
@@ -2491,41 +2548,73 @@
                 console.error('Error parsing variant inventory json:', err);
               }
             }
-            
-            if (isAvailable) {
-              if (invMgmt && invQty !== null && invQty !== undefined && invQty <= 0 && invPolicy === 'continue') {
-                if (elStockStatus) {
-                  elStockStatus.className = 'pp-stock-status pp-stock-status--made-to-order';
-                  elStockStatus.innerHTML = '<span>Made to Order</span>';
-                }
+
+            const productTags = {{ product.tags | json }} || [];
+            const isProductMTO = productTags.some(t => {
+              const tl = String(t).toLowerCase().trim();
+              return tl === 'made to order' || tl === 'made-to-order';
+            });
+
+            let isOutOfStock = false;
+            let isMTO = false;
+
+            if (!isAvailable) {
+              isOutOfStock = true;
+            } else if (invMgmt && invQty !== null && invQty !== undefined && invQty <= 0) {
+              if (isProductMTO && invPolicy === 'continue') {
+                isMTO = true;
               } else {
-                if (elStockStatus) {
-                  elStockStatus.className = 'pp-stock-status pp-stock-status--in-stock';
-                  elStockStatus.innerHTML = '<span>In Stock</span>';
-                }
+                isOutOfStock = true;
               }
-              
+            }
+            
+            if (isOutOfStock) {
+              if (elStockStatus) {
+                elStockStatus.className = 'pp-stock-status pp-stock-status--sold-out pp-stock-status--out-of-stock';
+                elStockStatus.innerHTML = '<span>Out of Stock</span>';
+              }
+              if (elBtnAdd) {
+                elBtnAdd.setAttribute('disabled', 'true');
+                if (elBtnAddText) elBtnAddText.textContent = 'OUT OF STOCK';
+              }
+              if (elBtnBuy) {
+                elBtnBuy.setAttribute('disabled', 'true');
+                elBtnBuy.classList.add('is-out-of-stock');
+                elBtnBuy.style.display = '';
+                const buyText = elBtnBuy.querySelector('.pp-btn-text');
+                if (buyText) buyText.textContent = 'OUT OF STOCK';
+              }
+            } else if (isMTO) {
+              if (elStockStatus) {
+                elStockStatus.className = 'pp-stock-status pp-stock-status--made-to-order';
+                elStockStatus.innerHTML = '<span>Made to Order</span>';
+              }
               if (elBtnAdd) {
                 elBtnAdd.removeAttribute('disabled');
                 if (elBtnAddText) elBtnAddText.textContent = 'ADD TO CART';
               }
               if (elBtnBuy) {
                 elBtnBuy.removeAttribute('disabled');
+                elBtnBuy.classList.remove('is-out-of-stock');
                 elBtnBuy.style.display = '';
+                const buyText = elBtnBuy.querySelector('.pp-btn-text');
+                if (buyText) buyText.textContent = 'BUY NOW';
               }
             } else {
               if (elStockStatus) {
-                elStockStatus.className = 'pp-stock-status pp-stock-status--sold-out';
-                elStockStatus.innerHTML = '<span>Sold Out</span>';
+                elStockStatus.className = 'pp-stock-status pp-stock-status--in-stock';
+                elStockStatus.innerHTML = '<span>In Stock</span>';
               }
-              
               if (elBtnAdd) {
-                elBtnAdd.setAttribute('disabled', 'true');
-                if (elBtnAddText) elBtnAddText.textContent = 'SOLD OUT';
+                elBtnAdd.removeAttribute('disabled');
+                if (elBtnAddText) elBtnAddText.textContent = 'ADD TO CART';
               }
               if (elBtnBuy) {
-                elBtnBuy.setAttribute('disabled', 'true');
-                elBtnBuy.style.display = 'none';
+                elBtnBuy.removeAttribute('disabled');
+                elBtnBuy.classList.remove('is-out-of-stock');
+                elBtnBuy.style.display = '';
+                const buyText = elBtnBuy.querySelector('.pp-btn-text');
+                if (buyText) buyText.textContent = 'BUY NOW';
               }
             }
             
@@ -2683,7 +2772,7 @@
               if(elTotal) elTotal.textContent = priceFormatted;
               
               if (window.updateVariantCoupons) {
-                window.updateVariantCoupons(matched.id);
+                window.updateVariantCoupons(matched.id, isOutOfStock);
               }
             }
           }
@@ -2820,18 +2909,46 @@
             let invMgmt = invInfo.inventory_management;
             let invPolicy = invInfo.inventory_policy;
             let invQty = invInfo.inventory_quantity;
-            
-            if (isAvailable) {
-              if (invMgmt && invQty !== null && invQty !== undefined && invQty <= 0 && invPolicy === 'continue') {
-                if (elStockStatus) {
-                  elStockStatus.className = 'pp-stock-status pp-stock-status--made-to-order';
-                  elStockStatus.innerHTML = '<span>Made to Order</span>';
-                }
+
+            const productTags = {{ product.tags | json }} || [];
+            const isProductMTO = productTags.some(t => {
+              const tl = String(t).toLowerCase().trim();
+              return tl === 'made to order' || tl === 'made-to-order';
+            });
+
+            let isOutOfStock = false;
+            let isMTO = false;
+
+            if (!isAvailable) {
+              isOutOfStock = true;
+            } else if (invMgmt && invQty !== null && invQty !== undefined && invQty <= 0) {
+              if (isProductMTO && invPolicy === 'continue') {
+                isMTO = true;
               } else {
-                if (elStockStatus) {
-                  elStockStatus.className = 'pp-stock-status pp-stock-status--in-stock';
-                  elStockStatus.innerHTML = '<span>In Stock</span>';
-                }
+                isOutOfStock = true;
+              }
+            }
+            
+            if (isOutOfStock) {
+              if (elStockStatus) {
+                elStockStatus.className = 'pp-stock-status pp-stock-status--sold-out pp-stock-status--out-of-stock';
+                elStockStatus.innerHTML = '<span>Out of Stock</span>';
+              }
+              if (elBtnAdd) {
+                elBtnAdd.setAttribute('disabled', 'true');
+                if (elBtnAddText) elBtnAddText.textContent = 'OUT OF STOCK';
+              }
+              if (elBtnBuy) {
+                elBtnBuy.setAttribute('disabled', 'true');
+                elBtnBuy.classList.add('is-out-of-stock');
+                elBtnBuy.style.display = '';
+                const buyText = elBtnBuy.querySelector('.pp-btn-text');
+                if (buyText) buyText.textContent = 'OUT OF STOCK';
+              }
+            } else if (isMTO) {
+              if (elStockStatus) {
+                elStockStatus.className = 'pp-stock-status pp-stock-status--made-to-order';
+                elStockStatus.innerHTML = '<span>Made to Order</span>';
               }
               if (elBtnAdd) {
                 elBtnAdd.removeAttribute('disabled');
@@ -2839,21 +2956,31 @@
               }
               if (elBtnBuy) {
                 elBtnBuy.removeAttribute('disabled');
+                elBtnBuy.classList.remove('is-out-of-stock');
                 elBtnBuy.style.display = '';
+                const buyText = elBtnBuy.querySelector('.pp-btn-text');
+                if (buyText) buyText.textContent = 'BUY NOW';
               }
             } else {
               if (elStockStatus) {
-                elStockStatus.className = 'pp-stock-status pp-stock-status--sold-out';
-                elStockStatus.innerHTML = '<span>Sold Out</span>';
+                elStockStatus.className = 'pp-stock-status pp-stock-status--in-stock';
+                elStockStatus.innerHTML = '<span>In Stock</span>';
               }
               if (elBtnAdd) {
-                elBtnAdd.setAttribute('disabled', 'true');
-                if (elBtnAddText) elBtnAddText.textContent = 'SOLD OUT';
+                elBtnAdd.removeAttribute('disabled');
+                if (elBtnAddText) elBtnAddText.textContent = 'ADD TO CART';
               }
               if (elBtnBuy) {
-                elBtnBuy.setAttribute('disabled', 'true');
-                elBtnBuy.style.display = 'none';
+                elBtnBuy.removeAttribute('disabled');
+                elBtnBuy.classList.remove('is-out-of-stock');
+                elBtnBuy.style.display = '';
+                const buyText = elBtnBuy.querySelector('.pp-btn-text');
+                if (buyText) buyText.textContent = 'BUY NOW';
               }
+            }
+
+            if (window.updateVariantCoupons) {
+              window.updateVariantCoupons(currentId, isOutOfStock);
             }
           }
         } catch (err) {
@@ -3032,21 +3159,34 @@
     }
   });
 
-  window.updateVariantCoupons = function(variantId) {
-    const coupons = getCouponsForVariant(variantId);
+  window.updateVariantCoupons = function(variantId, isVariantOutOfStock) {
     const trigger = document.getElementById('pp-coupon-trigger');
-    if (trigger) {
-      if (coupons && coupons.length > 0) {
-        trigger.style.display = 'inline-flex';
-      } else {
-        trigger.style.display = 'none';
-      }
+    if (!trigger) return;
+
+    let outOfStock = isVariantOutOfStock;
+    if (outOfStock === undefined || outOfStock === null) {
+      const stockStatusEl = document.querySelector('.pp-stock-status');
+      outOfStock = stockStatusEl ? (stockStatusEl.classList.contains('pp-stock-status--sold-out') || stockStatusEl.classList.contains('pp-stock-status--out-of-stock')) : false;
+    }
+
+    if (outOfStock) {
+      trigger.style.display = 'none';
+      return;
+    }
+
+    const coupons = getCouponsForVariant(variantId);
+    if (coupons && coupons.length > 0) {
+      trigger.style.display = 'inline-flex';
+    } else {
+      trigger.style.display = 'none';
     }
   };
 
   // Initial update
   const initialVariantId = document.getElementById('pp-variant-id')?.value;
-  window.updateVariantCoupons(initialVariantId);
+  const initialStockStatusEl = document.querySelector('.pp-stock-status');
+  const initialOutOfStock = initialStockStatusEl ? (initialStockStatusEl.classList.contains('pp-stock-status--sold-out') || initialStockStatusEl.classList.contains('pp-stock-status--out-of-stock')) : false;
+  window.updateVariantCoupons(initialVariantId, initialOutOfStock);
 })();
 </script>
 

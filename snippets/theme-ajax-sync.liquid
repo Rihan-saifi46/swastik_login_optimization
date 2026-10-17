@@ -546,6 +546,12 @@
 
       const submitBtn = e.submitter || form.querySelector('[type="submit"], .btn-add-cart, .pp-btn-add') || (form.id ? document.querySelector('button[form="' + form.id + '"]') : null);
 
+      if (submitBtn && (submitBtn.disabled || submitBtn.classList.contains('is-out-of-stock') || submitBtn.getAttribute('aria-disabled') === 'true')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
       // Prevent concurrent/rapid duplicate requests
       if (form.dataset.submitting === 'true' || (submitBtn && submitBtn.classList.contains('btn-loading'))) {
         return;
@@ -654,6 +660,11 @@
       document.addEventListener('click', function(e) {
         const target = e.target.closest('a[href*="/checkout"], button[name="checkout"], .btn-checkout, .pp-btn-buy, .btn-buy-now');
         if (target) {
+          if (target.disabled || target.classList.contains('is-out-of-stock') || target.getAttribute('aria-disabled') === 'true') {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
           e.preventDefault();
           e.stopPropagation();
           handleCheckoutInterception(target);
@@ -688,6 +699,9 @@
       // If it's a "Buy Now" action, add to cart via AJAX first so guest doesn't lose their selection
       const form = triggerElement.closest('form');
       if (form && (triggerElement.classList.contains('pp-btn-buy') || triggerElement.classList.contains('btn-buy-now'))) {
+        if (triggerElement.disabled || triggerElement.classList.contains('is-out-of-stock') || triggerElement.getAttribute('aria-disabled') === 'true') {
+          return;
+        }
         const submitBtn = triggerElement;
         submitBtn.classList.add('btn-loading');
         

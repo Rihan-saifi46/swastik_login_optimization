@@ -37,14 +37,23 @@
     <h3 class="product-card-ui__title">{{ product_title }}</h3>
     
     <div class="product-card-ui__pills">
-      {%- if current_variant.available -%}
-        {%- if current_variant.inventory_management and current_variant.inventory_quantity <= 0 and current_variant.inventory_policy == 'continue' -%}
-          <span class="product-card-ui__pill product-card-ui__pill--made-to-order">Made to Order</span>
-        {%- else -%}
-          <span class="product-card-ui__pill product-card-ui__pill--in-stock">In Stock</span>
-        {%- endif -%}
+      {%- assign card_is_mto = false -%}
+      {%- if product.tags contains 'Made to Order' or product.tags contains 'made to order' or product.tags contains 'made-to-order' -%}
+        {%- assign card_is_mto = true -%}
+      {%- endif -%}
+      {%- assign card_is_out_of_stock = false -%}
+      {%- if current_variant.available == false -%}
+        {%- assign card_is_out_of_stock = true -%}
+      {%- elsif current_variant.inventory_management != blank and current_variant.inventory_quantity != blank and current_variant.inventory_quantity <= 0 and card_is_mto == false -%}
+        {%- assign card_is_out_of_stock = true -%}
+      {%- endif -%}
+
+      {%- if card_is_out_of_stock -%}
+        <span class="product-card-ui__pill product-card-ui__pill--sold-out product-card-ui__pill--out-of-stock">Out of Stock</span>
+      {%- elsif card_is_mto and current_variant.inventory_policy == 'continue' -%}
+        <span class="product-card-ui__pill product-card-ui__pill--made-to-order">Made to Order</span>
       {%- else -%}
-        <span class="product-card-ui__pill product-card-ui__pill--sold-out">Sold Out</span>
+        <span class="product-card-ui__pill product-card-ui__pill--in-stock">In Stock</span>
       {%- endif -%}
     </div>
 

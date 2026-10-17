@@ -143,7 +143,8 @@
   color: #E65100 !important;
 }
 
-.product-card-ui__pill--sold-out {
+.product-card-ui__pill--sold-out,
+.product-card-ui__pill--out-of-stock {
   background: #FFEBEE !important;
   color: #C62828 !important;
 }

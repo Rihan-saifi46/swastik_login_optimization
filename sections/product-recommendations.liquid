@@ -113,14 +113,23 @@
                 <h3 class="pp-related-item-title">{{ recommendation.title }}</h3>
                 <div class="pp-related-pills">
                   {%- assign rec_variant = recommendation.selected_or_first_available_variant -%}
-                  {%- if rec_variant.available -%}
-                    {%- if rec_variant.inventory_management and rec_variant.inventory_quantity <= 0 and rec_variant.inventory_policy == 'continue' -%}
-                      <span class="pp-rel-pill pp-rel-pill--made-to-order">Made to Order</span>
-                    {%- else -%}
-                      <span class="pp-rel-pill pp-rel-pill--in-stock">In Stock</span>
-                    {%- endif -%}
+                  {%- assign rec_is_mto = false -%}
+                  {%- if recommendation.tags contains 'Made to Order' or recommendation.tags contains 'made to order' or recommendation.tags contains 'made-to-order' -%}
+                    {%- assign rec_is_mto = true -%}
+                  {%- endif -%}
+                  {%- assign rec_is_out_of_stock = false -%}
+                  {%- if rec_variant.available == false -%}
+                    {%- assign rec_is_out_of_stock = true -%}
+                  {%- elsif rec_variant.inventory_management != blank and rec_variant.inventory_quantity != blank and rec_variant.inventory_quantity <= 0 and rec_is_mto == false -%}
+                    {%- assign rec_is_out_of_stock = true -%}
+                  {%- endif -%}
+
+                  {%- if rec_is_out_of_stock -%}
+                    <span class="pp-rel-pill pp-rel-pill--sold-out pp-rel-pill--out-of-stock">Out of Stock</span>
+                  {%- elsif rec_is_mto and rec_variant.inventory_policy == 'continue' -%}
+                    <span class="pp-rel-pill pp-rel-pill--made-to-order">Made to Order</span>
                   {%- else -%}
-                    <span class="pp-rel-pill pp-rel-pill--sold-out">Sold Out</span>
+                    <span class="pp-rel-pill pp-rel-pill--in-stock">In Stock</span>
                   {%- endif -%}
                 </div>
                 {% assign rev_count = recommendation.id | modulo: 80 | plus: 48 %}
@@ -481,7 +490,8 @@
     background: #FFF3E0 !important;
     color: #E65100 !important;
   }
-  .pp-rel-pill--sold-out {
+  .pp-rel-pill--sold-out,
+  .pp-rel-pill--out-of-stock {
     background: #FFEBEE !important;
     color: #C62828 !important;
   }
