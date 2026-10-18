@@ -848,7 +848,21 @@
       // Enter loading state to prevent double clicks
       btn.disabled = true;
       const originalText = btn.querySelector('.dt-btn-text').textContent;
-      btn.querySelector('.dt-btn-text').textContent = 'CONNECTING TO RESERVATION SERVICE...';
+      btn.querySelector('.dt-btn-text').textContent = 'CONNECTING TO PAYTM...';
+
+      // Persist customer details in sessionStorage so we can show them upon redirect return
+      try {
+        sessionStorage.setItem('sw_dt_pending_booking', JSON.stringify({
+          name: name,
+          phone: phone,
+          email: email,
+          variant_id: currentVariantData.id,
+          sku: currentVariantData.sku,
+          timestamp: Date.now()
+        }));
+      } catch (e) {}
+
+      const returnUrl = window.location.origin + window.location.pathname;
 
       const payload = {
         product_id: CONFIG.productId,
@@ -858,11 +872,14 @@
         customer_name: name,
         customer_phone: '+91' + phone,
         customer_email: email,
-        source: 'shopify_storefront'
+        source: 'shopify_storefront',
+        gateway: 'paytm',
+        redirect_url: returnUrl,
+        callback_url: returnUrl
       };
 
       try {
-        // Dispatch real booking request to CRM backend endpoint
+        // Dispatch booking order creation to CRM backend endpoint
         const res = await fetch(CONFIG.crmEndpoint + '/create-booking-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -870,7 +887,7 @@
         });
 
         if (!res.ok) {
-          let errorMsg = 'Unable to initiate reservation. The CRM service may be undergoing configuration. Please try again shortly or contact support on WhatsApp.';
+          let errorMsg = 'Unable to initiate Paytm reservation. Please try again shortly or contact support on WhatsApp.';
           try {
             const errData = await res.json();
             if (errData && errData.message) errorMsg = errData.message;
@@ -881,72 +898,121 @@
 
         const orderData = await res.json();
 
-        if (orderData && orderData.gateway_key && orderData.razorpay_order_id && window.Razorpay) {
-          // Launch standard Razorpay payment gateway
-          const options = {
-            key: orderData.gateway_key,
-            amount: CONFIG.bookingAmountCents, // 100000 paise (₹1,000)
-            currency: 'INR',
-            name: 'Swastik Jewels',
-            description: 'Dhanteras Advance Reservation for ' + currentVariantData.sku,
-            order_id: orderData.razorpay_order_id,
-            prefill: {
-              name: name,
-              email: email,
-              contact: '+91' + phone
-            },
-            theme: { color: '#013F3E' },
-            handler: async function (response) {
-              btn.disabled = true;
-              btn.querySelector('.dt-btn-text').textContent = 'VERIFYING PAYMENT WITH SERVER...';
-              
-              try {
-                // Server-Side Verification Call to CRM
-                const verifyRes = await fetch(CONFIG.crmEndpoint + '/verify-payment', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                  body: JSON.stringify({
-                    booking_id: orderData.booking_id,
-                    razorpay_payment_id: response.razorpay_payment_id,
-                    razorpay_order_id: response.razorpay_order_id,
-                    razorpay_signature: response.razorpay_signature
-                  })
-                });
-
-                if (verifyRes.ok) {
-                  const verifyData = await verifyRes.json();
-                  showBookingSuccess(verifyData.booking_id || orderData.booking_id, email);
-                } else {
-                  showError('Payment verification was not confirmed by the server. If ₹1,000 was debited, your gateway payment ID is: ' + response.razorpay_payment_id + '. Please contact customer care with this reference.');
-                }
-              } catch (verifyErr) {
-                showError('Network error verifying payment with server. If amount was debited, reference ID: ' + response.razorpay_payment_id + '. Please contact support.');
-              } finally {
-                btn.disabled = false;
-                btn.querySelector('.dt-btn-text').textContent = originalText;
-              }
-            },
-            modal: {
-              ondismiss: function () {
-                btn.disabled = false;
-                btn.querySelector('.dt-btn-text').textContent = originalText;
-              }
-            }
-          };
-          const rzp = new window.Razorpay(options);
-          rzp.open();
-        } else if (orderData && orderData.checkout_url) {
-          // If CRM returns a direct payment checkout URL (e.g. Cashfree / PayU / Hosted session)
-          window.location.href = orderData.checkout_url;
-        } else {
-          showError('Invalid gateway configuration returned by CRM server. Please contact support.');
+        // 1. Paytm Hosted Payment / Direct Checkout URL (Recommended)
+        const paytmRedirectUrl = orderData.checkout_url || orderData.payment_url || orderData.paytm_url || orderData.redirect_url;
+        if (orderData && paytmRedirectUrl) {
+          btn.querySelector('.dt-btn-text').textContent = 'REDIRECTING TO PAYTM...';
+          window.location.href = paytmRedirectUrl;
+          return;
         }
+
+        // 2. Paytm Standard Form POST (if CRM returns post URL and form parameters)
+        if (orderData && orderData.paytm_post_url && orderData.paytm_params) {
+          btn.querySelector('.dt-btn-text').textContent = 'REDIRECTING TO PAYTM...';
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = orderData.paytm_post_url;
+          form.style.display = 'none';
+          for (const key in orderData.paytm_params) {
+            if (Object.prototype.hasOwnProperty.call(orderData.paytm_params, key)) {
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = key;
+              input.value = orderData.paytm_params[key];
+              form.appendChild(input);
+            }
+          }
+          document.body.appendChild(form);
+          form.submit();
+          return;
+        }
+
+        // 3. Optional fallback for Razorpay popup if returned
+        if (orderData && orderData.gateway_key && (orderData.razorpay_order_id || orderData.order_id)) {
+          if (!window.Razorpay) {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            document.head.appendChild(script);
+            await new Promise(r => script.onload = r);
+          }
+          if (window.Razorpay) {
+            const options = {
+              key: orderData.gateway_key,
+              amount: orderData.amount || CONFIG.bookingAmountCents,
+              currency: orderData.currency || 'INR',
+              name: 'Swastik Jewels',
+              description: 'Dhanteras Advance Reservation for ' + currentVariantData.sku,
+              order_id: orderData.razorpay_order_id || orderData.order_id,
+              prefill: { name: name, email: email, contact: '+91' + phone },
+              theme: { color: '#013F3E' },
+              handler: async function (response) {
+                showBookingSuccess(orderData.booking_id, email);
+              }
+            };
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+            return;
+          }
+        }
+
+        showError(orderData.message || 'Invalid gateway configuration returned by CRM server. Please contact support.');
       } catch (err) {
         showError('Reservation service is unreachable. Please verify network connectivity or contact support on WhatsApp.');
         console.error('[Dhanteras Booking] Connection error:', err);
       } finally {
         btn.disabled = false;
         btn.querySelector('.dt-btn-text').textContent = originalText;
+      }
+    }
+
+    function checkRedirectReturnStatus() {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookingStatus = (urlParams.get('booking_status') || urlParams.get('booking') || urlParams.get('STATUS') || '').toLowerCase();
+        const bookingId = urlParams.get('booking_id') || urlParams.get('order_id') || urlParams.get('ORDERID');
+        const respCode = urlParams.get('RESPCODE');
+
+        // Paytm successful payment status
+        const isSuccess = (
+          bookingStatus === 'success' ||
+          bookingStatus === 'confirmed' ||
+          bookingStatus === 'txn_success' ||
+          respCode === '01'
+        );
+
+        if (isSuccess && bookingId) {
+          let customerEmail = urlParams.get('customer_email') || urlParams.get('email') || '';
+          try {
+            const pendingStr = sessionStorage.getItem('sw_dt_pending_booking');
+            if (pendingStr) {
+              const pending = JSON.parse(pendingStr);
+              if (pending && pending.email && !customerEmail) customerEmail = pending.email;
+              sessionStorage.removeItem('sw_dt_pending_booking');
+            }
+          } catch(e) {}
+
+          const overlay = document.getElementById('DhanterasBookingModalOverlay');
+          if (overlay) {
+            showBookingSuccess(bookingId, customerEmail || 'your email');
+            overlay.classList.add('is-active');
+            document.body.style.overflow = 'hidden';
+          }
+
+          // Clean URL parameters without reloading
+          if (window.history && window.history.replaceState) {
+            const cleanUrl = window.location.origin + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+          }
+        } else if (bookingStatus === 'failed' || bookingStatus === 'txn_failure') {
+          const overlay = document.getElementById('DhanterasBookingModalOverlay');
+          if (overlay) {
+            overlay.classList.add('is-active');
+            document.body.style.overflow = 'hidden';
+            showError('Paytm payment was not completed or was cancelled. If ₹1,000 was debited, it will be refunded back to your source account within 24–48 hours.');
+          }
+        }
+      } catch (err) {
+        console.warn('[Dhanteras Booking] Return status error:', err);
       }
     }
 
@@ -1025,6 +1091,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
       initCountdownTimer();
+      checkRedirectReturnStatus();
 
       const closeBtn = document.getElementById('dt-modal-close');
       const backdrop = document.getElementById('dt-modal-backdrop');

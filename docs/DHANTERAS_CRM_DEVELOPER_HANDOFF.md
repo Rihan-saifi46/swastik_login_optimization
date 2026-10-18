@@ -18,8 +18,8 @@
 | **Customer Contact Capture (Name, WhatsApp, Email)** | Shopify Theme (`snippets/dhanteras-booking-modal.liquid`) | **IMPLEMENTED** |
 | **Out-of-Stock & Reserved State Handling** | Shopify Theme (`sections/product.liquid`) | **IMPLEMENTED** |
 | **Order Creation API (`POST /create-booking-order`)** | **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
-| **Payment Gateway Integration (Razorpay/Cashfree Order)**| **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
-| **Webhook Signature Verification (`POST /verify-payment`)**| **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
+| **Payment Gateway Integration (Paytm Payment Gateway)** | **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
+| **Paytm Callback & Checksum Verification (`POST /paytm-callback`)**| **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
 | **Single-Piece Inventory Locking (Shopify Admin API)** | **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
 | **Customer Booking Record & Status Lifecycle** | **CRM Database** | **REQUIRED** |
 | **4-Hour Flash Sale Validation (Nov 6, 2–6 PM IST)** | **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
@@ -33,7 +33,7 @@
 ### Endpoint 1: Initiate Booking Order
 * **HTTP Method**: `POST`
 * **Route**: `/api/dhanteras/create-booking-order`
-* **Purpose**: Called by the storefront booking modal when the customer clicks **"PAY ₹1,000 TO RESERVE NOW"**. Validates single-piece availability and creates a ₹1,000 payment order on the gateway.
+* **Purpose**: Called by the storefront booking modal when customer clicks **"PAY ₹1,000 TO RESERVE NOW"**. Validates single-piece availability and creates a ₹1,000 Paytm order transaction.
 
 #### Request Payload (sent from frontend):
 ```json
@@ -45,28 +45,49 @@
   "customer_name": "Aditi Sharma",
   "customer_phone": "+919876543210",
   "customer_email": "aditi@example.com",
-  "source": "shopify_storefront"
+  "source": "shopify_storefront",
+  "gateway": "paytm",
+  "redirect_url": "https://swastikjewel.in/products/exclusive-diamond-necklace"
 }
 ```
 
 #### Backend Requirements:
 1. **Inventory Pre-Check**: Call Shopify Admin API (`GET /admin/api/2024-01/inventory_levels.json`) to confirm that the requested `variant_id` currently has `available >= 1`.
 2. **Concurrent Lock Prevention**: In the CRM database, ensure no other booking exists with status `CONFIRMED` or `PENDING_PAYMENT` (within a 10-minute hold window) for the same `variant_id`.
-3. **Gateway Order Generation**: Call Razorpay API (`POST /v1/orders`) or Cashfree API to create an order for `100000` paise (₹1,000.00 INR).
+3. **Paytm Order Initiation**: Call Paytm Initiate Transaction API (`/theia/api/v1/initiateTransaction`) or generate a Paytm Checkout / Payment Link for ₹1,000.00 INR.
 4. **CRM Database Insertion**: Insert a booking record with status `PENDING_PAYMENT`.
 
-#### Success Response (HTTP 200):
+#### Success Response Options (HTTP 200):
+
+**Option A (Recommended — Direct Redirect URL):**
 ```json
 {
   "status": "success",
   "booking_id": "SW-DT-2026-894102",
-  "razorpay_order_id": "order_EKmOWWDw3nQ6YJ",
-  "gateway_key": "rzp_live_xxxxxxxxxxxx",
-  "amount": 100000,
-  "currency": "INR"
+  "checkout_url": "https://securegw.paytm.in/theia/api/v1/showPaymentPage?mid=YOUR_MID&orderId=SW-DT-2026-894102&txnToken=YOUR_TXN_TOKEN"
 }
 ```
-*(If using a hosted redirect gateway instead of an in-page modal, the backend can return `{ "status": "success", "checkout_url": "https://..." }`).*
+*(The storefront immediately redirects customer to this URL via `window.location.href`).*
+
+**Option B (Paytm Standard Form POST):**
+```json
+{
+  "status": "success",
+  "booking_id": "SW-DT-2026-894102",
+  "paytm_post_url": "https://securegw.paytm.in/theia/processTransaction",
+  "paytm_params": {
+    "MID": "YOUR_MID",
+    "ORDER_ID": "SW-DT-2026-894102",
+    "TXN_AMOUNT": "1000.00",
+    "WEBSITE": "DEFAULT",
+    "CHANNEL_ID": "WEB",
+    "INDUSTRY_TYPE_ID": "Retail",
+    "CHECKSUMHASH": "e7c65c2b6a22...",
+    "CALLBACK_URL": "https://backend-api.swastikjewel.in/api/dhanteras/paytm-callback"
+  }
+}
+```
+*(The storefront automatically constructs and posts a hidden form to Paytm).*
 
 #### Error Response Expected by Frontend:
 ```json
@@ -85,52 +106,56 @@
 
 ---
 
-### Endpoint 2: Server-Side Payment Verification & Inventory Locking
+### Endpoint 2: Paytm Callback, Checksum Verification & Inventory Locking
 * **HTTP Method**: `POST`
-* **Route**: `/api/dhanteras/verify-payment`
-* **Purpose**: Verifies that the ₹1,000 payment succeeded, transitions booking status to `CONFIRMED`, and atomically locks the 1-of-1 inventory in Shopify.
-
-#### Request Payload (sent from frontend or gateway webhook):
-```json
-{
-  "booking_id": "SW-DT-2026-894102",
-  "razorpay_payment_id": "pay_EKmUq7u9yUvBqw",
-  "razorpay_order_id": "order_EKmOWWDw3nQ6YJ",
-  "razorpay_signature": "e7c65c2b6a22..."
-}
-```
+* **Route**: `/api/dhanteras/paytm-callback` (or configured Paytm Callback URL)
+* **Purpose**: Receives transaction response from Paytm, cryptographically verifies checksum signature, transitions booking status to `CONFIRMED`, atomically locks the 1-of-1 inventory in Shopify, and redirects customer back to the storefront confirmation screen.
 
 #### Backend Requirements:
-1. **Cryptographic Signature Verification**:
+1. **Paytm Checksum Verification**:
    ```javascript
-   const crypto = require('crypto');
-   const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
-   hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
-   const generatedSignature = hmac.digest('hex');
-   if (generatedSignature !== razorpay_signature) {
-     return res.status(400).json({ status: 'error', message: 'Invalid payment signature' });
+   const PaytmChecksum = require('paytmchecksum');
+   
+   const paytmParams = req.body;
+   const paytmChecksum = paytmParams.CHECKSUMHASH;
+   delete paytmParams.CHECKSUMHASH;
+
+   const isVerifySignature = PaytmChecksum.verifySignatureByString(
+     JSON.stringify(paytmParams), 
+     process.env.PAYTM_MERCHANT_KEY, 
+     paytmChecksum
+   );
+
+   if (!isVerifySignature) {
+     return res.status(400).send("Checksum Mismatch");
    }
    ```
-2. **Idempotency**: If `booking_id` is already `CONFIRMED`, return success without re-executing inventory decrements.
-3. **Shopify Inventory Locking (Admin REST or GraphQL API)**:
+2. **Status Check**:
+   If `paytmParams.STATUS === 'TXN_SUCCESS'` (or `RESPCODE === '01'`):
+3. **Idempotency**: If `booking_id` is already `CONFIRMED`, skip re-executing inventory decrements.
+4. **Shopify Inventory Locking (Admin REST or GraphQL API)**:
    * Call `POST /admin/api/2024-01/inventory_levels/set.json`:
      Set `available = 0` for this variant at the primary location.
    * Call `PUT /admin/api/2024-01/products/{product_id}.json`:
-     Add tag: `dhanteras-reserved:SW-DT-2026-894102`.
-4. **CRM Database Update**:
+     Add tag: `dhanteras-reserved:<booking_id>`.
+5. **CRM Database Update**:
    * Set status to `CONFIRMED`.
-   * Save `payment_id`, `paid_at: ISO8601`, `booking_amount: 1000`.
-5. **Customer Dispatch**:
+   * Save `paytm_txn_id: paytmParams.TXNID`, `bank_txn_id: paytmParams.BANKTXNID`, `paid_at: ISO8601`, `booking_amount: 1000`.
+6. **Customer Notification**:
    * Trigger WhatsApp confirmation message via Wati/Interakt/Gupshup:
      *"Namaste Aditi, your exclusive piece (SKU: SJ-100) is reserved for Dhanteras! Booking ID: SW-DT-2026-894102. Your 30% discount purchase window opens on Nov 6, 2:00 PM - 6:00 PM IST."*
+7. **Redirect to Storefront Confirmation**:
+   The CRM redirects the browser back to the product page with success parameters:
+   ```javascript
+   const redirectUrl = storedBooking.redirect_url || 'https://swastikjewel.in';
+   res.redirect(`${redirectUrl}?booking_status=success&booking_id=${storedBooking.booking_id}`);
+   ```
+   *(The storefront automatically catches `booking_status=success` and pops open the Confirmation screen with the Booking ID).*
 
-#### Success Response (HTTP 200):
-```json
-{
-  "status": "success",
-  "booking_id": "SW-DT-2026-894102",
-  "message": "Reservation confirmed and piece locked successfully."
-}
+   If payment failed or cancelled:
+   ```javascript
+   res.redirect(`${storedBooking.redirect_url}?booking_status=failed&booking_id=${storedBooking.booking_id}`);
+   ```
 ```
 
 ---
