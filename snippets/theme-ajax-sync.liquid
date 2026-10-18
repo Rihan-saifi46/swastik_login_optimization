@@ -724,13 +724,18 @@
     }
 
     function triggerLoginAndRedirectCheckout() {
-      // Store intent in sessionStorage for reliable post-login redirection
-      sessionStorage.setItem('post_login_redirect', '/checkout');
+      // Store intent in sessionStorage for reliable post-login redirection with applied coupon
+      const appliedCoupon = localStorage.getItem('swastik_applied_coupon') || sessionStorage.getItem('swastik_applied_coupon') || '';
+      let targetCheckoutUrl = '/checkout';
+      if (appliedCoupon) {
+        targetCheckoutUrl += '?discount=' + encodeURIComponent(appliedCoupon);
+      }
+      sessionStorage.setItem('post_login_redirect', targetCheckoutUrl);
       
       const accountEl = document.getElementById('storefront-shopify-account');
       if (accountEl) {
         // Dynamically update the sign-in URL redirection parameter (fallback)
-        accountEl.setAttribute('sign-in-url', '/customer_authentication/login?return_to=/checkout');
+        accountEl.setAttribute('sign-in-url', '/customer_authentication/login?return_to=' + encodeURIComponent(targetCheckoutUrl));
 
         // Trigger the login overlay via click on the profile icon
         const trigger = accountEl.querySelector('[slot="signed-out-avatar"]');
@@ -739,7 +744,7 @@
         }
       } else {
         // Fallback redirection to hosted login
-        window.location.href = '/customer_authentication/login?return_to=/checkout';
+        window.location.href = '/customer_authentication/login?return_to=' + encodeURIComponent(targetCheckoutUrl);
       }
     }
 

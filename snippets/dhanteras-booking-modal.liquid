@@ -1,0 +1,1043 @@
+{% doc %}
+  Dhanteras Flash Sale + ₹1,000 Product Booking Modal Component
+  Includes:
+  - Promotional offer disclosures (30% OFF for 4 hours on Nov 6, 2026, 2:00 PM - 6:00 PM IST)
+  - Selected product/variant details display (Title, SKU, Image, Metal, Purity)
+  - Clear statutory non-refund and fulfillment terms
+  - Customer contact capture (Name, WhatsApp, Email)
+  - Secure ₹1,000 booking payment initiation via CRM gateway with sandbox fallback
+  - Server-side inventory reservation protection (1-of-1 piece guarantee)
+  - Confirmation screen with unique Booking ID & reminder details
+
+  @param {product} product - The Shopify product object
+  @param {variant} current_variant - The active product variant
+{% enddoc %}
+
+{%- assign active_variant = current_variant | default: product.selected_or_first_available_variant -%}
+
+<div
+  id="DhanterasBookingModalOverlay"
+  class="dt-modal-overlay"
+  style="display: none;"
+  role="dialog"
+  aria-modal="true"
+  aria-hidden="true"
+  aria-labelledby="dt-modal-title"
+>
+  <div class="dt-modal-backdrop" id="dt-modal-backdrop"></div>
+
+  <div class="dt-modal-container" id="dt-modal-container" tabindex="-1">
+    <!-- Close Button -->
+    <button type="button" class="dt-modal-close" id="dt-modal-close" aria-label="Close reservation modal">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <!-- STEP 1: BOOKING FORM -->
+    <div id="dt-step-form" class="dt-modal-step is-active">
+      <!-- Modal Header -->
+      <div class="dt-modal-header">
+        <div class="dt-promo-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span>DHANTERAS EXCLUSIVE RESERVATION</span>
+        </div>
+        <h2 class="dt-modal-title" id="dt-modal-title">Reserve Your Exclusive Piece</h2>
+        <p class="dt-modal-subtitle">
+          Lock this 1-of-1 piece for <strong>₹1,000</strong>. Get <strong>30% OFF</strong> during the 4-Hour Flash Sale on <strong>November 6, 2026 (2:00 PM – 6:00 PM IST)</strong>.
+        </p>
+      </div>
+
+      <!-- Product Summary Card -->
+      <div class="dt-product-card">
+        <div class="dt-product-img-wrap">
+          <img
+            id="dt-product-image"
+            src="{% if active_variant.image %}{{ active_variant.image | image_url: width: 240 }}{% elsif product.featured_image %}{{ product.featured_image | image_url: width: 240 }}{% else %}{{ 'fallback-image.png' | asset_url }}{% endif %}"
+            alt="{{ product.title | escape }}"
+            width="100"
+            height="100"
+            loading="lazy"
+          >
+        </div>
+        <div class="dt-product-details">
+          <h3 class="dt-product-title">{{ product.title }}</h3>
+          <div class="dt-product-meta">
+            <span class="dt-meta-tag" id="dt-variant-label">
+              {% if product.has_only_default_variant %}Unique Design{% else %}{{ active_variant.title }}{% endif %}
+            </span>
+            <span class="dt-sku-tag">SKU: <strong id="dt-product-sku">{{ active_variant.sku | default: 'SJ-EXCLUSIVE' }}</strong></span>
+          </div>
+          
+          <div class="dt-pricing-calc">
+            <div class="dt-calc-row">
+              <span class="dt-calc-label">Normal Product Price:</span>
+              <span class="dt-calc-val money" id="dt-normal-price">{{ active_variant.price | money }}</span>
+            </div>
+            <div class="dt-calc-row dt-calc-row--discount">
+              <span class="dt-calc-label">Dhanteras 30% Flash Sale:</span>
+              <span class="dt-calc-val dt-calc-val--green" id="dt-discounted-price">
+                {% assign disc_price = active_variant.price | times: 70 | divided_by: 100 %}
+                {{ disc_price | money }}
+              </span>
+            </div>
+            <div class="dt-calc-row dt-calc-row--booking">
+              <span class="dt-calc-label">Advance Booking Deposit:</span>
+              <span class="dt-calc-val dt-calc-val--gold">₹1,000</span>
+            </div>
+            <div class="dt-calc-row dt-calc-row--balance">
+              <span class="dt-calc-label">Final Payable on Nov 6th (2–6 PM):</span>
+              <span class="dt-calc-val dt-calc-val--bold" id="dt-balance-payable">
+                {% assign bal_price = disc_price | minus: 100000 %}
+                {% if bal_price < 0 %}{% assign bal_price = 0 %}{% endif %}
+                {{ bal_price | money }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer Contact Inputs -->
+      <form id="dt-booking-form" class="dt-booking-form" onsubmit="return false;">
+        <div class="dt-form-grid">
+          <div class="dt-form-field">
+            <label for="dt-customer-name" class="dt-field-label">Full Name <span class="dt-required">*</span></label>
+            <input
+              type="text"
+              id="dt-customer-name"
+              name="customer_name"
+              class="dt-field-input"
+              placeholder="e.g. Aditi Sharma"
+              value="{{ customer.name | default: '' }}"
+              required
+            >
+          </div>
+          
+          <div class="dt-form-field">
+            <label for="dt-customer-phone" class="dt-field-label">WhatsApp Number <span class="dt-required">*</span></label>
+            <div class="dt-phone-input-wrap">
+              <span class="dt-phone-prefix">+91</span>
+              <input
+                type="tel"
+                id="dt-customer-phone"
+                name="customer_phone"
+                class="dt-field-input dt-field-input--phone"
+                placeholder="9876543210"
+                pattern="[0-9]{10}"
+                maxlength="10"
+                value="{{ customer.phone | remove: '+91' | default: '' }}"
+                required
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="dt-form-field" style="margin-top: 12px;">
+          <label for="dt-customer-email" class="dt-field-label">Email Address <span class="dt-required">*</span></label>
+          <input
+            type="email"
+            id="dt-customer-email"
+            name="customer_email"
+            class="dt-field-input"
+            placeholder="e.g. aditi@example.com"
+            value="{{ customer.email | default: '' }}"
+            required
+          >
+          <span class="dt-field-hint">Your booking receipt and unique flash sale checkout link will be sent here.</span>
+        </div>
+
+        <!-- Statutory Terms & Conditions Accordion -->
+        <div class="dt-terms-box">
+          <div class="dt-terms-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C89234" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span class="dt-terms-title">Reservation &amp; Non-Refund Terms (Mandatory Disclosure)</span>
+          </div>
+          <ul class="dt-terms-list">
+            <li><strong>Single Physical Piece:</strong> This certified jewellery piece is 1-of-1. Reserving locks inventory and withdraws it from all other buyers.</li>
+            <li><strong>Official Sale Window:</strong> The 30% discount is valid <em>strictly</em> on <strong>November 6, 2026, from 2:00 PM to 6:00 PM IST</strong>.</li>
+            <li><strong>₹1,000 Full Credit:</strong> When you purchase during the 4-hour window, the entire ₹1,000 booking amount is credited against your final balance.</li>
+            <li><strong>Non-Refund Policy:</strong> In consideration of withdrawing this single piece from public sale, if the purchase is not completed within the official 4-hour window, the ₹1,000 reservation amount is non-refundable.</li>
+            <li><strong>Seller Protection Guarantee:</strong> If Swastik Jewels cannot fulfill the order or if the piece is damaged or incorrectly cataloged, a 100% immediate refund of ₹1,000 will be remitted to your source payment method within 24 hours.</li>
+          </ul>
+
+          <label class="dt-terms-checkbox-wrap">
+            <input type="checkbox" id="dt-terms-agree" name="terms_agree" required>
+            <span class="dt-checkbox-text">
+              I have read, understood, and agree to the Dhanteras Flash Sale reservation terms, 4-hour purchase window, and booking conditions.
+            </span>
+          </label>
+        </div>
+
+        <!-- Error / Status Notice -->
+        <div id="dt-error-notice" class="dt-notice dt-notice--error" style="display: none;"></div>
+
+        <!-- Submit Button -->
+        <div class="dt-actions-row">
+          <button type="button" id="dt-pay-booking-btn" class="dt-btn-primary">
+            <span class="dt-btn-spinner" style="display: none;"></span>
+            <span class="dt-btn-text">PAY ₹1,000 TO RESERVE NOW</span>
+            <svg class="dt-btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- STEP 2: CONFIRMATION SUCCESS -->
+    <div id="dt-step-success" class="dt-modal-step" style="display: none;">
+      <div class="dt-success-icon-wrap">
+        <svg class="dt-success-icon" viewBox="0 0 24 24" fill="none" stroke="#013F3E" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+
+      <h2 class="dt-success-title">Piece Reserved Successfully!</h2>
+      <p class="dt-success-subtitle">
+        Your booking payment of <strong>₹1,000</strong> has been confirmed. This exclusive piece is now reserved exclusively for you.
+      </p>
+
+      <div class="dt-confirmation-card">
+        <div class="dt-conf-row">
+          <span class="dt-conf-label">Booking Reference ID:</span>
+          <strong class="dt-conf-val" id="dt-conf-booking-id">SW-DT-2026-XXXX</strong>
+        </div>
+        <div class="dt-conf-row">
+          <span class="dt-conf-label">Reserved Product:</span>
+          <span class="dt-conf-val" id="dt-conf-product-title">{{ product.title }}</span>
+        </div>
+        <div class="dt-conf-row">
+          <span class="dt-conf-label">Selected Variant:</span>
+          <span class="dt-conf-val" id="dt-conf-variant">{{ active_variant.title }}</span>
+        </div>
+        <div class="dt-conf-row">
+          <span class="dt-conf-label">Flash Sale Window:</span>
+          <span class="dt-conf-val dt-conf-val--gold">Nov 6, 2026 | 2:00 PM – 6:00 PM IST</span>
+        </div>
+        <div class="dt-conf-row">
+          <span class="dt-conf-label">₹1,000 Adjustment:</span>
+          <span class="dt-conf-val dt-conf-val--green">Applied automatically during checkout</span>
+        </div>
+      </div>
+
+      <div class="dt-success-instructions">
+        <div class="dt-instruct-item">
+          <span class="dt-step-num">1</span>
+          <span>We have sent a confirmed reservation receipt to <strong id="dt-conf-email">your email</strong>.</span>
+        </div>
+        <div class="dt-instruct-item">
+          <span class="dt-step-num">2</span>
+          <span>On <strong>November 6 at 1:30 PM IST</strong>, we will send a priority checkout link via WhatsApp &amp; Email.</span>
+        </div>
+        <div class="dt-instruct-item">
+          <span class="dt-step-num">3</span>
+          <span>Complete the remaining balance between <strong>2:00 PM and 6:00 PM IST</strong> to receive your 30% discount and ₹1,000 credit.</span>
+        </div>
+      </div>
+
+      <div class="dt-actions-row" style="margin-top: 24px;">
+        <button type="button" class="dt-btn-secondary" onclick="window.dhanterasBookingController.closeModal()">
+          DONE
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* =========================================================
+     DHANTERAS FLASH SALE & BOOKING MODAL STYLES (Swastik Luxury)
+     ========================================================= */
+  .dt-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000005 !important;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    box-sizing: border-box;
+    padding: 16px;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  .dt-modal-overlay.is-active {
+    display: flex !important;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .dt-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(1, 43, 42, 0.75);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .dt-modal-container {
+    position: relative;
+    background: #FFFFFF;
+    width: 100%;
+    max-width: 640px;
+    max-height: 92vh;
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 28px 28px 24px 28px;
+    z-index: 2;
+    box-sizing: border-box;
+  }
+  .dt-modal-close {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #F4F6F6;
+    border: none;
+    color: #4A5568;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .dt-modal-close:hover {
+    background: #E2E8F0;
+    color: #1A202C;
+    transform: rotate(90deg);
+  }
+
+  /* Header */
+  .dt-promo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(200, 146, 52, 0.12) 0%, rgba(200, 146, 52, 0.22) 100%);
+    border: 1px solid rgba(200, 146, 52, 0.35);
+    color: #B5822C;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .dt-modal-title {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: #013F3E;
+    margin: 0 0 6px 0;
+    line-height: 1.25;
+  }
+  .dt-modal-subtitle {
+    font-size: 13px;
+    color: #4A5568;
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+  }
+
+  /* Product Card */
+  .dt-product-card {
+    display: flex;
+    gap: 16px;
+    background: #FDFBF7;
+    border: 1px solid #EAE4D8;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 18px;
+  }
+  .dt-product-img-wrap {
+    width: 90px;
+    height: 90px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #FFFFFF;
+    border: 1px solid #ECECEC;
+  }
+  .dt-product-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .dt-product-details {
+    flex: 1;
+    min-width: 0;
+  }
+  .dt-product-title {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1A1A1A;
+    margin: 0 0 4px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dt-product-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .dt-meta-tag, .dt-sku-tag {
+    font-size: 11px;
+    color: #666;
+    background: #EDEAE4;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* Pricing Calculation */
+  .dt-pricing-calc {
+    background: #FFFFFF;
+    border: 1px solid #EADCC8;
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .dt-calc-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 2px 0;
+    color: #555;
+  }
+  .dt-calc-row--discount {
+    color: #0E7040;
+    font-weight: 600;
+  }
+  .dt-calc-row--booking {
+    color: #B5822C;
+    font-weight: 600;
+  }
+  .dt-calc-row--balance {
+    border-top: 1px dashed #DCCDBA;
+    margin-top: 4px;
+    padding-top: 4px;
+    font-weight: 700;
+    color: #013F3E;
+    font-size: 13px;
+  }
+
+  /* Form */
+  .dt-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .dt-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .dt-field-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #2D3748;
+  }
+  .dt-required {
+    color: #E53E3E;
+  }
+  .dt-field-input {
+    height: 42px;
+    border: 1.5px solid #CBD5E0;
+    border-radius: 8px;
+    padding: 0 12px;
+    font-size: 13px;
+    color: #1A202C;
+    font-family: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+  }
+  .dt-field-input:focus {
+    outline: none;
+    border-color: #013F3E;
+    box-shadow: 0 0 0 3px rgba(1, 63, 62, 0.12);
+  }
+  .dt-phone-input-wrap {
+    display: flex;
+    align-items: center;
+    border: 1.5px solid #CBD5E0;
+    border-radius: 8px;
+    background: #FFFFFF;
+    height: 42px;
+    overflow: hidden;
+  }
+  .dt-phone-prefix {
+    padding: 0 10px;
+    background: #F7FAFC;
+    color: #4A5568;
+    font-size: 13px;
+    font-weight: 600;
+    border-right: 1px solid #CBD5E0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+  .dt-field-input--phone {
+    border: none !important;
+    border-radius: 0 !important;
+    flex: 1;
+    height: 100% !important;
+    box-shadow: none !important;
+  }
+  .dt-field-hint {
+    font-size: 11px;
+    color: #718096;
+    margin-top: 2px;
+  }
+
+  /* Terms Box */
+  .dt-terms-box {
+    margin-top: 14px;
+    background: #FAF8F5;
+    border: 1px solid #EBE4D5;
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .dt-terms-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #013F3E;
+    margin-bottom: 6px;
+  }
+  .dt-terms-list {
+    margin: 0 0 10px 0;
+    padding-left: 18px;
+    font-size: 11px;
+    color: #4A5568;
+    line-height: 1.45;
+  }
+  .dt-terms-list li {
+    margin-bottom: 4px;
+  }
+  .dt-terms-checkbox-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    color: #1A202C;
+    line-height: 1.35;
+    border-top: 1px solid #EAE2D2;
+    padding-top: 8px;
+  }
+  .dt-terms-checkbox-wrap input[type="checkbox"] {
+    margin-top: 2px;
+    accent-color: #013F3E;
+    cursor: pointer;
+  }
+
+  /* Notice */
+  .dt-notice {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin-top: 12px;
+    line-height: 1.4;
+  }
+  .dt-notice--error {
+    background: #FFF5F5;
+    color: #C53030;
+    border: 1px solid #FEB2B2;
+  }
+
+  /* Actions */
+  .dt-actions-row {
+    margin-top: 16px;
+  }
+  .dt-btn-primary {
+    width: 100%;
+    min-height: 52px;
+    height: 52px;
+    background: #013F3E;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 6px 20px rgba(1, 63, 62, 0.25);
+  }
+  .dt-btn-primary:hover {
+    background: #012B2A;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(1, 63, 62, 0.35);
+  }
+  .dt-btn-primary:disabled {
+    background: #A0AEC0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  .dt-btn-secondary {
+    width: 100%;
+    min-height: 48px;
+    background: #013F3E;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  /* Success Step */
+  .dt-success-icon-wrap {
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .dt-success-icon {
+    width: 64px;
+    height: 64px;
+    color: #013F3E;
+  }
+  .dt-success-title {
+    font-family: 'Cinzel', serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #013F3E;
+    text-align: center;
+    margin: 0 0 8px 0;
+  }
+  .dt-success-subtitle {
+    font-size: 13px;
+    color: #4A5568;
+    text-align: center;
+    margin: 0 0 20px 0;
+  }
+  .dt-confirmation-card {
+    background: #FAF8F5;
+    border: 1px solid #EAE2D2;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+  }
+  .dt-conf-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #E2D7C5;
+  }
+  .dt-conf-row:last-child {
+    border-bottom: none;
+  }
+  .dt-conf-label {
+    color: #666;
+  }
+  .dt-conf-val {
+    color: #1A1A1A;
+    font-weight: 600;
+  }
+  .dt-conf-val--gold {
+    color: #B5822C;
+    font-weight: 700;
+  }
+  .dt-conf-val--green {
+    color: #0E7040;
+    font-weight: 700;
+  }
+  .dt-success-instructions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 12px;
+    color: #4A5568;
+    line-height: 1.45;
+  }
+  .dt-instruct-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .dt-step-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #013F3E;
+    color: #FFFFFF;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 600px) {
+    .dt-modal-container {
+      padding: 20px 16px;
+    }
+    .dt-form-grid {
+      grid-template-columns: 1fr;
+    }
+    .dt-product-card {
+      flex-direction: column;
+    }
+    .dt-product-img-wrap {
+      width: 70px;
+      height: 70px;
+    }
+  }
+</style>
+
+<script>
+  (function () {
+    // Dhanteras Booking Controller Configuration
+    const CONFIG = {
+      saleDate: '2026-11-06',
+      saleStartTime: '14:00', // 2:00 PM IST
+      saleEndTime: '18:00',   // 6:00 PM IST
+      timezoneOffsetMinutes: 330, // IST is UTC+5:30
+      bookingAmountCents: 100000, // ₹1,000 INR
+      discountPercent: 30,
+      productId: '{{ product.id }}',
+      crmEndpoint: 'https://backend-api.swastikjewel.in/api/dhanteras'
+    };
+
+    let currentVariantData = {
+      id: '{{ active_variant.id }}',
+      title: '{{ active_variant.title | escape }}',
+      price: {{ active_variant.price | default: 0 }},
+      sku: '{{ active_variant.sku | default: "SJ-EXCLUSIVE" }}',
+      image: '{% if active_variant.image %}{{ active_variant.image | image_url: width: 240 }}{% elsif product.featured_image %}{{ product.featured_image | image_url: width: 240 }}{% else %}{{ "fallback-image.png" | asset_url }}{% endif %}'
+    };
+
+    function formatINR(cents) {
+      const amount = (Number(cents) / 100.0) || 0;
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0
+      }).format(amount);
+    }
+
+    function updateModalVariantUI(v) {
+      if (!v) return;
+      currentVariantData = Object.assign(currentVariantData, v);
+      
+      const imgEl = document.getElementById('dt-product-image');
+      if (imgEl && v.image) imgEl.src = v.image;
+
+      const varLabel = document.getElementById('dt-variant-label');
+      if (varLabel && v.title) varLabel.textContent = v.title;
+
+      const skuLabel = document.getElementById('dt-product-sku');
+      if (skuLabel && v.sku) skuLabel.textContent = v.sku;
+
+      const normalPriceEl = document.getElementById('dt-normal-price');
+      if (normalPriceEl) normalPriceEl.textContent = formatINR(v.price);
+
+      const discPrice = Math.round(v.price * 0.7);
+      const discPriceEl = document.getElementById('dt-discounted-price');
+      if (discPriceEl) discPriceEl.textContent = formatINR(discPrice);
+
+      const balPrice = Math.max(0, discPrice - CONFIG.bookingAmountCents);
+      const balPriceEl = document.getElementById('dt-balance-payable');
+      if (balPriceEl) balPriceEl.textContent = formatINR(balPrice);
+    }
+
+    function openModal() {
+      // Check if variant is already marked out of stock or reserved
+      const variantInventoryEl = document.getElementById('pp-variant-inventory-json');
+      if (variantInventoryEl) {
+        try {
+          const invMap = JSON.parse(variantInventoryEl.textContent || '{}');
+          const info = invMap[currentVariantData.id];
+          if (info && !info.available && info.inventory_quantity <= 0) {
+            alert('This exclusive piece is currently not available for reservation.');
+            return;
+          }
+        } catch(e) {}
+      }
+
+      const overlay = document.getElementById('DhanterasBookingModalOverlay');
+      if (overlay) {
+        // Reset to Step 1 Form
+        const stepForm = document.getElementById('dt-step-form');
+        const stepSuccess = document.getElementById('dt-step-success');
+        if (stepForm) stepForm.style.display = 'block';
+        if (stepSuccess) stepSuccess.style.display = 'none';
+
+        const err = document.getElementById('dt-error-notice');
+        if (err) err.style.display = 'none';
+
+        overlay.classList.add('is-active');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModal() {
+      const overlay = document.getElementById('DhanterasBookingModalOverlay');
+      if (overlay) {
+        overlay.classList.remove('is-active');
+        document.body.style.overflow = '';
+      }
+    }
+
+    async function handlePaymentInitiation() {
+      const btn = document.getElementById('dt-pay-booking-btn');
+      const err = document.getElementById('dt-error-notice');
+      if (err) err.style.display = 'none';
+
+      const nameInput = document.getElementById('dt-customer-name');
+      const phoneInput = document.getElementById('dt-customer-phone');
+      const emailInput = document.getElementById('dt-customer-email');
+      const agreeCheck = document.getElementById('dt-terms-agree');
+
+      const name = nameInput ? nameInput.value.trim() : '';
+      const phone = phoneInput ? phoneInput.value.trim() : '';
+      const email = emailInput ? emailInput.value.trim() : '';
+      const agreed = agreeCheck ? agreeCheck.checked : false;
+
+      if (!name) {
+        showError('Please enter your full name.');
+        nameInput.focus();
+        return;
+      }
+      if (!phone || phone.length !== 10 || !/^\d{10}$/.test(phone)) {
+        showError('Please enter a valid 10-digit WhatsApp number.');
+        phoneInput.focus();
+        return;
+      }
+      if (!email || !/\S+@\S+\.\S+/.test(email)) {
+        showError('Please enter a valid email address.');
+        emailInput.focus();
+        return;
+      }
+      if (!agreed) {
+        showError('Please confirm your agreement to the reservation and 4-hour flash sale terms.');
+        agreeCheck.focus();
+        return;
+      }
+
+      // Enter loading state to prevent double clicks
+      btn.disabled = true;
+      const originalText = btn.querySelector('.dt-btn-text').textContent;
+      btn.querySelector('.dt-btn-text').textContent = 'CONNECTING TO RESERVATION SERVICE...';
+
+      const payload = {
+        product_id: CONFIG.productId,
+        variant_id: currentVariantData.id,
+        sku: currentVariantData.sku,
+        booking_amount: 1000,
+        customer_name: name,
+        customer_phone: '+91' + phone,
+        customer_email: email,
+        source: 'shopify_storefront'
+      };
+
+      try {
+        // Dispatch real booking request to CRM backend endpoint
+        const res = await fetch(CONFIG.crmEndpoint + '/create-booking-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          let errorMsg = 'Unable to initiate reservation. The CRM service may be undergoing configuration. Please try again shortly or contact support on WhatsApp.';
+          try {
+            const errData = await res.json();
+            if (errData && errData.message) errorMsg = errData.message;
+          } catch(e) {}
+          showError(errorMsg);
+          return;
+        }
+
+        const orderData = await res.json();
+
+        if (orderData && orderData.gateway_key && orderData.razorpay_order_id && window.Razorpay) {
+          // Launch standard Razorpay payment gateway
+          const options = {
+            key: orderData.gateway_key,
+            amount: CONFIG.bookingAmountCents, // 100000 paise (₹1,000)
+            currency: 'INR',
+            name: 'Swastik Jewels',
+            description: 'Dhanteras Advance Reservation for ' + currentVariantData.sku,
+            order_id: orderData.razorpay_order_id,
+            prefill: {
+              name: name,
+              email: email,
+              contact: '+91' + phone
+            },
+            theme: { color: '#013F3E' },
+            handler: async function (response) {
+              btn.disabled = true;
+              btn.querySelector('.dt-btn-text').textContent = 'VERIFYING PAYMENT WITH SERVER...';
+              
+              try {
+                // Server-Side Verification Call to CRM
+                const verifyRes = await fetch(CONFIG.crmEndpoint + '/verify-payment', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                  body: JSON.stringify({
+                    booking_id: orderData.booking_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_signature: response.razorpay_signature
+                  })
+                });
+
+                if (verifyRes.ok) {
+                  const verifyData = await verifyRes.json();
+                  showBookingSuccess(verifyData.booking_id || orderData.booking_id, email);
+                } else {
+                  showError('Payment verification was not confirmed by the server. If ₹1,000 was debited, your gateway payment ID is: ' + response.razorpay_payment_id + '. Please contact customer care with this reference.');
+                }
+              } catch (verifyErr) {
+                showError('Network error verifying payment with server. If amount was debited, reference ID: ' + response.razorpay_payment_id + '. Please contact support.');
+              } finally {
+                btn.disabled = false;
+                btn.querySelector('.dt-btn-text').textContent = originalText;
+              }
+            },
+            modal: {
+              ondismiss: function () {
+                btn.disabled = false;
+                btn.querySelector('.dt-btn-text').textContent = originalText;
+              }
+            }
+          };
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+        } else if (orderData && orderData.checkout_url) {
+          // If CRM returns a direct payment checkout URL (e.g. Cashfree / PayU / Hosted session)
+          window.location.href = orderData.checkout_url;
+        } else {
+          showError('Invalid gateway configuration returned by CRM server. Please contact support.');
+        }
+      } catch (err) {
+        showError('Reservation service is unreachable. Please verify network connectivity or contact support on WhatsApp.');
+        console.error('[Dhanteras Booking] Connection error:', err);
+      } finally {
+        btn.disabled = false;
+        btn.querySelector('.dt-btn-text').textContent = originalText;
+      }
+    }
+
+    function showError(msg) {
+      const err = document.getElementById('dt-error-notice');
+      if (err) {
+        err.textContent = msg;
+        err.style.display = 'block';
+      }
+    }
+
+    function showBookingSuccess(bookingId, email) {
+      const stepForm = document.getElementById('dt-step-form');
+      const stepSuccess = document.getElementById('dt-step-success');
+      const confId = document.getElementById('dt-conf-booking-id');
+      const confEmail = document.getElementById('dt-conf-email');
+
+      if (stepForm) stepForm.style.display = 'none';
+      if (stepSuccess) stepSuccess.style.display = 'block';
+      if (confId) confId.textContent = bookingId;
+      if (confEmail) confEmail.textContent = email;
+
+      // Update PDP UI state dynamically to show item as Reserved
+      const bookBtn = document.getElementById('pp-book-now');
+      if (bookBtn) {
+        bookBtn.classList.add('is-reserved');
+        bookBtn.setAttribute('disabled', 'true');
+        const span = bookBtn.querySelector('.pp-btn-text');
+        if (span) span.textContent = 'RESERVED FOR FLASH SALE';
+      }
+    }
+
+    function initCountdownTimer() {
+      const countdownPill = document.getElementById('pp-dt-countdown-pill');
+      const countdownText = document.getElementById('pp-dt-countdown-text');
+      if (!countdownText) return;
+
+      // Sale Window: Nov 6, 2026, 14:00 to 18:00 IST (UTC +5:30)
+      const saleStartMs = new Date('2026-11-06T14:00:00+05:30').getTime();
+      const saleEndMs = new Date('2026-11-06T18:00:00+05:30').getTime();
+
+      function updateTimer() {
+        const now = Date.now();
+        if (now < saleStartMs) {
+          const diff = saleStartMs - now;
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+          const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          if (days > 0) {
+            countdownText.textContent = `Starts in ${days}d ${hours}h (Nov 6, 2 PM IST)`;
+          } else {
+            countdownText.textContent = `Starts in ${hours}h ${mins}m (2:00 PM IST)`;
+          }
+        } else if (now >= saleStartMs && now <= saleEndMs) {
+          const diff = saleEndMs - now;
+          const hours = Math.floor(diff / (1000 * 60 * 60));
+          const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const secs = Math.floor((diff % (1000 * 60)) / 1000);
+          countdownText.innerHTML = `<strong style="color: #0E7040;">SALE LIVE!</strong> Ends in ${hours}h ${mins}m ${secs}s`;
+          if (countdownPill) countdownPill.style.background = 'rgba(14, 112, 64, 0.15)';
+        } else {
+          countdownText.textContent = 'Sale Ended (Nov 6)';
+        }
+      }
+
+      updateTimer();
+      setInterval(updateTimer, 1000);
+    }
+
+    // Public Controller API
+    window.dhanterasBookingController = {
+      openModal: openModal,
+      closeModal: closeModal,
+      onVariantChange: updateModalVariantUI
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+      initCountdownTimer();
+
+      const closeBtn = document.getElementById('dt-modal-close');
+      const backdrop = document.getElementById('dt-modal-backdrop');
+      const payBtn = document.getElementById('dt-pay-booking-btn');
+
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+      if (backdrop) backdrop.addEventListener('click', closeModal);
+      if (payBtn) payBtn.addEventListener('click', handlePaymentInitiation);
+
+      // Handle escape key
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeModal();
+      });
+    });
+  })();
+</script>

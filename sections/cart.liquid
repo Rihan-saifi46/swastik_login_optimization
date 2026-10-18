@@ -1128,17 +1128,6 @@
       } catch(e) {}
     }
 
-    // 3. Fallback welcome coupon if none from metafields
-    if (rawList.length === 0) {
-      rawList.push({
-        code: 'WELCOME10',
-        type: 'percentage',
-        value: 10,
-        short_description: 'Welcome 10% discount on handcrafted jewellery',
-        expiry_date: 'Limited time offer'
-      });
-    }
-
     // Normalize & Deduplicate
     const uniqueMap = new Map();
     rawList.forEach(item => {
@@ -1241,37 +1230,37 @@
     let appliedCoupon = null;
 
     if (appliedCode) {
-      appliedCoupon = availableCouponsList.find(c => c.code.toUpperCase() === appliedCode.toUpperCase()) || {
-        code: appliedCode,
-        type: 'percentage',
-        value: 10,
-        min_order_value: null,
-        short_description: 'Coupon code applied'
-      };
+      appliedCoupon = availableCouponsList.find(c => c.code.toUpperCase() === appliedCode.toUpperCase());
 
-      discountCents = calculateDiscount(appliedCoupon, currentSubtotalCents);
+      if (appliedCoupon) {
+        discountCents = calculateDiscount(appliedCoupon, currentSubtotalCents);
 
-      // Check min order value requirement
-      if (appliedCoupon.min_order_value && (currentSubtotalCents / 100) < appliedCoupon.min_order_value) {
-        showCouponMsg(`Add ₹${(appliedCoupon.min_order_value - (currentSubtotalCents / 100)).toLocaleString('en-IN')} more to use ${appliedCoupon.code}`, 'error');
-        discountCents = 0;
+        // Check min order value requirement
+        if (appliedCoupon.min_order_value && (currentSubtotalCents / 100) < appliedCoupon.min_order_value) {
+          showCouponMsg(`Add ₹${(appliedCoupon.min_order_value - (currentSubtotalCents / 100)).toLocaleString('en-IN')} more to use ${appliedCoupon.code}`, 'error');
+          discountCents = 0;
+        }
       }
     }
 
     if (appliedCode && discountCents > 0) {
       if (discountRow) {
         discountRow.style.display = 'flex';
-        if (discountTag) discountTag.textContent = appliedCoupon.code;
+        if (discountTag) discountTag.textContent = appliedCoupon ? appliedCoupon.code : appliedCode;
         if (discountVal) discountVal.textContent = '-' + formatMoney(discountCents);
       }
       if (appliedBanner) {
         appliedBanner.style.display = 'flex';
-        if (appliedCodeLabel) appliedCodeLabel.textContent = appliedCoupon.code;
+        if (appliedCodeLabel) appliedCodeLabel.textContent = appliedCoupon ? appliedCoupon.code : appliedCode;
         if (appliedDescLabel) appliedDescLabel.textContent = `You saved ${formatMoney(discountCents)} on this order`;
       }
-    } else {
+    } else if (appliedCode) {
       if (discountRow) discountRow.style.display = 'none';
-      if (appliedBanner) appliedBanner.style.display = 'none';
+      if (appliedBanner) {
+        appliedBanner.style.display = 'flex';
+        if (appliedCodeLabel) appliedCodeLabel.textContent = appliedCode;
+        if (appliedDescLabel) appliedDescLabel.textContent = 'Discount will be calculated at checkout';
+      }
     }
 
     const finalTotalCents = Math.max(0, currentSubtotalCents - discountCents);

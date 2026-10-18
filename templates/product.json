@@ -22,10 +22,7 @@
         },
         "discount_code": {
           "type": "discount_code",
-          "settings": {
-            "code": "GOLDEN10",
-            "discount_percent": 10
-          }
+          "settings": {}
         },
         "variant_picker": {
           "type": "variant_picker",

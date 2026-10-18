@@ -1,0 +1,1851 @@
+{% doc %}
+  Product Details Page (PDP) Coupon Modal and Controller for Swastik Jewels.
+  Displays ONLY verified discount codes received from the CRM metafield integration,
+  applies coupons via Shopify supported discount flow, and powers smooth animated price transitions.
+
+  @param {product} product - The current product object
+  @param {variant} current_variant - The currently selected product variant
+
+  @example
+  {% render 'pdp-coupon-modal', product: product, current_variant: current_variant %}
+{% enddoc %}
+
+{%- assign active_variant = current_variant | default: product.selected_or_first_available_variant -%}
+<div
+  id="pdp-initial-variant-data"
+  data-variant-id="{{ active_variant.id }}"
+  data-price="{{ active_variant.price }}"
+  data-sku="{{ active_variant.sku }}"
+  style="display: none;"
+></div>
+
+{%- assign product_coupon_metafield = product.metafields.custom.coupons -%}
+{%- assign shop_coupon_metafield = shop.metafields.custom.coupons | default: shop.metafields.custom.global_coupons -%}
+
+<!-- Sourced Authoritative CRM Discount Data JSON scripts -->
+<script id="pp-shop-coupons-json" type="application/json">
+  {{ shop_coupon_metafield | default: '[]' }}
+</script>
+
+<script id="pp-coupons-data-json" type="application/json">
+  {{ product_coupon_metafield | default: '[]' }}
+</script>
+
+<script id="pp-collection-coupons-json" type="application/json">
+  [
+    {%- assign c_count = 0 -%}
+    {%- for collection in product.collections -%}
+      {%- if collection.metafields.custom.coupons != blank -%}
+        {%- if c_count > 0 -%},{%- endif -%}
+        {{ collection.metafields.custom.coupons }}
+        {%- assign c_count = c_count | plus: 1 -%}
+      {%- endif -%}
+    {%- endfor -%}
+  ]
+</script>
+
+<script id="pp-variant-coupons-json" type="application/json">
+  {
+    {% for variant in product.variants %}
+      "{{ variant.id }}": {{ variant.metafields.custom.coupons | default: '[]' }}{% unless forloop.last %},{% endunless %}
+    {% endfor %}
+  }
+</script>
+
+<!-- PDP Coupon Modal / Drawer Overlay -->
+<div
+  class="pdp-coupon-overlay"
+  id="PdpCouponModalOverlay"
+  style="display: none;"
+  role="dialog"
+  aria-modal="true"
+  aria-hidden="true"
+  aria-labelledby="PdpCouponModalTitle"
+>
+  <div class="pdp-coupon-backdrop" id="PdpCouponBackdrop"></div>
+
+  <div class="pdp-coupon-drawer" id="PdpCouponDrawer" tabindex="-1">
+    <!-- Mobile Pull Indicator -->
+    <div class="pdp-coupon-drag-handle" aria-hidden="true"></div>
+
+    <!-- Header -->
+    <div class="pdp-coupon-drawer-header">
+      <div class="pdp-coupon-header-text">
+        <div class="pdp-coupon-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span>EXCLUSIVE OFFERS</span>
+        </div>
+        <h3 class="pdp-coupon-drawer-title" id="PdpCouponModalTitle">Available Coupons</h3>
+        <p class="pdp-coupon-drawer-subtitle">Apply an eligible discount code for savings on this order</p>
+      </div>
+
+      <button
+        type="button"
+        class="pdp-coupon-close-btn"
+        id="PdpCouponCloseBtn"
+        aria-label="Close coupon offers"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Manual Code Entry Form -->
+    <div class="pdp-coupon-manual-box">
+      <div class="pdp-coupon-input-group">
+        <svg class="pdp-coupon-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+          <line x1="7" y1="7" x2="7.01" y2="7"></line>
+        </svg>
+        <input
+          type="text"
+          id="PdpManualCouponInput"
+          class="pdp-coupon-input"
+          placeholder="Enter coupon code"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          aria-label="Enter coupon code"
+        >
+      </div>
+      <button
+        type="button"
+        id="PdpManualApplyBtn"
+        class="pdp-coupon-manual-btn"
+      >
+        <span>APPLY</span>
+      </button>
+    </div>
+
+    <!-- In-modal Notification/Alert Message -->
+    <div id="PdpCouponAlertMsg" class="pdp-coupon-alert-msg" style="display: none;" role="status" aria-live="polite"></div>
+
+    <!-- Scrollable Coupon Cards List -->
+    <div class="pdp-coupon-drawer-body" id="PdpCouponListContainer">
+      <!-- Injected dynamically from authoritative CRM data -->
+    </div>
+
+    <!-- Footer Security Note -->
+    <div class="pdp-coupon-drawer-footer">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+      </svg>
+      <span>Shopify discounts are verified and passed directly to your checkout.</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Price Area Integration */
+  .pp-price-box-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 14px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .pp-price-display-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .pp-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* Current and Discounted Price Display */
+  .pp-price-current {
+    font-family: var(--pp-font-sans, 'Inter', sans-serif) !important;
+    font-size: 40px !important;
+    font-weight: 700 !important;
+    color: var(--pp-primary, #013F3E) !important;
+    line-height: 1.1 !important;
+    letter-spacing: -0.02em !important;
+    transition: color 0.3s ease;
+  }
+
+  .pp-price-current.is-discounted {
+    color: #013F3E !important;
+  }
+
+  .pp-price-animating {
+    animation: ppPricePulse 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes ppPricePulse {
+    0% {
+      opacity: 0.4;
+      transform: translateY(4px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Original Price Strikethrough */
+  .pp-price-original-struck {
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 20px;
+    font-weight: 500;
+    color: #777777;
+    text-decoration: line-through;
+    opacity: 0.85;
+    position: relative;
+    white-space: nowrap;
+    animation: ppFadeIn 0.35s ease forwards;
+  }
+
+  .pp-price--discounted {
+    color: var(--pp-primary, #013F3E) !important;
+  }
+
+  .pp-price--original {
+    text-decoration: line-through !important;
+    color: #888888 !important;
+    margin-left: 8px;
+    font-size: 20px;
+    font-weight: 500;
+  }
+
+  @keyframes ppFadeIn {
+    from { opacity: 0; transform: translateX(-4px); }
+    to { opacity: 0.85; transform: translateX(0); }
+  }
+
+  /* Apply Coupon Trigger Button (Beside Price) */
+  .pp-coupon-trigger-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .pp-apply-coupon-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 16px !important;
+    background: #FCFBF9 !important;
+    border: 1px solid rgba(212, 175, 55, 0.45) !important;
+    border-radius: 20px !important;
+    color: #013F3E !important;
+    font-family: var(--pp-font-sans, 'Inter', sans-serif) !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-shadow: 0 2px 8px rgba(1, 63, 62, 0.05) !important;
+    outline: none !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+  }
+
+  .pp-apply-coupon-btn:hover {
+    background: rgba(212, 175, 55, 0.12) !important;
+    border-color: #D4AF37 !important;
+    color: #012B2A !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.22) !important;
+  }
+
+  .pp-apply-coupon-btn:active {
+    transform: scale(0.97) !important;
+  }
+
+  .pp-apply-coupon-btn.is-applied {
+    background: rgba(1, 63, 62, 0.07) !important;
+    border-color: #013F3E !important;
+    color: #013F3E !important;
+  }
+
+  .pp-apply-coupon-btn.is-applied .pp-coupon-btn-icon {
+    color: #2E7D32 !important;
+  }
+
+  .pp-coupon-btn-icon {
+    flex-shrink: 0;
+    color: #B38245;
+    transition: color 0.2s ease;
+  }
+
+  .pp-coupon-btn-badge {
+    background: #013F3E;
+    color: #FFFFFF;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* Quick Remove Button on PDP Trigger */
+  .pp-coupon-quick-remove {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 50% !important;
+    border: 1px solid rgba(1, 63, 62, 0.18) !important;
+    background: #FFFFFF !important;
+    color: #666666 !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    transition: all 0.2s ease !important;
+    outline: none !important;
+  }
+
+  .pp-coupon-quick-remove:hover {
+    background: #FFEBEE !important;
+    border-color: #D32F2F !important;
+    color: #D32F2F !important;
+    transform: rotate(90deg) !important;
+  }
+
+  /* Savings Callout in Price Box Bottom */
+  .pp-coupon-applied-callout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+    animation: ppFadeIn 0.35s ease forwards;
+  }
+
+  .pp-coupon-savings-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    background: #E8F5E9;
+    border: 1px solid #A5D6A7;
+    border-radius: 6px;
+    color: #1B5E20;
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+  }
+
+  .pp-coupon-savings-explanation {
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 12px;
+    color: #666666;
+    font-weight: 500;
+  }
+
+  /* =========================================================
+     MODAL & DRAWER STYLES
+     ========================================================= */
+  .pdp-coupon-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    box-sizing: border-box;
+  }
+
+  .pdp-coupon-overlay.is-active {
+    display: flex !important;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .pdp-coupon-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(1, 39, 38, 0.58);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    cursor: pointer;
+  }
+
+  .pdp-coupon-drawer {
+    position: relative;
+    width: 92%;
+    max-width: 480px;
+    max-height: 88vh;
+    background: #FCFBF9;
+    border: 1px solid rgba(1, 63, 62, 0.12);
+    border-radius: 16px;
+    padding: 24px 22px 18px;
+    box-shadow: 0 20px 60px rgba(1, 39, 38, 0.28), 0 4px 16px rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.95) translateY(12px);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+    outline: none;
+  }
+
+  .pdp-coupon-overlay.is-active .pdp-coupon-drawer {
+    transform: scale(1) translateY(0);
+  }
+
+  .pdp-coupon-drag-handle {
+    display: none;
+  }
+
+  .pdp-coupon-drawer-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 4px;
+    gap: 12px;
+  }
+
+  .pdp-coupon-header-text {
+    flex: 1;
+  }
+
+  .pdp-coupon-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    background: rgba(212, 175, 55, 0.12);
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: 20px;
+    color: #9E742E;
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .pdp-coupon-badge svg {
+    color: #D4AF37;
+  }
+
+  .pdp-coupon-drawer-title {
+    font-family: 'Outfit', 'Cormorant Garamond', serif;
+    font-size: 21px;
+    font-weight: 600;
+    color: #013F3E;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+
+  .pdp-coupon-drawer-subtitle {
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 12.5px;
+    color: #666666;
+    margin: 0;
+    line-height: 1.4;
+    font-weight: 400;
+  }
+
+  .pdp-coupon-close-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 1px solid rgba(1, 63, 62, 0.12);
+    color: #013F3E;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background-color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    flex-shrink: 0;
+    outline: none;
+  }
+
+  .pdp-coupon-close-btn:hover {
+    background: #F0EFEA;
+    border-color: #013F3E;
+    transform: rotate(90deg);
+  }
+
+  .pdp-coupon-close-btn:focus-visible {
+    box-shadow: 0 0 0 2px #013F3E;
+  }
+
+  /* Manual Code Input */
+  .pdp-coupon-manual-box {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .pdp-coupon-input-group {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .pdp-coupon-input-icon {
+    position: absolute;
+    left: 12px;
+    color: #888888;
+    pointer-events: none;
+  }
+
+  .pdp-coupon-input {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px 0 36px;
+    background: #FFFFFF;
+    border: 1px solid rgba(1, 63, 62, 0.18);
+    border-radius: 8px;
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 13px;
+    font-weight: 600;
+    color: #013F3E;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+  }
+
+  .pdp-coupon-input::placeholder {
+    color: #999999;
+    text-transform: none;
+    font-weight: 400;
+    letter-spacing: normal;
+  }
+
+  .pdp-coupon-input:focus {
+    border-color: #013F3E;
+    box-shadow: 0 0 0 3px rgba(1, 63, 62, 0.1);
+  }
+
+  .pdp-coupon-manual-btn {
+    padding: 0 16px;
+    height: 42px;
+    border-radius: 8px;
+    background: #013F3E;
+    color: #FFFFFF;
+    border: none;
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pdp-coupon-manual-btn:hover {
+    background: #012B2A;
+    transform: translateY(-1px);
+  }
+
+  .pdp-coupon-manual-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .pdp-coupon-alert-msg {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 12px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    animation: ppFadeIn 0.25s ease;
+  }
+
+  .pdp-coupon-alert-msg.is-success {
+    background: #E8F5E9;
+    color: #2E7D32;
+    border: 1px solid #C8E6C9;
+  }
+
+  .pdp-coupon-alert-msg.is-error {
+    background: #FFEBEE;
+    color: #C62828;
+    border: 1px solid #FFCDD2;
+  }
+
+  .pdp-coupon-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(88vh - 210px);
+    padding: 2px 2px 6px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pdp-coupon-drawer-body::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .pdp-coupon-drawer-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .pdp-coupon-drawer-body::-webkit-scrollbar-thumb {
+    background: rgba(1, 63, 62, 0.15);
+    border-radius: 4px;
+  }
+
+  /* Coupon Card */
+  .pdp-coupon-card {
+    display: flex;
+    align-items: stretch;
+    background: #FFFFFF;
+    border: 1px solid rgba(1, 63, 62, 0.12);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 3px 12px rgba(1, 63, 62, 0.03);
+    transition: all 0.2s ease;
+  }
+
+  .pdp-coupon-card:last-child {
+    margin-bottom: 0;
+  }
+
+  .pdp-coupon-card:hover {
+    border-color: rgba(212, 175, 55, 0.45);
+    box-shadow: 0 6px 18px rgba(1, 63, 62, 0.07);
+  }
+
+  .pdp-coupon-card.is-applied-card {
+    border-color: #2E7D32;
+    background: #FAFDF9;
+    box-shadow: 0 4px 16px rgba(46, 125, 50, 0.1);
+  }
+
+  .pdp-coupon-card.is-ineligible-card {
+    opacity: 0.75;
+    background: #FBFBFA;
+  }
+
+  /* Notches */
+  .pdp-coupon-card::before,
+  .pdp-coupon-card::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: #FCFBF9;
+    border-radius: 50%;
+    z-index: 3;
+    border: 1px solid rgba(1, 63, 62, 0.12);
+    box-sizing: border-box;
+  }
+
+  .pdp-coupon-card::before {
+    top: -7px;
+    right: 32%;
+  }
+
+  .pdp-coupon-card::after {
+    bottom: -7px;
+    right: 32%;
+  }
+
+  .pdp-coupon-card-left {
+    flex: 1.9;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .pdp-coupon-card-header-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    flex-wrap: wrap;
+  }
+
+  .pdp-coupon-card-discount {
+    font-family: 'Outfit', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: #013F3E;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  .pdp-coupon-status-tag {
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  .pdp-coupon-status-tag.is-applied {
+    background: #E8F5E9;
+    color: #2E7D32;
+    border: 1px solid #A5D6A7;
+  }
+
+  .pdp-coupon-status-tag.is-ineligible {
+    background: #FFF3E0;
+    color: #E65100;
+    border: 1px solid #FFE0B2;
+  }
+
+  .pdp-coupon-card-desc {
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 12px;
+    color: #333333;
+    font-weight: 500;
+    line-height: 1.35;
+    word-break: break-word;
+    margin-bottom: 4px;
+  }
+
+  .pdp-coupon-card-condition {
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 11px;
+    color: #666666;
+    margin-top: 2px;
+    line-height: 1.3;
+  }
+
+  .pdp-coupon-card-condition.is-unmet {
+    color: #C62828;
+    font-weight: 600;
+  }
+
+  .pdp-coupon-card-expiry {
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 10px;
+    color: #888888;
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  .pdp-coupon-card-right {
+    flex: 1.1;
+    padding: 12px 10px;
+    background: #FDFCF9;
+    border-left: 1px dashed rgba(1, 63, 62, 0.18);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .pdp-coupon-code-pill {
+    font-family: 'Outfit', sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #013F3E;
+    padding: 4px 6px;
+    background: #FFFFFF;
+    border: 1px dashed rgba(212, 175, 55, 0.6);
+    border-radius: 6px;
+    width: 94%;
+    max-width: 105px;
+    box-sizing: border-box;
+    word-break: break-all;
+    letter-spacing: 0.04em;
+  }
+
+  .pdp-card-action-btn {
+    width: 94%;
+    max-width: 105px;
+    padding: 7px 4px !important;
+    border-radius: 6px !important;
+    border: none !important;
+    background: #013F3E !important;
+    color: #FFFFFF !important;
+    font-family: var(--pp-font-sans, 'Inter', sans-serif) !important;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-align: center !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    outline: none !important;
+  }
+
+  .pdp-card-action-btn:hover {
+    background: #012B2A !important;
+    transform: translateY(-1px);
+  }
+
+  .pdp-card-action-btn.is-applied {
+    background: #C62828 !important;
+    color: #FFFFFF !important;
+  }
+
+  .pdp-card-action-btn.is-applied:hover {
+    background: #B71C1C !important;
+  }
+
+  .pdp-card-action-btn.is-disabled {
+    background: #E0E0E0 !important;
+    color: #888888 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+  }
+
+  /* Empty State */
+  .pdp-coupon-empty-state {
+    text-align: center;
+    padding: 30px 16px;
+    color: #666666;
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+  }
+
+  .pdp-coupon-empty-icon {
+    margin-bottom: 10px;
+    color: #B38245;
+  }
+
+  .pdp-coupon-empty-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #013F3E;
+    margin-bottom: 4px;
+  }
+
+  .pdp-coupon-empty-desc {
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: #777777;
+  }
+
+  .pdp-coupon-drawer-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(1, 63, 62, 0.08);
+    font-family: var(--pp-font-sans, 'Inter', sans-serif);
+    font-size: 11px;
+    color: #777777;
+    text-align: center;
+  }
+
+  .pdp-coupon-drawer-footer svg {
+    color: #013F3E;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 600px) {
+    .pdp-coupon-overlay {
+      align-items: flex-end;
+    }
+
+    .pdp-coupon-drawer {
+      width: 100%;
+      max-width: 100%;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      padding: 16px 16px 22px;
+      max-height: 84vh;
+      transform: translateY(100%);
+    }
+
+    .pdp-coupon-overlay.is-active .pdp-coupon-drawer {
+      transform: translateY(0);
+    }
+
+    .pdp-coupon-drag-handle {
+      display: block;
+      width: 38px;
+      height: 4px;
+      background: rgba(1, 63, 62, 0.2);
+      border-radius: 2px;
+      margin: 0 auto 12px;
+    }
+
+    .pdp-coupon-drawer-title {
+      font-size: 19px;
+    }
+
+    .pdp-coupon-card::before {
+      right: 34%;
+    }
+
+    .pdp-coupon-card::after {
+      right: 34%;
+    }
+
+    .pdp-coupon-card-left {
+      padding: 12px 10px;
+    }
+
+    .pdp-coupon-card-discount {
+      font-size: 16px;
+    }
+
+    .pdp-coupon-card-right {
+      padding: 10px 6px;
+    }
+
+    .pp-price-box-top {
+      align-items: flex-start !important;
+    }
+
+    .pp-coupon-trigger-wrap {
+      margin-left: 0;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .pp-apply-coupon-btn {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pdp-coupon-overlay,
+    .pdp-coupon-drawer,
+    .pp-apply-coupon-btn,
+    .pp-price-current,
+    .pp-price-animating,
+    .pp-price-original-struck {
+      transition: none !important;
+      animation: none !important;
+      transform: none !important;
+    }
+  }
+</style>
+
+<script>
+(function() {
+  'use strict';
+
+  const STORAGE_KEY = 'swastik_applied_coupon';
+  let cachedCoupons = [];
+  let isDataLoaded = false;
+  let currentAppliedCode = '';
+
+  function formatPriceINR(cents) {
+    const rupees = cents / 100;
+    return 'Rs. ' + rupees.toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function getStoredCoupon() {
+    try {
+      return localStorage.getItem(STORAGE_KEY) || sessionStorage.getItem(STORAGE_KEY) || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function setStoredCoupon(code) {
+    try {
+      if (code) {
+        localStorage.setItem(STORAGE_KEY, code);
+        sessionStorage.setItem(STORAGE_KEY, code);
+        // Set standard Shopify storefront discount cookie directly
+        document.cookie = 'discount_code=' + encodeURIComponent(code) + '; path=/; SameSite=Lax';
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(STORAGE_KEY);
+        document.cookie = 'discount_code=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      }
+    } catch (e) {}
+  }
+
+  // Parse CRM coupon record
+  function normalizeCrmCoupon(c) {
+    if (!c || typeof c !== 'object') return null;
+    const code = c.code || c.promo_code || '';
+    if (!code || typeof code !== 'string') return null;
+
+    // Filter expired discounts based on CRM timestamps
+    const expiryRaw = c.endsAt || c.expiry_date || c.end_date || null;
+    if (expiryRaw) {
+      const expDate = new Date(expiryRaw);
+      if (!isNaN(expDate.getTime()) && expDate.getTime() < Date.now()) {
+        return null; // Inactive / Expired
+      }
+    }
+
+    // Filter not-yet-started discounts
+    const startsRaw = c.startsAt || c.start_date || null;
+    if (startsRaw) {
+      const startDate = new Date(startsRaw);
+      if (!isNaN(startDate.getTime()) && startDate.getTime() > Date.now()) {
+        return null; // Inactive / Future
+      }
+    }
+
+    let formattedExpiry = '';
+    if (expiryRaw) {
+      const expDate = new Date(expiryRaw);
+      if (!isNaN(expDate.getTime())) {
+        formattedExpiry = expDate.toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        });
+      } else {
+        formattedExpiry = String(expiryRaw).replace(/^Valid till\s*/i, '');
+      }
+    }
+
+    let type = c.type || c.discount_type || 'percentage';
+    let value = c.discount_value !== undefined ? c.discount_value :
+      (c.value !== undefined ? c.value :
+        (c.customerGets?.value?.percentage ? c.customerGets.value.percentage * 100 :
+          (c.customerGets?.value?.discountAmount?.amount || 0)));
+
+    if (type === 'percentage' && value > 0 && value < 1) {
+      value = Math.round(value * 100);
+    }
+
+    const minOrder = c.min_order_value !== undefined && c.min_order_value !== null ? c.min_order_value :
+      (c.minimum_order_value !== undefined && c.minimum_order_value !== null ? c.minimum_order_value :
+        (c.minimumRequirement?.subtotal?.greaterThanOrEqualToSubtotal || null));
+
+    const desc = c.short_description || c.title || c.campaign_name || '';
+
+    const isDiamondOnly = Boolean(
+      c.is_diamond_only === true ||
+      c.is_diamond_only === 'true' ||
+      c.isDiamondOnly === true ||
+      c.isDiamondOnly === 'true' ||
+      c.discount_target === 'diamond_only' ||
+      c.discountTarget === 'diamond_only'
+    );
+    let diaPercent = parseFloat(
+      c.diamond_discount_percent !== undefined ? c.diamond_discount_percent :
+      (c.diamondDiscountPercent !== undefined ? c.diamondDiscountPercent :
+      (isDiamondOnly ? value : 0))
+    ) || 0;
+    if (diaPercent > 0 && diaPercent <= 1) {
+      diaPercent = Math.round(diaPercent * 100);
+    }
+
+    return {
+      code: code.trim().toUpperCase(),
+      title: c.title || '',
+      type: type,
+      value: parseFloat(value) || 0,
+      discount_target: c.discount_target || c.discountTarget || (isDiamondOnly ? 'diamond_only' : 'entire_product'),
+      is_diamond_only: isDiamondOnly,
+      diamond_discount_percent: diaPercent,
+      eligible_categories: Array.isArray(c.eligible_categories) ? c.eligible_categories : [],
+      excluded_categories: Array.isArray(c.excluded_categories) ? c.excluded_categories : [],
+      min_order_value: minOrder !== null ? parseFloat(minOrder) : null,
+      expiry_date: formattedExpiry,
+      short_description: desc
+    };
+  }
+
+  function getVariantMetafields(variantId) {
+    if (!variantId) return {};
+    const el = document.getElementById('pp-variant-metafields-json');
+    if (!el) return {};
+    try {
+      const all = JSON.parse(el.textContent || '{}');
+      return all[String(variantId)] || all[variantId] || {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function getVariantDiamondValue(variantId) {
+    const meta = getVariantMetafields(variantId);
+    if (meta && meta.diamond_value !== undefined && meta.diamond_value !== null) {
+      const parsed = parseFloat(String(meta.diamond_value).replace(/[^0-9.]/g, ''));
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    // Fallback: check DOM breakdown element if available
+    const diaPriceEl = document.getElementById('ui-price-diamond');
+    if (diaPriceEl) {
+      const inrAttr = diaPriceEl.getAttribute('data-inr-price');
+      if (inrAttr) {
+        const val = parseFloat(inrAttr) / 100;
+        if (!isNaN(val) && val > 0) return val;
+      }
+      const text = diaPriceEl.textContent || '';
+      const match = text.replace(/,/g, '').match(/[0-9.]+/);
+      if (match) {
+        const val = parseFloat(match[0]);
+        if (!isNaN(val) && val > 0) return val;
+      }
+    }
+    return 0;
+  }
+
+  // Authoritative CRM Loader: ONLY reads from CRM metafield elements
+  function loadCrmCoupons() {
+    if (isDataLoaded && cachedCoupons.length > 0) return cachedCoupons;
+
+    const rawList = [];
+
+    // 1. Shop Metafields
+    const shopJson = document.getElementById('pp-shop-coupons-json');
+    if (shopJson) {
+      try {
+        const raw = JSON.parse(shopJson.textContent || '[]');
+        if (Array.isArray(raw)) rawList.push(...raw);
+      } catch (e) {}
+    }
+
+    // 2. Collection Metafields
+    const colJson = document.getElementById('pp-collection-coupons-json');
+    if (colJson) {
+      try {
+        const raw = JSON.parse(colJson.textContent || '[]');
+        if (Array.isArray(raw)) {
+          raw.forEach(item => {
+            if (Array.isArray(item)) rawList.push(...item);
+            else if (item && typeof item === 'object') rawList.push(item);
+          });
+        }
+      } catch (e) {}
+    }
+
+    // 3. Product Metafields
+    const prodJson = document.getElementById('pp-coupons-data-json');
+    if (prodJson) {
+      try {
+        const raw = JSON.parse(prodJson.textContent || '[]');
+        if (Array.isArray(raw)) rawList.push(...raw);
+      } catch (e) {}
+    }
+
+    // Deduplicate and filter exclusively via CRM data rules
+    const map = new Map();
+    rawList.forEach(item => {
+      const norm = normalizeCrmCoupon(item);
+      if (norm && norm.code && !map.has(norm.code)) {
+        map.set(norm.code, norm);
+      }
+    });
+
+    cachedCoupons = Array.from(map.values());
+    isDataLoaded = true;
+    return cachedCoupons;
+  }
+
+  function getVariantCoupons(variantId) {
+    const all = loadCrmCoupons();
+    if (!variantId) return all;
+
+    const varJson = document.getElementById('pp-variant-coupons-json');
+    if (varJson) {
+      try {
+        const varMap = JSON.parse(varJson.textContent || '{}');
+        const vCoupons = varMap[variantId];
+        if (Array.isArray(vCoupons)) {
+          const combined = [...all];
+          vCoupons.forEach(item => {
+            const norm = normalizeCrmCoupon(item);
+            if (norm && norm.code && !combined.some(c => c.code === norm.code)) {
+              combined.push(norm);
+            }
+          });
+          return combined;
+        }
+      } catch (e) {}
+    }
+
+    return all;
+  }
+
+  function getCurrentVariant() {
+    const variantIdInput = document.getElementById('pp-variant-id');
+    const variantId = variantIdInput ? variantIdInput.value : null;
+    const variantsJson = document.getElementById('pp-variants-json');
+
+    if (variantsJson && variantId) {
+      try {
+        const list = JSON.parse(variantsJson.textContent || '[]');
+        const matched = list.find(v => String(v.id) === String(variantId));
+        if (matched) return matched;
+      } catch (e) {}
+    }
+
+    // Fallback reading
+    const priceEl = document.getElementById('pp-price');
+    const priceCents = priceEl ? parseInt(priceEl.getAttribute('data-inr-price'), 10) : 0;
+    const skuEl = document.getElementById('pp-sku');
+    const sku = skuEl ? skuEl.textContent.trim() : '';
+
+    return {
+      id: variantId,
+      price: priceCents,
+      sku: sku,
+      available: true
+    };
+  }
+
+  function checkCategoryEligibility(coupon, variant) {
+    if (!coupon) return false;
+    const sku = (variant?.sku || document.getElementById('pp-sku')?.textContent || '').trim().toUpperCase();
+    const skuPrefix = sku.match(/^[A-Z]+/)?.[0] || '';
+
+    // Check excluded categories
+    if (coupon.excluded_categories && coupon.excluded_categories.length > 0) {
+      if (skuPrefix && coupon.excluded_categories.includes(skuPrefix)) {
+        return false;
+      }
+    }
+
+    // Check eligible categories
+    if (coupon.eligible_categories && coupon.eligible_categories.length > 0) {
+      if (skuPrefix && !coupon.eligible_categories.includes(skuPrefix)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // Smooth number counting animation
+  function animatePriceNumber(element, startCents, endCents, durationMs = 450) {
+    if (!element) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || durationMs <= 0) {
+      element.innerHTML = formatPriceINR(endCents);
+      return;
+    }
+
+    const startTime = performance.now();
+    const diff = endCents - startCents;
+
+    element.classList.add('pp-price-animating');
+
+    function step(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / durationMs, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(startCents + (diff * ease));
+
+      element.innerHTML = formatPriceINR(current);
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        element.innerHTML = formatPriceINR(endCents);
+        setTimeout(() => {
+          element.classList.remove('pp-price-animating');
+        }, 100);
+      }
+    }
+
+    requestAnimationFrame(step);
+  }
+
+  // Evaluate discount per CRM rules and Critical Pricing Rule
+  function evaluateDiscountForVariant(coupon, variant) {
+    if (!coupon || !variant || !variant.price) {
+      return {
+        isEligible: false,
+        isDeterminable: false,
+        discountAmount: 0,
+        discountCents: 0,
+        finalPriceCents: variant ? variant.price : 0,
+        reason: 'Invalid variant or coupon'
+      };
+    }
+
+    const originalPrice = variant.price / 100;
+
+    // 1. Category check
+    if (!checkCategoryEligibility(coupon, variant)) {
+      return {
+        isEligible: false,
+        isDeterminable: false,
+        discountAmount: 0,
+        discountCents: 0,
+        finalPriceCents: variant.price,
+        reason: 'Not eligible for this jewellery category'
+      };
+    }
+
+    // 2. Minimum order requirement check
+    if (coupon.min_order_value && coupon.min_order_value > 0 && originalPrice < coupon.min_order_value) {
+      return {
+        isEligible: false,
+        isDeterminable: false,
+        discountAmount: 0,
+        discountCents: 0,
+        finalPriceCents: variant.price,
+        shortfallRs: Math.ceil(coupon.min_order_value - originalPrice),
+        reason: `Requires minimum order of ₹${coupon.min_order_value.toLocaleString('en-IN')}`
+      };
+    }
+
+    let discountAmount = 0;
+
+    // 3. Diamond-Only Discount check (e.g. TEST-30)
+    if (coupon.is_diamond_only || coupon.discount_target === 'diamond_only') {
+      // 1. Get the diamond value from the variant metafields JSON already on the page
+      const diamondValue = getVariantDiamondValue(variant.id);
+      let percent = parseFloat(coupon.diamond_discount_percent || 0);
+      if (percent <= 0 && coupon.value) {
+        const v = parseFloat(coupon.value);
+        percent = v <= 1 ? v * 100 : v;
+      } else if (percent > 0 && percent <= 1) {
+        percent = percent * 100;
+      }
+
+      // 2. Calculate discount solely on diamond portion
+      if (diamondValue > 0 && percent > 0) {
+        discountAmount = (diamondValue * percent) / 100;
+        const discountCents = Math.round(discountAmount * 100);
+        return {
+          isEligible: true,
+          isDeterminable: true,
+          discountAmount: discountAmount,
+          discountCents: discountCents,
+          finalPriceCents: Math.max(0, variant.price - discountCents),
+          savingsLabel: `Save ${formatPriceINR(discountCents)} (${percent}% OFF Diamond Value)`,
+          reason: ''
+        };
+      } else if (diamondValue === 0) {
+        return {
+          isEligible: false,
+          isDeterminable: false,
+          discountAmount: 0,
+          discountCents: 0,
+          finalPriceCents: variant.price,
+          reason: 'This coupon is valid only on diamond jewellery'
+        };
+      } else {
+        return {
+          isEligible: true,
+          isDeterminable: false,
+          discountAmount: 0,
+          discountCents: 0,
+          finalPriceCents: variant.price,
+          savingsLabel: `${percent}% OFF Diamond Value at Checkout`,
+          reason: 'Discount applies to diamond value at checkout'
+        };
+      }
+    }
+
+    // 4. Standard coupon on entire price (e.g. WEL-D10)
+    if (coupon.type === 'percentage' || (!coupon.type && coupon.value)) {
+      const val = parseFloat(coupon.value) || 0;
+      const percent = val <= 1 ? val * 100 : val;
+      if (percent > 0 && percent <= 100) {
+        discountAmount = originalPrice * (val <= 1 ? val : val / 100);
+        const discountCents = Math.round(discountAmount * 100);
+        return {
+          isEligible: true,
+          isDeterminable: true,
+          discountAmount: discountAmount,
+          discountCents: discountCents,
+          finalPriceCents: Math.max(0, variant.price - discountCents),
+          savingsLabel: `Save ${formatPriceINR(discountCents)} (${percent}% OFF)`,
+          reason: ''
+        };
+      }
+    } else if (coupon.type === 'fixed_amount' || coupon.type === 'fixed') {
+      discountAmount = parseFloat(coupon.value) || 0;
+      const discountCents = Math.round(discountAmount * 100);
+      return {
+        isEligible: true,
+        isDeterminable: true,
+        discountAmount: discountAmount,
+        discountCents: Math.min(variant.price, discountCents),
+        finalPriceCents: Math.max(0, variant.price - discountCents),
+        savingsLabel: `Save ${formatPriceINR(discountCents)}`,
+        reason: ''
+      };
+    }
+
+    return {
+      isEligible: true,
+      isDeterminable: false,
+      discountAmount: 0,
+      discountCents: 0,
+      finalPriceCents: variant.price,
+      savingsLabel: 'Discount verified for checkout',
+      reason: ''
+    };
+  }
+
+  // Update PDP UI based strictly on CRM coupons
+  function updatePdpPriceUI(shouldAnimate = false, explicitVariant = null) {
+    const variant = explicitVariant || getCurrentVariant();
+    const priceEl = document.getElementById('pp-price');
+    const struckPriceEl = document.getElementById('pp-price-original-struck');
+    const triggerBtn = document.getElementById('pp-apply-coupon-trigger');
+    const triggerText = document.getElementById('pp-apply-coupon-text');
+    const triggerBadge = document.getElementById('pp-coupon-btn-badge');
+    const removeBtn = document.getElementById('pp-coupon-quick-remove');
+    const calloutBox = document.getElementById('pp-coupon-applied-callout');
+    const savingsTag = document.getElementById('pp-coupon-savings-tag');
+    const savingsNote = document.getElementById('pp-coupon-savings-explanation');
+
+    if (!priceEl || !variant) return;
+
+    currentAppliedCode = getStoredCoupon();
+    const coupons = getVariantCoupons(variant.id);
+    const appliedCoupon = currentAppliedCode ? coupons.find(c => c.code.toUpperCase() === currentAppliedCode.toUpperCase()) : null;
+
+    if (appliedCoupon && currentAppliedCode) {
+      const evalResult = evaluateDiscountForVariant(appliedCoupon, variant);
+
+      // Trigger button state
+      if (triggerBtn) {
+        triggerBtn.classList.add('is-applied');
+        if (triggerText) triggerText.textContent = appliedCoupon.code;
+        if (triggerBadge) {
+          triggerBadge.textContent = 'APPLIED ✓';
+          triggerBadge.style.display = 'inline-flex';
+        }
+      }
+      if (removeBtn) removeBtn.style.display = 'inline-flex';
+
+      // Price Display
+      if (evalResult.isEligible && evalResult.isDeterminable && evalResult.discountCents > 0) {
+        const originalPrice = variant.price / 100;
+        const finalPrice = evalResult.finalPriceCents / 100;
+
+        if (struckPriceEl) {
+          struckPriceEl.classList.add('pp-price--original');
+          struckPriceEl.innerHTML = formatPriceINR(variant.price);
+          struckPriceEl.style.display = 'inline-block';
+
+          priceEl.classList.add('is-discounted', 'pp-price--discounted');
+          const startCents = shouldAnimate ? variant.price : evalResult.finalPriceCents;
+          animatePriceNumber(priceEl, startCents, evalResult.finalPriceCents, shouldAnimate ? 450 : 0);
+        } else {
+          // Slash the price and update DOM directly
+          priceEl.classList.add('is-discounted');
+          priceEl.innerHTML = `
+            <span class="pp-price--discounted">Rs. ${finalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <span class="pp-price--original" style="text-decoration: line-through; color: #888; margin-left: 8px;">
+              Rs. ${originalPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          `;
+        }
+
+        if (calloutBox) calloutBox.style.display = 'flex';
+        if (savingsTag) savingsTag.innerHTML = `✓ ${appliedCoupon.code} Applied (${evalResult.savingsLabel})`;
+        if (savingsNote) savingsNote.textContent = 'Discount confirmed for this piece. Reflected at checkout.';
+      } else {
+        // Ineligible or Cart-level: Keep original price per CRITICAL PRICING RULE
+        if (struckPriceEl) {
+          struckPriceEl.style.display = 'none';
+          struckPriceEl.classList.remove('pp-price--original');
+        }
+        priceEl.classList.remove('is-discounted', 'pp-price--discounted');
+        priceEl.innerHTML = formatPriceINR(variant.price);
+
+        if (calloutBox) calloutBox.style.display = 'flex';
+        if (savingsTag) savingsTag.innerHTML = `🏷️ ${appliedCoupon.code} Saved`;
+        if (savingsNote) {
+          if (!evalResult.isEligible && evalResult.shortfallRs) {
+            savingsNote.textContent = `Add ₹${evalResult.shortfallRs.toLocaleString('en-IN')} more to your cart to activate discount at checkout.`;
+          } else if (evalResult.reason) {
+            savingsNote.textContent = evalResult.reason;
+          } else {
+            savingsNote.textContent = 'Special discount code applied. Final total confirmed in cart & checkout.';
+          }
+        }
+      }
+    } else {
+      // No valid CRM coupon applied
+      if (triggerBtn) {
+        triggerBtn.classList.remove('is-applied');
+        if (triggerText) triggerText.textContent = 'Apply Coupon';
+        if (triggerBadge) triggerBadge.style.display = 'none';
+      }
+      if (removeBtn) removeBtn.style.display = 'none';
+      if (struckPriceEl) {
+        struckPriceEl.style.display = 'none';
+        struckPriceEl.classList.remove('pp-price--original');
+      }
+
+      priceEl.classList.remove('is-discounted', 'pp-price--discounted');
+      priceEl.innerHTML = formatPriceINR(variant.price);
+      if (calloutBox) calloutBox.style.display = 'none';
+    }
+  }
+
+  // Render modal list strictly with CRM records
+  function renderModalList() {
+    const container = document.getElementById('PdpCouponListContainer');
+    if (!container) return;
+
+    const variant = getCurrentVariant();
+    const coupons = getVariantCoupons(variant ? variant.id : null);
+    const appliedCode = getStoredCoupon();
+
+    if (!coupons || coupons.length === 0) {
+      container.innerHTML = `
+        <div class="pdp-coupon-empty-state">
+          <svg class="pdp-coupon-empty-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+            <line x1="7" y1="7" x2="7.01" y2="7"></line>
+          </svg>
+          <div class="pdp-coupon-empty-title">No coupons available for this product right now.</div>
+          <p class="pdp-coupon-empty-desc">Check back soon for exclusive promotions from Swastik Jewels.</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    coupons.forEach(coupon => {
+      const isApplied = appliedCode && appliedCode.toUpperCase() === coupon.code.toUpperCase();
+      const evalResult = variant ? evaluateDiscountForVariant(coupon, variant) : { isEligible: true };
+
+      let discountText = '';
+      if ((coupon.is_diamond_only || coupon.discount_target === 'diamond_only') && (coupon.diamond_discount_percent || coupon.value)) {
+        const pct = coupon.diamond_discount_percent || (coupon.value <= 1 ? coupon.value * 100 : coupon.value);
+        discountText = `${pct}% OFF DIAMOND`;
+      } else if (coupon.type === 'percentage') {
+        discountText = `${coupon.value}% OFF`;
+      } else {
+        discountText = `₹${parseFloat(coupon.value || 0).toLocaleString('en-IN')} OFF`;
+      }
+
+      // ONLY use CRM description or title
+      const descText = coupon.short_description || coupon.title || '';
+      let conditionText = '';
+      let isUnmet = false;
+
+      if (!evalResult.isEligible && evalResult.reason) {
+        conditionText = evalResult.reason;
+        isUnmet = true;
+      } else if (coupon.min_order_value && coupon.min_order_value > 0) {
+        conditionText = `Valid on orders above ₹${coupon.min_order_value.toLocaleString('en-IN')}`;
+      }
+
+      const expiryText = coupon.expiry_date ? `Valid till ${coupon.expiry_date}` : '';
+
+      let cardClass = 'pdp-coupon-card';
+      if (isApplied) cardClass += ' is-applied-card';
+      else if (!evalResult.isEligible) cardClass += ' is-ineligible-card';
+
+      html += `
+        <div class="${cardClass}">
+          <div class="pdp-coupon-card-left">
+            <div class="pdp-coupon-card-header-row">
+              <span class="pdp-coupon-card-discount">${discountText}</span>
+              ${isApplied ? '<span class="pdp-coupon-status-tag is-applied">APPLIED ✓</span>' : (!evalResult.isEligible ? '<span class="pdp-coupon-status-tag is-ineligible">RESTRICTED</span>' : '')}
+            </div>
+            ${descText ? `<div class="pdp-coupon-card-desc">${descText}</div>` : ''}
+            ${conditionText ? `<div class="pdp-coupon-card-condition ${isUnmet ? 'is-unmet' : ''}">${conditionText}</div>` : ''}
+            ${expiryText ? `<div class="pdp-coupon-card-expiry">${expiryText}</div>` : ''}
+          </div>
+          <div class="pdp-coupon-card-right">
+            <div class="pdp-coupon-code-pill">${coupon.code}</div>
+            ${isApplied ? `
+              <button type="button" class="pdp-card-action-btn is-applied js-pdp-coupon-remove" data-code="${coupon.code}" aria-label="Remove coupon ${coupon.code}">
+                <span>REMOVE</span>
+              </button>
+            ` : (evalResult.isEligible ? `
+              <button type="button" class="pdp-card-action-btn js-pdp-coupon-apply" data-code="${coupon.code}" aria-label="Apply coupon ${coupon.code}">
+                <span>APPLY</span>
+              </button>
+            ` : `
+              <button type="button" class="pdp-card-action-btn is-disabled" disabled aria-label="Coupon ${coupon.code} not eligible">
+                <span>APPLY</span>
+              </button>
+            `)}
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function showAlertMessage(msg, type = 'success') {
+    const alertEl = document.getElementById('PdpCouponAlertMsg');
+    if (!alertEl) return;
+    alertEl.textContent = msg;
+    alertEl.className = 'pdp-coupon-alert-msg ' + (type === 'error' ? 'is-error' : 'is-success');
+    alertEl.style.display = 'block';
+
+    setTimeout(() => {
+      alertEl.style.display = 'none';
+    }, 4000);
+  }
+
+  function openPdpModal() {
+    const overlay = document.getElementById('PdpCouponModalOverlay');
+    if (!overlay) return;
+
+    renderModalList();
+
+    const input = document.getElementById('PdpManualCouponInput');
+    if (input) input.value = '';
+
+    const alertEl = document.getElementById('PdpCouponAlertMsg');
+    if (alertEl) alertEl.style.display = 'none';
+
+    overlay.style.display = 'flex';
+    void overlay.offsetWidth;
+    overlay.classList.add('is-active');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+
+    const drawer = document.getElementById('PdpCouponDrawer');
+    if (drawer) drawer.focus();
+  }
+
+  function closePdpModal() {
+    const overlay = document.getElementById('PdpCouponModalOverlay');
+    if (!overlay) return;
+
+    overlay.classList.remove('is-active');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+
+    setTimeout(() => {
+      if (!overlay.classList.contains('is-active')) {
+        overlay.style.display = 'none';
+      }
+    }, 350);
+
+    const triggerBtn = document.getElementById('pp-apply-coupon-trigger');
+    if (triggerBtn) triggerBtn.focus();
+  }
+
+  // Application Flow: Saves verified CRM code, sets storefront cookie, passes to checkout
+  function applyCouponCode(code, sourceBtn) {
+    if (!code || typeof code !== 'string') return;
+    const cleanCode = code.trim().toUpperCase();
+    if (!cleanCode) return;
+
+    const variant = getCurrentVariant();
+    const coupons = getVariantCoupons(variant ? variant.id : null);
+    const matchedCoupon = coupons.find(c => c.code.toUpperCase() === cleanCode);
+
+    if (!matchedCoupon) {
+      showAlertMessage(`Coupon code "${cleanCode}" is invalid or not available for this product.`, 'error');
+      return;
+    }
+
+    const evalResult = evaluateDiscountForVariant(matchedCoupon, variant);
+    if (!evalResult.isEligible) {
+      showAlertMessage(evalResult.reason || 'This coupon is not eligible for this item.', 'error');
+      return;
+    }
+
+    if (sourceBtn) {
+      sourceBtn.setAttribute('disabled', 'true');
+      const span = sourceBtn.querySelector('span');
+      if (span) span.textContent = '...';
+    }
+
+    // Save to localStorage/sessionStorage & cookie for checkout
+    setStoredCoupon(cleanCode);
+
+    // Update PDP Price Transition smoothly
+    updatePdpPriceUI(true);
+
+    if (typeof window.showSwastikToast === 'function') {
+      window.showSwastikToast(
+        'Coupon Applied!',
+        `Code ${cleanCode} has been applied to your order.`,
+        false
+      );
+    }
+
+    closePdpModal();
+
+    if (sourceBtn) {
+      sourceBtn.removeAttribute('disabled');
+      const span = sourceBtn.querySelector('span');
+      if (span) span.textContent = 'APPLY';
+    }
+  }
+
+  function removeCouponCode() {
+    setStoredCoupon('');
+    updatePdpPriceUI(true);
+
+    if (typeof window.showSwastikToast === 'function') {
+      window.showSwastikToast('Coupon Removed', 'The coupon code has been removed.', false);
+    }
+
+    closePdpModal();
+  }
+
+  function initEvents() {
+    document.addEventListener('click', function(e) {
+      const trigger = e.target.closest('#pp-apply-coupon-trigger, #pp-coupon-trigger');
+      if (trigger) {
+        e.preventDefault();
+        openPdpModal();
+        return;
+      }
+
+      const quickRemove = e.target.closest('#pp-coupon-quick-remove');
+      if (quickRemove) {
+        e.preventDefault();
+        removeCouponCode();
+        return;
+      }
+
+      const closeBtn = e.target.closest('#PdpCouponCloseBtn');
+      if (closeBtn) {
+        e.preventDefault();
+        closePdpModal();
+        return;
+      }
+
+      const backdrop = e.target.closest('#PdpCouponBackdrop');
+      if (backdrop) {
+        e.preventDefault();
+        closePdpModal();
+        return;
+      }
+
+      const cardApplyBtn = e.target.closest('.js-pdp-coupon-apply');
+      if (cardApplyBtn) {
+        e.preventDefault();
+        const code = cardApplyBtn.getAttribute('data-code');
+        applyCouponCode(code, cardApplyBtn);
+        return;
+      }
+
+      const cardRemoveBtn = e.target.closest('.js-pdp-coupon-remove');
+      if (cardRemoveBtn) {
+        e.preventDefault();
+        removeCouponCode();
+        return;
+      }
+
+      const manualBtn = e.target.closest('#PdpManualApplyBtn');
+      if (manualBtn) {
+        e.preventDefault();
+        const input = document.getElementById('PdpManualCouponInput');
+        if (!input || !input.value.trim()) {
+          showAlertMessage('Please enter a valid coupon code.', 'error');
+          return;
+        }
+        applyCouponCode(input.value.trim(), manualBtn);
+        return;
+      }
+    });
+
+    const manualInput = document.getElementById('PdpManualCouponInput');
+    if (manualInput) {
+      manualInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const applyBtn = document.getElementById('PdpManualApplyBtn');
+          if (applyBtn) applyBtn.click();
+        }
+      });
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        const overlay = document.getElementById('PdpCouponModalOverlay');
+        if (overlay && overlay.classList.contains('is-active')) {
+          closePdpModal();
+        }
+      }
+
+      const overlay = document.getElementById('PdpCouponModalOverlay');
+      if (overlay && overlay.classList.contains('is-active') && e.key === 'Tab') {
+        const focusable = overlay.querySelectorAll('button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])');
+        if (focusable.length > 0) {
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    });
+  }
+
+  // Public API
+  window.pdpCouponController = {
+    init: function() {
+      loadCrmCoupons();
+      updatePdpPriceUI(false);
+      initEvents();
+    },
+    onVariantChange: function(matchedVariant) {
+      loadCrmCoupons();
+      updatePdpPriceUI(true, matchedVariant);
+      const overlay = document.getElementById('PdpCouponModalOverlay');
+      if (overlay && overlay.classList.contains('is-active')) {
+        renderModalList();
+      }
+    },
+    openModal: openPdpModal,
+    closeModal: closePdpModal,
+    applyCoupon: applyCouponCode,
+    removeCoupon: removeCouponCode,
+    getAvailableCoupons: function(variantId) {
+      return getVariantCoupons(variantId);
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      window.pdpCouponController.init();
+    });
+  } else {
+    window.pdpCouponController.init();
+  }
+})();
+</script>

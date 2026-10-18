@@ -94,14 +94,49 @@
           {%- when 'price' -%}
             <div class="pp-price-box">
               <div class="pp-price-box-top">
-                <span class="pp-price-current money" id="pp-price" data-inr-price="{{ current_variant.price }}">{{ current_variant.price | money }}</span>
-                <span class="pp-price-tax-label">(Incl. of all taxes)</span>
+                <div class="pp-price-display-wrap">
+                  <div class="pp-price-row">
+                    <span class="pp-price-current money" id="pp-price" data-inr-price="{{ current_variant.price }}">{{ current_variant.price | money }}</span>
+                    <span class="pp-price-original-struck money" id="pp-price-original-struck" style="display: none;"></span>
+                  </div>
+                  <span class="pp-price-tax-label">(Incl. of all taxes)</span>
+                </div>
+
+                <!-- COMPACT PREMIUM "APPLY COUPON" BUTTON -->
+                <div class="pp-coupon-trigger-wrap" id="pp-coupon-trigger-wrap">
+                  <button type="button" class="pp-apply-coupon-btn" id="pp-apply-coupon-trigger" aria-haspopup="dialog" aria-expanded="false" aria-label="Apply Coupon">
+                    <svg class="pp-coupon-btn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                      <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                    </svg>
+                    <span class="pp-coupon-btn-text" id="pp-apply-coupon-text">Apply Coupon</span>
+                    <span class="pp-coupon-btn-badge" id="pp-coupon-btn-badge" style="display: none;"></span>
+                  </button>
+                  <button type="button" class="pp-coupon-quick-remove" id="pp-coupon-quick-remove" style="display: none;" title="Remove coupon" aria-label="Remove coupon">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
               </div>
+
               <div class="pp-price-box-bottom">
                 {% assign compare_price = current_variant.compare_at_price %}
                 <span class="pp-price-compare money" id="pp-compare-price" data-inr-price="{{ compare_price }}" {% unless compare_price > current_variant.price %}style="display:none;"{% endunless %}>MRP {{ compare_price | money }}</span>
+
+                <!-- APPLIED COUPON SAVINGS CALLOUT -->
+                <div class="pp-coupon-applied-callout" id="pp-coupon-applied-callout" style="display: none;">
+                  <span class="pp-coupon-savings-tag" id="pp-coupon-savings-tag"></span>
+                  <span class="pp-coupon-savings-explanation" id="pp-coupon-savings-explanation"></span>
+                </div>
               </div>
             </div>
+
+          {%- when 'discount_code' -%}
+            {%- comment -%}
+              Authoritative coupon discounts are sourced exclusively from CRM metafields.
+            {%- endcomment -%}
 
           {%- when 'variant_picker' -%}
             {% form 'product', product, id: 'pp-product-form' %}
@@ -443,11 +478,43 @@
                 {%- endif -%}
               </div>
 
+              {%- assign is_dhanteras_enabled = section.settings.dhanteras_enable | default: true -%}
+              {%- assign is_dhanteras_eligible = true -%}
+              {%- if section.settings.dhanteras_only_tagged -%}
+                {%- unless product.tags contains 'dhanteras-sale' or product.tags contains 'dhanteras-eligible' or product.tags contains 'Dhanteras' -%}
+                  {%- assign is_dhanteras_eligible = false -%}
+                {%- endunless -%}
+              {%- endif -%}
+              {%- assign is_already_reserved = false -%}
+              {%- if product.tags contains 'dhanteras-reserved' or current_variant.metafields.custom.reserved == true or current_variant.metafields.custom.reserved == 'true' -%}
+                {%- assign is_already_reserved = true -%}
+              {%- endif -%}
+
+              {%- if is_dhanteras_enabled and is_dhanteras_eligible -%}
+                <!-- DHANTERAS FLASH SALE PROMOTIONAL BANNER -->
+                <div class="pp-dt-promo-banner" id="pp-dt-promo-banner">
+                  <div class="pp-dt-promo-top">
+                    <div class="pp-dt-promo-tag">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                      <span>DHANTERAS FLASH SALE</span>
+                    </div>
+                    <div class="pp-dt-countdown-pill" id="pp-dt-countdown-pill">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                      <span id="pp-dt-countdown-text">Nov 6, 2:00 PM – 6:00 PM IST</span>
+                    </div>
+                  </div>
+                  <div class="pp-dt-promo-content">
+                    <div class="pp-dt-promo-title">Get 30% OFF on 6th &mdash; Valid for 4 Hours Only</div>
+                    <div class="pp-dt-promo-desc">Reserve your favourite 1-of-1 piece today for ₹1,000. 100% credited toward your final purchase.</div>
+                  </div>
+                </div>
+              {%- endif -%}
+
               <!-- ROW 1: ADD TO CART + ADD TO WISHLIST -->
               <div class="pp-actions-top-row">
-                <button type="submit" form="pp-product-form" class="pp-btn-add" {% if current_is_out_of_stock %}disabled{% endif %}>
+                <button type="submit" form="pp-product-form" class="pp-btn-add" {% if current_is_out_of_stock or is_already_reserved %}disabled{% endif %}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                  <span>{% if current_is_out_of_stock %}OUT OF STOCK{% else %}ADD TO CART{% endif %}</span>
+                  <span>{% if is_already_reserved %}RESERVED{% elsif current_is_out_of_stock %}OUT OF STOCK{% else %}ADD TO CART{% endif %}</span>
                 </button>
                 <button type="button" class="pp-btn-wishlist product-single__wishlist-btn" aria-label="Add to Wishlist" 
                   data-product-id="{{ product.id }}" 
@@ -463,12 +530,26 @@
                 </button>
               </div>
 
-              <!-- ROW 2: BUY NOW WITH ARROW / OUT OF STOCK -->
-              <button type="button" class="pp-btn-buy{% if current_is_out_of_stock %} is-out-of-stock{% endif %}" id="pp-buy-now" {% if current_is_out_of_stock %}disabled{% endif %}>
-                <span class="pp-btn-spacer"></span>
-                <span class="pp-btn-text">{% if current_is_out_of_stock %}OUT OF STOCK{% else %}BUY NOW{% endif %}</span>
-                <svg class="pp-btn-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-              </button>
+              <!-- ROW 2: BOOK NOW + BUY NOW -->
+              <div class="pp-actions-checkout-row{% unless is_dhanteras_enabled and is_dhanteras_eligible %} pp-actions-checkout-row--single{% endunless %}">
+                {%- if is_dhanteras_enabled and is_dhanteras_eligible -%}
+                  <button type="button" class="pp-btn-book{% if current_is_out_of_stock or is_already_reserved %} is-disabled{% endif %}{% if is_already_reserved %} is-reserved{% endif %}" id="pp-book-now" {% if current_is_out_of_stock or is_already_reserved %}disabled{% endif %}>
+                    <svg class="pp-btn-book-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span class="pp-btn-text">{% if is_already_reserved %}RESERVED{% elsif current_is_out_of_stock %}OUT OF STOCK{% else %}BOOK NOW &mdash; ₹1,000{% endif %}</span>
+                  </button>
+                {%- endif -%}
+
+                <button type="button" class="pp-btn-buy{% if current_is_out_of_stock or is_already_reserved %} is-out-of-stock{% endif %}" id="pp-buy-now" {% if current_is_out_of_stock or is_already_reserved %}disabled{% endif %}>
+                  <span class="pp-btn-spacer"></span>
+                  <span class="pp-btn-text">{% if is_already_reserved %}RESERVED{% elsif current_is_out_of_stock %}OUT OF STOCK{% else %}BUY NOW{% endif %}</span>
+                  <svg class="pp-btn-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+              </div>
 
             </div>
 
@@ -1329,6 +1410,138 @@
   .pp-btn-wishlist.active { background: #FFF5F5 !important; border-color: #E25C5C !important; color: #E25C5C !important; }
   .pp-btn-wishlist.active svg { fill: #E25C5C !important; stroke: #E25C5C !important; }
   .pp-btn-wishlist svg { transition: all 0.25s ease !important; flex-shrink: 0 !important; }
+
+  /* Dhanteras Promotional Banner */
+  .pp-dt-promo-banner {
+    background: linear-gradient(135deg, #FFFDF8 0%, #FBF6EB 100%);
+    border: 1.5px solid #E4CCA1;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 16px rgba(200, 146, 52, 0.1);
+  }
+  .pp-dt-promo-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .pp-dt-promo-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #013F3E;
+    color: #D4AF37;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .pp-dt-countdown-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #8C6219;
+    background: rgba(200, 146, 52, 0.14);
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+  .pp-dt-promo-title {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #013F3E;
+    line-height: 1.35;
+    margin-bottom: 3px;
+  }
+  .pp-dt-promo-desc {
+    font-size: 12px;
+    color: #555555;
+    line-height: 1.4;
+  }
+
+  /* Dual Action Checkout Row: Book Now + Buy Now */
+  .pp-actions-checkout-row {
+    display: flex !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+  .pp-actions-checkout-row--single .pp-btn-buy {
+    width: 100% !important;
+  }
+  .pp-btn-book {
+    flex: 1 1 50% !important;
+    background: #013F3E !important;
+    color: #FFFFFF !important;
+    border: 1.5px solid #C89234 !important;
+    border-radius: 10px !important;
+    min-height: 56px !important;
+    height: 56px !important;
+    font-family: var(--pp-font-sans) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.25s ease !important;
+    box-shadow: 0 6px 20px rgba(1, 63, 62, 0.2) !important;
+    padding: 0 14px !important;
+  }
+  .pp-btn-book:hover {
+    background: #012B2A !important;
+    border-color: #D4AF37 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(1, 63, 62, 0.35) !important;
+  }
+  .pp-btn-book svg {
+    color: #D4AF37;
+    flex-shrink: 0;
+  }
+  .pp-btn-book.is-disabled,
+  .pp-btn-book.is-reserved,
+  .pp-btn-book:disabled {
+    background: #E8E8E8 !important;
+    border-color: #D0D0D0 !important;
+    color: #888888 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
+  }
+  .pp-btn-book.is-disabled svg,
+  .pp-btn-book.is-reserved svg,
+  .pp-btn-book:disabled svg {
+    color: #888888 !important;
+  }
+  .pp-actions-checkout-row .pp-btn-buy {
+    flex: 1 1 50% !important;
+    width: auto !important;
+    padding: 0 16px !important;
+    font-size: 15px !important;
+  }
+
+  @media (max-width: 600px) {
+    .pp-actions-checkout-row {
+      flex-direction: column !important;
+      gap: 10px !important;
+    }
+    .pp-actions-checkout-row .pp-btn-book,
+    .pp-actions-checkout-row .pp-btn-buy {
+      width: 100% !important;
+      flex: none !important;
+    }
+  }
 
   .pp-btn-buy {
     width: 100% !important; background: #C89234 !important; color: #ffffff !important;
@@ -2470,6 +2683,19 @@
       return;
     }
 
+    // Dhanteras Book Now Button
+    const bookBtn = e.target.closest('.pp-btn-book');
+    if (bookBtn) {
+      e.preventDefault();
+      if (bookBtn.disabled || bookBtn.classList.contains('is-disabled') || bookBtn.classList.contains('is-reserved')) {
+        return;
+      }
+      if (window.dhanterasBookingController && typeof window.dhanterasBookingController.openModal === 'function') {
+        window.dhanterasBookingController.openModal();
+      }
+      return;
+    }
+
     // Buy Now Button (Dynamic Checkout)
     const buyBtn = e.target.closest('.pp-btn-buy');
     if (buyBtn) {
@@ -2568,6 +2794,7 @@
               }
             }
             
+            const elBtnBook = document.getElementById('pp-book-now');
             if (isOutOfStock) {
               if (elStockStatus) {
                 elStockStatus.className = 'pp-stock-status pp-stock-status--sold-out pp-stock-status--out-of-stock';
@@ -2583,6 +2810,12 @@
                 elBtnBuy.style.display = '';
                 const buyText = elBtnBuy.querySelector('.pp-btn-text');
                 if (buyText) buyText.textContent = 'OUT OF STOCK';
+              }
+              if (elBtnBook) {
+                elBtnBook.setAttribute('disabled', 'true');
+                elBtnBook.classList.add('is-disabled');
+                const bookText = elBtnBook.querySelector('.pp-btn-text');
+                if (bookText) bookText.textContent = 'OUT OF STOCK';
               }
             } else if (isMTO) {
               if (elStockStatus) {
@@ -2600,6 +2833,12 @@
                 const buyText = elBtnBuy.querySelector('.pp-btn-text');
                 if (buyText) buyText.textContent = 'BUY NOW';
               }
+              if (elBtnBook) {
+                elBtnBook.removeAttribute('disabled');
+                elBtnBook.classList.remove('is-disabled');
+                const bookText = elBtnBook.querySelector('.pp-btn-text');
+                if (bookText) bookText.textContent = 'BOOK NOW \u2014 \u20B91,000';
+              }
             } else {
               if (elStockStatus) {
                 elStockStatus.className = 'pp-stock-status pp-stock-status--in-stock';
@@ -2616,6 +2855,12 @@
                 const buyText = elBtnBuy.querySelector('.pp-btn-text');
                 if (buyText) buyText.textContent = 'BUY NOW';
               }
+              if (elBtnBook) {
+                elBtnBook.removeAttribute('disabled');
+                elBtnBook.classList.remove('is-disabled');
+                const bookText = elBtnBook.querySelector('.pp-btn-text');
+                if (bookText) bookText.textContent = 'BOOK NOW \u2014 \u20B91,000';
+              }
             }
             
             const formatMoney = (cents) => {
@@ -2626,6 +2871,19 @@
             const priceEl = document.getElementById('pp-price');
             if (priceEl && matched.price) {
               priceEl.innerHTML = priceFormatted;
+              priceEl.setAttribute('data-inr-price', matched.price);
+              if (window.pdpCouponController && typeof window.pdpCouponController.onVariantChange === 'function') {
+                window.pdpCouponController.onVariantChange(matched);
+              }
+              if (window.dhanterasBookingController && typeof window.dhanterasBookingController.onVariantChange === 'function') {
+                window.dhanterasBookingController.onVariantChange({
+                  id: matched.id,
+                  title: matched.title,
+                  price: matched.price,
+                  sku: matched.sku,
+                  image: matched.featured_image ? matched.featured_image.src : null
+                });
+              }
             }
 
             const comparePriceEl = document.getElementById('pp-compare-price');
@@ -2929,6 +3187,7 @@
               }
             }
             
+            const elBtnBook = document.getElementById('pp-book-now');
             if (isOutOfStock) {
               if (elStockStatus) {
                 elStockStatus.className = 'pp-stock-status pp-stock-status--sold-out pp-stock-status--out-of-stock';
@@ -2944,6 +3203,12 @@
                 elBtnBuy.style.display = '';
                 const buyText = elBtnBuy.querySelector('.pp-btn-text');
                 if (buyText) buyText.textContent = 'OUT OF STOCK';
+              }
+              if (elBtnBook) {
+                elBtnBook.setAttribute('disabled', 'true');
+                elBtnBook.classList.add('is-disabled');
+                const bookText = elBtnBook.querySelector('.pp-btn-text');
+                if (bookText) bookText.textContent = 'OUT OF STOCK';
               }
             } else if (isMTO) {
               if (elStockStatus) {
@@ -2961,6 +3226,12 @@
                 const buyText = elBtnBuy.querySelector('.pp-btn-text');
                 if (buyText) buyText.textContent = 'BUY NOW';
               }
+              if (elBtnBook) {
+                elBtnBook.removeAttribute('disabled');
+                elBtnBook.classList.remove('is-disabled');
+                const bookText = elBtnBook.querySelector('.pp-btn-text');
+                if (bookText) bookText.textContent = 'BOOK NOW \u2014 \u20B91,000';
+              }
             } else {
               if (elStockStatus) {
                 elStockStatus.className = 'pp-stock-status pp-stock-status--in-stock';
@@ -2976,6 +3247,12 @@
                 elBtnBuy.style.display = '';
                 const buyText = elBtnBuy.querySelector('.pp-btn-text');
                 if (buyText) buyText.textContent = 'BUY NOW';
+              }
+              if (elBtnBook) {
+                elBtnBook.removeAttribute('disabled');
+                elBtnBook.classList.remove('is-disabled');
+                const bookText = elBtnBook.querySelector('.pp-btn-text');
+                if (bookText) bookText.textContent = 'BOOK NOW \u2014 \u20B91,000';
               }
             }
 
@@ -3036,10 +3313,32 @@
     const minOrder = c.min_order_value || c.minimum_order_value || c.minimumRequirement?.subtotal?.greaterThanOrEqualToSubtotal || null;
     const desc = c.short_description || c.campaign_name || c.title || '';
 
+    const isDiamondOnly = Boolean(
+      c.is_diamond_only === true ||
+      c.is_diamond_only === 'true' ||
+      c.isDiamondOnly === true ||
+      c.isDiamondOnly === 'true' ||
+      c.discount_target === 'diamond_only' ||
+      c.discountTarget === 'diamond_only'
+    );
+    let diaPercent = parseFloat(
+      c.diamond_discount_percent !== undefined ? c.diamond_discount_percent :
+      (c.diamondDiscountPercent !== undefined ? c.diamondDiscountPercent :
+      (isDiamondOnly ? value : 0))
+    ) || 0;
+    if (diaPercent > 0 && diaPercent <= 1) {
+      diaPercent = Math.round(diaPercent * 100);
+    }
+
     return {
       code: code.trim().toUpperCase(),
       type: type,
       value: value,
+      discount_target: c.discount_target || c.discountTarget || (isDiamondOnly ? 'diamond_only' : 'entire_product'),
+      is_diamond_only: isDiamondOnly,
+      diamond_discount_percent: diaPercent,
+      eligible_categories: Array.isArray(c.eligible_categories) ? c.eligible_categories : [],
+      excluded_categories: Array.isArray(c.excluded_categories) ? c.excluded_categories : [],
       min_order_value: minOrder,
       expiry_date: formattedExpiry,
       short_description: desc
@@ -3145,8 +3444,10 @@
   };
 
   function openCoupons() {
-    const currentCoupons = window.getCouponsForCurrentVariant();
-    if (typeof window.openSiteCouponPopup === 'function') {
+    if (window.pdpCouponController && typeof window.pdpCouponController.openModal === 'function') {
+      window.pdpCouponController.openModal();
+    } else if (typeof window.openSiteCouponPopup === 'function') {
+      const currentCoupons = window.getCouponsForCurrentVariant();
       window.openSiteCouponPopup(currentCoupons);
     }
   }
@@ -3160,6 +3461,9 @@
   });
 
   window.updateVariantCoupons = function(variantId, isVariantOutOfStock) {
+    if (window.pdpCouponController && typeof window.pdpCouponController.onVariantChange === 'function') {
+      window.pdpCouponController.onVariantChange();
+    }
     const trigger = document.getElementById('pp-coupon-trigger');
     if (!trigger) return;
 
@@ -3301,10 +3605,68 @@
   </div>
 {%- endif -%}
 
+{% render 'pdp-coupon-modal', product: product, current_variant: current_variant %}
+{% render 'dhanteras-booking-modal', product: product, current_variant: current_variant %}
+
 {% schema %}
 {
   "name": "Product Premium",
   "settings": [
+    {
+      "type": "header",
+      "content": "Dhanteras Flash Sale & Booking"
+    },
+    {
+      "type": "checkbox",
+      "id": "dhanteras_enable",
+      "label": "Enable Dhanteras Flash Sale & Booking",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "dhanteras_only_tagged",
+      "label": "Only Show for Products tagged 'dhanteras-sale'",
+      "default": false
+    },
+    {
+      "type": "text",
+      "id": "dhanteras_sale_date",
+      "label": "Sale Date (YYYY-MM-DD)",
+      "default": "2026-11-06"
+    },
+    {
+      "type": "text",
+      "id": "dhanteras_sale_start",
+      "label": "Sale Start Time (HH:MM)",
+      "default": "14:00"
+    },
+    {
+      "type": "text",
+      "id": "dhanteras_sale_end",
+      "label": "Sale End Time (HH:MM)",
+      "default": "18:00"
+    },
+    {
+      "type": "text",
+      "id": "dhanteras_sale_timezone",
+      "label": "Sale Timezone",
+      "default": "Asia/Kolkata"
+    },
+    {
+      "type": "number",
+      "id": "dhanteras_booking_amount",
+      "label": "Booking Amount (INR)",
+      "default": 1000
+    },
+    {
+      "type": "range",
+      "id": "dhanteras_discount_percent",
+      "label": "Flash Sale Discount Percentage",
+      "min": 5,
+      "max": 50,
+      "step": 1,
+      "default": 30
+    },
     {
       "type": "header",
       "content": "Educational Guides"
@@ -3357,10 +3719,7 @@
       "type": "discount_code", 
       "name": "Discount Code", 
       "limit": 1,
-      "settings": [
-        { "type": "text", "id": "code", "label": "Discount Code", "default": "GOLDEN10" },
-        { "type": "range", "id": "discount_percent", "label": "Discount %", "min": 5, "max": 50, "step": 1, "default": 10 }
-      ]
+      "settings": []
     },
     { "type": "variant_picker", "name": "Variant Picker", "limit": 1 },
     { "type": "buy_buttons", "name": "Buy Buttons", "limit": 1 }

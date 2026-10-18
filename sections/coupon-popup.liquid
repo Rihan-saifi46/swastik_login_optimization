@@ -62,13 +62,9 @@
     {{ shop_coupon_metafield | default: '[]' }}
   </script>
 
-  <!-- Fallback Settings Data JSON -->
-  <script id="site-fallback-coupon-json" type="application/json">
+  <!-- Popup Config Data JSON -->
+  <script id="site-popup-config-json" type="application/json">
     {
-      "code": {{ section.settings.fallback_code | default: 'WELCOME10' | json }},
-      "discount": {{ section.settings.fallback_discount | default: '10% OFF' | json }},
-      "desc": {{ section.settings.fallback_description | default: 'Welcome discount on your first luxury order' | json }},
-      "expiry": {{ section.settings.fallback_validity | default: 'Limited time offer' | json }},
       "delay": {{ section.settings.popup_delay | default: 1.5 | json }}
     }
   </script>
@@ -535,7 +531,6 @@
 
       function getSiteCoupons() {
         const shopJsonEl = document.getElementById('site-shop-coupons-json');
-        const fallbackJsonEl = document.getElementById('site-fallback-coupon-json');
 
         let coupons = [];
         if (shopJsonEl) {
@@ -549,25 +544,6 @@
             }
           } catch (e) {
             console.error('Error parsing site coupons:', e);
-          }
-        }
-
-        // If no coupons from metafields, use custom section fallback
-        if (coupons.length === 0 && fallbackJsonEl) {
-          try {
-            const fb = JSON.parse(fallbackJsonEl.textContent || '{}');
-            if (fb && fb.code) {
-              coupons.push({
-                code: String(fb.code).trim().toUpperCase(),
-                type: 'custom',
-                value: 0,
-                custom_discount: fb.discount || '10% OFF',
-                short_description: fb.desc || 'Special Welcome Discount',
-                expiry_date: fb.expiry || ''
-              });
-            }
-          } catch (e) {
-            console.error('Error parsing fallback coupon:', e);
           }
         }
 
@@ -816,12 +792,15 @@
 
         if (seen) return;
 
-        const fallbackJsonEl = document.getElementById('site-fallback-coupon-json');
+        const siteCoupons = getSiteCoupons();
+        if (!siteCoupons || siteCoupons.length === 0) return;
+
+        const configJsonEl = document.getElementById('site-popup-config-json');
         let delaySec = 1.5;
-        if (fallbackJsonEl) {
+        if (configJsonEl) {
           try {
-            const fb = JSON.parse(fallbackJsonEl.textContent || '{}');
-            if (fb && typeof fb.delay === 'number') delaySec = fb.delay;
+            const cfg = JSON.parse(configJsonEl.textContent || '{}');
+            if (cfg && typeof cfg.delay === 'number') delaySec = cfg.delay;
           } catch (e) {}
         }
 
@@ -884,34 +863,6 @@
       "max": 10,
       "step": 0.5,
       "default": 1.5
-    },
-    {
-      "type": "header",
-      "content": "Fallback / Default Coupon Offer"
-    },
-    {
-      "type": "text",
-      "id": "fallback_code",
-      "label": "Coupon Code",
-      "default": "WELCOME10"
-    },
-    {
-      "type": "text",
-      "id": "fallback_discount",
-      "label": "Discount Text",
-      "default": "10% OFF"
-    },
-    {
-      "type": "text",
-      "id": "fallback_description",
-      "label": "Description",
-      "default": "Welcome 10% Discount on your first order"
-    },
-    {
-      "type": "text",
-      "id": "fallback_validity",
-      "label": "Validity / Note",
-      "default": "Limited time offer"
     }
   ]
 }
