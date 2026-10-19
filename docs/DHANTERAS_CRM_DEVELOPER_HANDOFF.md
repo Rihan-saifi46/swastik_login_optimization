@@ -21,6 +21,8 @@
 | **Payment Gateway Integration (Paytm Payment Gateway)** | **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
 | **Paytm Callback & Checksum Verification (`POST /paytm-callback`)**| **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
 | **Single-Piece Inventory Locking (Shopify Admin API)** | **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
+| **Shopify Booking Status Sync (BOOKED Badge vs. Out of Stock)** | **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
+| **Cancellation & Inventory Restoration Flow** | **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
 | **Customer Booking Record & Status Lifecycle** | **CRM Database** | **REQUIRED** |
 | **4-Hour Flash Sale Validation (Nov 6, 2–6 PM IST)** | **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
 | **Shopify Draft Order Creation (₹1,000 Credit + 30% OFF)**| **CRM Backend (`backend-api.swastikjewel.in`)** | **REQUIRED** |
@@ -133,11 +135,10 @@
 2. **Status Check**:
    If `paytmParams.STATUS === 'TXN_SUCCESS'` (or `RESPCODE === '01'`):
 3. **Idempotency**: If `booking_id` is already `CONFIRMED`, skip re-executing inventory decrements.
-4. **Shopify Inventory Locking (Admin REST or GraphQL API)**:
+4. **Shopify Inventory Locking & Reservation Identification (Admin REST or GraphQL API)**:
    * Call `POST /admin/api/2024-01/inventory_levels/set.json`:
      Set `available = 0` for this variant at the primary location.
-   * Call `PUT /admin/api/2024-01/products/{product_id}.json`:
-     Add tag: `dhanteras-reserved:<booking_id>`.
+   * Synchronize confirmed booking identification to Shopify so the storefront displays **`BOOKED`** instead of `OUT OF STOCK` across PDP and listing cards (refer to Section 3 for multi-variant vs. 1-of-1 tagging specification).
 5. **CRM Database Update**:
    * Set status to `CONFIRMED`.
    * Save `paytm_txn_id: paytmParams.TXNID`, `bank_txn_id: paytmParams.BANKTXNID`, `paid_at: ISO8601`, `booking_amount: 1000`.
@@ -148,7 +149,7 @@
    The CRM redirects the browser back to the product page with success parameters:
    ```javascript
    const redirectUrl = storedBooking.redirect_url || 'https://swastikjewel.in';
-   res.redirect(`${redirectUrl}?booking_status=success&booking_id=${storedBooking.booking_id}`);
+   res.redirect(`${redirectUrl}?booking_status=success&booking_id=${storedBooking.booking_id}&variant_id=${storedBooking.variant_id}`);
    ```
    *(The storefront automatically catches `booking_status=success` and pops open the Confirmation screen with the Booking ID).*
 
@@ -248,7 +249,121 @@
 
 ---
 
-## 3. Database Schema Recommendations
+## 3. Shopify Booking Status Sync — BOOKED After Successful Reservation
+
+### 3.1 Architectural Context & Problem Statement
+In Swastik Jewels' 1-of-1 exclusive jewellery model, reserving a product previously resulted in setting Shopify inventory to `0` (`available = 0`). Consequently, the storefront defaulted to displaying `OUT OF STOCK`.
+
+The Shopify frontend (`Login-opt`) has been updated to differentiate between an unbooked out-of-stock item and an active reservation. When a confirmed booking exists:
+* The availability badge across the Product Details Page (`sections/product.liquid`), product listing cards (`snippets/product-card.liquid`), and recommendations displays **`BOOKED`** instead of `OUT OF STOCK`.
+* Purchase actions ("Add to Cart", "Book Now", "Buy Now") transition into disabled **`BOOKED`** states.
+* Products that have not been reserved preserve their normal `IN STOCK` or `MADE TO ORDER` states.
+
+To make the `BOOKED` status universally persistent across all devices, browser sessions, page reloads, and different customers, the CRM backend must synchronize confirmed bookings to Shopify using the existing CRM-to-Shopify integration.
+
+---
+
+### 3.2 Paytm Payment Gateway Confirmation & CRM State Persistence
+* **Actual Production Gateway**: **Paytm** (`/api/dhanteras/paytm-callback`).
+* **Trigger Event**: Paytm server-to-server callback or customer return with `STATUS === 'TXN_SUCCESS'` (or `RESPCODE === '01'`).
+* **Backend Processing Sequence**:
+  1. **Signature Verification**: Verify Paytm signature using `PaytmChecksum.verifySignatureByString(JSON.stringify(paytmParams), process.env.PAYTM_MERCHANT_KEY, paytmChecksum)`.
+  2. **Idempotent State Transition**:
+     - Locate the booking record in table `dhanteras_bookings` using `booking_id` (e.g. `SW-DT-2026-894102`).
+     - If status is already `CONFIRMED`, skip re-executing inventory decrements or duplicate tag calls.
+     - If status is `PENDING_PAYMENT`, transition status to `CONFIRMED`.
+     - Persist transaction metadata: `paytm_txn_id`, `bank_txn_id`, `paid_at: ISO8601`, `booking_amount: 1000`.
+  3. **Immediate Storefront Redirection**:
+     - Include the booked variant ID in the redirect URL:
+       ```javascript
+       const redirectUrl = storedBooking.redirect_url || 'https://swastikjewel.in';
+       res.redirect(`${redirectUrl}?booking_status=success&booking_id=${storedBooking.booking_id}&variant_id=${storedBooking.variant_id}`);
+       ```
+     - *Client Persistence*: The frontend catches `booking_status=success` and immediately caches `{ [variant_id]: { booking_id, product_id, timestamp } }` in `localStorage['sw_confirmed_bookings']`, eliminating any perceived visual delay while Shopify CDN indexes the product update.
+
+---
+
+### 3.3 Shopify CRM-to-Shopify Synchronization Specification
+The CRM backend must sync the reservation to Shopify using the existing Shopify Admin REST or GraphQL API credentials.
+
+#### 1. Inventory Decrement (Withdraw Item from Sale)
+* Call `POST /admin/api/2024-01/inventory_levels/set.json`:
+  - `location_id`: Primary fulfillment location ID
+  - `inventory_item_id`: Target variant's `inventory_item_id`
+  - `available`: `0`
+
+#### 2. Booking Identification: Proposal Validation (Tags vs. Metafields)
+The CRM integration must apply the reservation at the correct entity level so unrelated products or variants are never incorrectly marked `BOOKED`:
+
+* **Case A: Multi-Variant Products** (e.g. products with options for metal colour, purity, or ring size):
+  * **Tag Proposal (Recommended for Simplicity)**:
+    - Append tag to product via `PUT /admin/api/2024-01/products/{product_id}.json`:
+      `dhanteras-reserved:<variant_id>` or `booked:<variant_id>`
+      *(Example: `dhanteras-reserved:4591028472`)*
+    - *Storefront Execution*: The Liquid and JS engines verify `tag contains 'dhanteras-reserved:4591028472'`. Only variant `4591028472` displays `BOOKED`; selecting any other variant of that product displays `IN STOCK` or `MADE TO ORDER`.
+  * **Metafield Proposal (Alternative via GraphQL Admin API)**:
+    - Mutate variant metafield on the target `variant_id`:
+      - Namespace: `custom`
+      - Key: `reserved` (Type: `boolean`, Value: `true`), OR Key: `booking_status` (Type: `single_line_text_field`, Value: `"confirmed"`)
+
+* **Case B: Single-Variant / 1-of-1 Piece Products** (`product.has_only_default_variant` or single item):
+  * **Tag Proposal**:
+    - Append tag to product: `dhanteras-reserved:<booking_id>` or `dhanteras-reserved` or `booked`
+    - *Example*: `dhanteras-reserved:SW-DT-2026-894102`
+  * **Metafield Proposal**:
+    - Mutate product-level metafield:
+      - Namespace: `custom`
+      - Key: `reserved` (Type: `boolean`, Value: `true`), OR Key: `booking_status` (Type: `single_line_text_field`, Value: `"confirmed"`)
+
+> **Note for Backend / CRM Team**: The frontend code in `Login-opt` has already implemented dual support for both tag patterns (`dhanteras-reserved:*`, `booked:*`) and metafield keys (`custom.reserved`, `custom.booked`, `custom.booking_status`). Treat these tag and metafield formats as proposals to validate against your existing Shopify Admin API integration tooling, and select the one that integrates most seamlessly into your stack.
+
+---
+
+### 3.4 Cross-Browser, Multi-Session & Refresh Persistence
+* **Server-Rendered Status**: Because the CRM updates the tag or metafield on the Shopify product record, the Liquid engine in `product-card.liquid`, `product.liquid`, and `product-recommendations.liquid` renders `<span class="product-card-ui__pill product-card-ui__pill--booked">BOOKED</span>` and `<div class="pp-stock-status pp-stock-status--booked"><span>BOOKED</span></div>` on the server.
+* **Universal Visibility**: Any visitor across any browser, mobile device, or new session will see `BOOKED` rather than `OUT OF STOCK`.
+
+---
+
+### 3.5 Handling Failed, Timed-Out, or Unconfirmed Bookings
+* **Failed Bookings**:
+  - If Paytm returns `STATUS === 'TXN_FAILURE'`, customer aborts checkout, or transaction fails validation, update CRM record to `FAILED`.
+  - **Never mark the product as BOOKED in Shopify for failed or unconfirmed bookings.**
+  - The existing availability (`IN STOCK` or `MADE TO ORDER`) must remain unchanged.
+* **Unconfirmed Pending Bookings (Hold Expiry)**:
+  - If a 10-minute hold window was tracked in the CRM during `PENDING_PAYMENT`, and no successful Paytm callback is received within 10 minutes, transition the CRM status to `EXPIRED`.
+  - Do not apply any persistent reservation tag/metafield in Shopify.
+
+---
+
+### 3.6 Cancellation & Inventory Restoration Flow
+If a confirmed booking is cancelled (e.g. customer service cancellation, merchant release, or post-flash-sale expiry on Nov 6):
+
+1. **CRM Record Update**: Update status in table `dhanteras_bookings` to `CANCELLED` or `REFUNDED`.
+2. **Remove Shopify Booking Identification**:
+   * If using tags: Remove `dhanteras-reserved:<variant_id>`, `dhanteras-reserved:<booking_id>`, or `dhanteras-reserved` from the product tags via `PUT /admin/api/2024-01/products/{product_id}.json`.
+   * If using metafields: Set `custom.reserved = false` or `custom.booking_status = "cancelled"`.
+3. **Restore Shopify Inventory Quantity**:
+   * Call `POST /admin/api/2024-01/inventory_levels/adjust.json`:
+     - `inventory_item_id`: Target variant's `inventory_item_id`
+     - `available_adjustment`: `1` (or set inventory back to `1`)
+4. **Storefront Result**:
+   * The product badge automatically reverts to `IN STOCK` (or `MADE TO ORDER` if tagged with `Made to Order` and policy `continue`).
+   * "Add to Cart", "Book Now", and "Buy Now" buttons are immediately re-enabled.
+
+---
+
+### 3.7 Architecture & Scope Boundaries
+* **Payment Gateway**: Paytm is the exclusive production gateway for this integration. Do not implement Razorpay-specific workflows or credentials.
+* **Endpoint Architecture**: No new API endpoints are required. All logic attaches to existing routes:
+  - `/api/dhanteras/create-booking-order` (Pre-check & Paytm initiation)
+  - `/api/dhanteras/paytm-callback` (Checksum verification, DB confirmation, Shopify sync, customer redirect)
+  - `/api/dhanteras/generate-sale-checkout` (Flash sale Nov 6 draft order generation)
+* **Database Schema**: Reuses existing `dhanteras_bookings` table without structural alterations.
+
+---
+
+## 4. Database Schema Recommendations
 
 ### Table: `dhanteras_bookings`
 * `id`: Primary Key (UUID)
@@ -270,7 +385,7 @@
 
 ---
 
-## 4. Legal & Regulatory Compliance (Statutory Notice)
+## 5. Legal & Regulatory Compliance (Statutory Notice)
 
 Under the **Consumer Protection (E-Commerce) Rules, 2020** and applicable Indian contract law:
 1. **Transparent Forfeiture**: Because Swastik Jewels withdraws unique 1-of-1 physical pieces from public commerce, retaining the ₹1,000 deposit upon failure to complete purchase within the clearly disclosed 4-hour window is legally permissible, provided the customer affirmatively agreed to the disclosure (which the frontend checkbox enforces).
@@ -278,7 +393,7 @@ Under the **Consumer Protection (E-Commerce) Rules, 2020** and applicable Indian
 
 ---
 
-## 5. Summary of Frontend Status
+## 6. Summary of Frontend Status
 
 * **Frontend Theme Repository**: `Login-opt`
 * **Modal Trigger**: Handled in [`snippets/dhanteras-booking-modal.liquid`](file:///d:/swastik%20shopify%20R/Login-opt/snippets/dhanteras-booking-modal.liquid).

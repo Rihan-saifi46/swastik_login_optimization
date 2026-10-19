@@ -101,7 +101,8 @@
 
         <div class="pr-rec-carousel" id="pr-rec-carousel">
           {%- for recommendation in display_products limit: section.settings.products_to_show -%}
-            <a href="{{ recommendation.url }}" class="pp-related-item-card pr-rec-card" style="text-decoration: none;">
+            {%- assign rec_variant = recommendation.selected_or_first_available_variant -%}
+            <a href="{{ recommendation.url }}" class="pp-related-item-card pr-rec-card" data-product-id="{{ recommendation.id }}" data-variant-id="{{ rec_variant.id }}" style="text-decoration: none;">
               <div class="pp-related-img-wrap">
                 {%- if recommendation.featured_image -%}
                   <img src="{{ recommendation.featured_image | image_url: width: 400 }}" alt="{{ recommendation.title | escape }}" width="400" height="400" loading="lazy">
@@ -124,7 +125,34 @@
                     {%- assign rec_is_out_of_stock = true -%}
                   {%- endif -%}
 
-                  {%- if rec_is_out_of_stock -%}
+                  {%- assign rec_is_booked = false -%}
+                  {%- if rec_variant.metafields.custom.reserved == true or rec_variant.metafields.custom.reserved == 'true' or rec_variant.metafields.custom.booked == true or rec_variant.metafields.custom.booked == 'true' or rec_variant.metafields.custom.booking_status == 'confirmed' or rec_variant.metafields.custom.booking_status == 'booked' -%}
+                    {%- assign rec_is_booked = true -%}
+                  {%- endif -%}
+                  {%- if recommendation.metafields.custom.reserved == true or recommendation.metafields.custom.reserved == 'true' or recommendation.metafields.custom.booked == true or recommendation.metafields.custom.booked == 'true' or recommendation.metafields.custom.booking_status == 'confirmed' or recommendation.metafields.custom.booking_status == 'booked' -%}
+                    {%- if recommendation.has_only_default_variant or recommendation.variants.size <= 1 -%}
+                      {%- assign rec_is_booked = true -%}
+                    {%- endif -%}
+                  {%- endif -%}
+                  {%- assign rec_v_id_str = rec_variant.id | append: '' -%}
+                  {%- for tag in recommendation.tags -%}
+                    {%- assign tag_lower = tag | downcase -%}
+                    {%- if tag_lower == 'dhanteras-reserved' or tag_lower == 'booked' or tag_lower == 'dhanteras-booked' or tag_lower == 'reserved' -%}
+                      {%- if recommendation.has_only_default_variant or recommendation.variants.size <= 1 -%}
+                        {%- assign rec_is_booked = true -%}
+                      {%- endif -%}
+                    {%- elsif tag_lower contains 'dhanteras-reserved:' or tag_lower contains 'booked:' or tag_lower contains 'dhanteras-booked:' or tag_lower contains 'reserved:' -%}
+                      {%- if tag_lower contains rec_v_id_str -%}
+                        {%- assign rec_is_booked = true -%}
+                      {%- elsif recommendation.has_only_default_variant or recommendation.variants.size <= 1 -%}
+                        {%- assign rec_is_booked = true -%}
+                      {%- endif -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+
+                  {%- if rec_is_booked -%}
+                    <span class="pp-rel-pill pp-rel-pill--booked">BOOKED</span>
+                  {%- elsif rec_is_out_of_stock -%}
                     <span class="pp-rel-pill pp-rel-pill--sold-out pp-rel-pill--out-of-stock">Out of Stock</span>
                   {%- elsif rec_is_mto and rec_variant.inventory_policy == 'continue' -%}
                     <span class="pp-rel-pill pp-rel-pill--made-to-order">Made to Order</span>
@@ -494,6 +522,11 @@
   .pp-rel-pill--out-of-stock {
     background: #FFEBEE !important;
     color: #C62828 !important;
+  }
+  .pp-rel-pill--booked {
+    background: #FAF3E3 !important;
+    color: #8C6219 !important;
+    border: 1px solid #E5D5BA !important;
   }
 {% endstylesheet %}
 

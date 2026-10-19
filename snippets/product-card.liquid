@@ -48,7 +48,34 @@
         {%- assign card_is_out_of_stock = true -%}
       {%- endif -%}
 
-      {%- if card_is_out_of_stock -%}
+      {%- assign card_is_booked = false -%}
+      {%- if current_variant.metafields.custom.reserved == true or current_variant.metafields.custom.reserved == 'true' or current_variant.metafields.custom.booked == true or current_variant.metafields.custom.booked == 'true' or current_variant.metafields.custom.booking_status == 'confirmed' or current_variant.metafields.custom.booking_status == 'booked' -%}
+        {%- assign card_is_booked = true -%}
+      {%- endif -%}
+      {%- if product.metafields.custom.reserved == true or product.metafields.custom.reserved == 'true' or product.metafields.custom.booked == true or product.metafields.custom.booked == 'true' or product.metafields.custom.booking_status == 'confirmed' or product.metafields.custom.booking_status == 'booked' -%}
+        {%- if product.has_only_default_variant or product.variants.size <= 1 -%}
+          {%- assign card_is_booked = true -%}
+        {%- endif -%}
+      {%- endif -%}
+      {%- assign card_v_id_str = current_variant.id | append: '' -%}
+      {%- for tag in product.tags -%}
+        {%- assign tag_lower = tag | downcase -%}
+        {%- if tag_lower == 'dhanteras-reserved' or tag_lower == 'booked' or tag_lower == 'dhanteras-booked' or tag_lower == 'reserved' -%}
+          {%- if product.has_only_default_variant or product.variants.size <= 1 -%}
+            {%- assign card_is_booked = true -%}
+          {%- endif -%}
+        {%- elsif tag_lower contains 'dhanteras-reserved:' or tag_lower contains 'booked:' or tag_lower contains 'dhanteras-booked:' or tag_lower contains 'reserved:' -%}
+          {%- if tag_lower contains card_v_id_str -%}
+            {%- assign card_is_booked = true -%}
+          {%- elsif product.has_only_default_variant or product.variants.size <= 1 -%}
+            {%- assign card_is_booked = true -%}
+          {%- endif -%}
+        {%- endif -%}
+      {%- endfor -%}
+
+      {%- if card_is_booked -%}
+        <span class="product-card-ui__pill product-card-ui__pill--booked">BOOKED</span>
+      {%- elsif card_is_out_of_stock -%}
         <span class="product-card-ui__pill product-card-ui__pill--sold-out product-card-ui__pill--out-of-stock">Out of Stock</span>
       {%- elsif card_is_mto and current_variant.inventory_policy == 'continue' -%}
         <span class="product-card-ui__pill product-card-ui__pill--made-to-order">Made to Order</span>

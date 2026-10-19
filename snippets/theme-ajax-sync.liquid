@@ -333,14 +333,92 @@
       });
     };
 
+    // Global booking status badge synchronization across product listing cards & PDP
+    window.swSyncBookedBadges = function() {
+      try {
+        const confirmedStr = localStorage.getItem('sw_confirmed_bookings');
+        if (!confirmedStr) return;
+        const confirmed = JSON.parse(confirmedStr || '{}');
+        const bookedKeys = Object.keys(confirmed);
+        if (!bookedKeys.length) return;
+
+        // 1. Sync .product-card-ui cards
+        document.querySelectorAll('.product-card-ui').forEach(card => {
+          const vId = String(card.getAttribute('data-variant-id') || '');
+          const pId = String(card.getAttribute('data-product-id') || '');
+          const isBooked = (vId && confirmed[vId]) || (pId && confirmed['p_' + pId]);
+          if (isBooked) {
+            const pillsWrap = card.querySelector('.product-card-ui__pills');
+            if (pillsWrap) {
+              const existingBooked = pillsWrap.querySelector('.product-card-ui__pill--booked');
+              if (!existingBooked) {
+                const existingPill = pillsWrap.querySelector('.product-card-ui__pill');
+                if (existingPill) {
+                  existingPill.className = 'product-card-ui__pill product-card-ui__pill--booked';
+                  existingPill.textContent = 'BOOKED';
+                } else {
+                  const newPill = document.createElement('span');
+                  newPill.className = 'product-card-ui__pill product-card-ui__pill--booked';
+                  newPill.textContent = 'BOOKED';
+                  pillsWrap.appendChild(newPill);
+                }
+              }
+            }
+          }
+        });
+
+        // 2. Sync related product cards (.pp-related-item-card)
+        document.querySelectorAll('.pp-related-item-card').forEach(card => {
+          const vId = String(card.getAttribute('data-variant-id') || '');
+          const pId = String(card.getAttribute('data-product-id') || '');
+          const isBooked = (vId && confirmed[vId]) || (pId && confirmed['p_' + pId]);
+          if (isBooked) {
+            const pillsWrap = card.querySelector('.pp-related-pills');
+            if (pillsWrap) {
+              const existingBooked = pillsWrap.querySelector('.pp-rel-pill--booked');
+              if (!existingBooked) {
+                const existingPill = pillsWrap.querySelector('.pp-rel-pill');
+                if (existingPill) {
+                  existingPill.className = 'pp-rel-pill pp-rel-pill--booked';
+                  existingPill.textContent = 'BOOKED';
+                } else {
+                  const newPill = document.createElement('span');
+                  newPill.className = 'pp-rel-pill pp-rel-pill--booked';
+                  newPill.textContent = 'BOOKED';
+                  pillsWrap.appendChild(newPill);
+                }
+              }
+            }
+          }
+        });
+
+        // 3. Sync PDP active variant if on product page
+        const variantIdInput = document.getElementById('pp-variant-id');
+        if (variantIdInput) {
+          const activeVariantId = String(variantIdInput.value || '');
+          if (confirmed[activeVariantId] || (window.ShopifyAnalytics && window.ShopifyAnalytics.meta && confirmed['p_' + window.ShopifyAnalytics.meta.product.id])) {
+            if (typeof window.swUpdatePDPStockUI === 'function') {
+              window.swUpdatePDPStockUI(activeVariantId, false, null, 'deny', 0);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[Theme Ajax Sync] Error syncing booked badges:', err);
+      }
+    };
+
     // Set initial active state on load and storage sync
     document.addEventListener('DOMContentLoaded', () => {
       window.syncWishlistUI();
+      window.swSyncBookedBadges();
     });
     window.addEventListener('storage', (e) => {
       if (e.key === 'wishlist' || e.key === 'wishlist_items_data') {
         window.updateWishlistBadge();
         window.syncWishlistUI();
+      }
+      if (e.key === 'sw_confirmed_bookings') {
+        window.swSyncBookedBadges();
       }
     });
 

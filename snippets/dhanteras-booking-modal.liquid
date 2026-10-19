@@ -929,7 +929,7 @@
               prefill: { name: name, contact: '+91' + phone },
               theme: { color: '#013F3E' },
               handler: async function (response) {
-                showBookingSuccess(orderData.booking_id, phone);
+                showBookingSuccess(orderData.booking_id, phone, currentVariantData ? currentVariantData.id : null);
               }
             };
             const rzp = new window.Razorpay(options);
@@ -965,18 +965,20 @@
 
         if (isSuccess && bookingId) {
           let customerPhone = urlParams.get('customer_phone') || urlParams.get('phone') || '';
+          let bookedVariantId = urlParams.get('variant_id');
           try {
             const pendingStr = sessionStorage.getItem('sw_dt_pending_booking');
             if (pendingStr) {
               const pending = JSON.parse(pendingStr);
               if (pending && pending.phone && !customerPhone) customerPhone = pending.phone;
+              if (pending && pending.variant_id && !bookedVariantId) bookedVariantId = pending.variant_id;
               sessionStorage.removeItem('sw_dt_pending_booking');
             }
           } catch(e) {}
 
           const overlay = document.getElementById('DhanterasBookingModalOverlay');
           if (overlay) {
-            showBookingSuccess(bookingId, customerPhone || 'WhatsApp');
+            showBookingSuccess(bookingId, customerPhone || 'WhatsApp', bookedVariantId);
             overlay.classList.add('is-active');
             document.body.style.overflow = 'hidden';
           }
@@ -1007,7 +1009,7 @@
       }
     }
 
-    function showBookingSuccess(bookingId, phone) {
+    function showBookingSuccess(bookingId, phone, variantId) {
       const stepForm = document.getElementById('dt-step-form');
       const stepSuccess = document.getElementById('dt-step-success');
       const confId = document.getElementById('dt-conf-booking-id');
@@ -1020,13 +1022,74 @@
         confPhone.textContent = phone.startsWith('+91') ? phone : (phone === 'WhatsApp' ? 'WhatsApp' : '+91 ' + phone);
       }
 
-      // Update PDP UI state dynamically to show item as Reserved
+      const targetVariantId = variantId || (currentVariantData ? currentVariantData.id : null) || CONFIG.variantId;
+
+      // 1. Store confirmed booking in localStorage for cross-page persistence & refresh resilience
+      try {
+        const confirmed = JSON.parse(localStorage.getItem('sw_confirmed_bookings') || '{}');
+        if (targetVariantId) {
+          confirmed[String(targetVariantId)] = {
+            booking_id: bookingId,
+            product_id: CONFIG.productId,
+            timestamp: Date.now()
+          };
+        }
+        if (CONFIG.productId) {
+          confirmed['p_' + CONFIG.productId] = {
+            booking_id: bookingId,
+            variant_id: targetVariantId,
+            timestamp: Date.now()
+          };
+        }
+        localStorage.setItem('sw_confirmed_bookings', JSON.stringify(confirmed));
+      } catch (err) {
+        console.warn('[Dhanteras Booking] Failed to save confirmed booking to localStorage:', err);
+      }
+
+      // 2. Update variant booking map script if present on PDP
+      const variantBookingEl = document.getElementById('pp-variant-booking-json');
+      if (variantBookingEl && targetVariantId) {
+        try {
+          const map = JSON.parse(variantBookingEl.textContent || '{}');
+          map[String(targetVariantId)] = true;
+          variantBookingEl.textContent = JSON.stringify(map);
+        } catch (e) {}
+      }
+
+      // 3. Update PDP UI elements dynamically to show BOOKED status
+      const elStockStatus = document.querySelector('.pp-stock-status');
+      if (elStockStatus) {
+        elStockStatus.className = 'pp-stock-status pp-stock-status--booked';
+        elStockStatus.innerHTML = '<span>BOOKED</span>';
+      }
+
+      const addBtn = document.querySelector('.pp-btn-add');
+      if (addBtn) {
+        addBtn.setAttribute('disabled', 'true');
+        const span = addBtn.querySelector('span');
+        if (span) span.textContent = 'BOOKED';
+      }
+
+      const buyBtn = document.getElementById('pp-buy-now');
+      if (buyBtn) {
+        buyBtn.setAttribute('disabled', 'true');
+        buyBtn.classList.add('is-out-of-stock');
+        buyBtn.style.display = '';
+        const span = buyBtn.querySelector('.pp-btn-text');
+        if (span) span.textContent = 'BOOKED';
+      }
+
       const bookBtn = document.getElementById('pp-book-now');
       if (bookBtn) {
-        bookBtn.classList.add('is-reserved');
+        bookBtn.classList.add('is-reserved', 'is-booked', 'is-disabled');
         bookBtn.setAttribute('disabled', 'true');
         const span = bookBtn.querySelector('.pp-btn-text');
-        if (span) span.textContent = 'RESERVED FOR FLASH SALE';
+        if (span) span.textContent = 'BOOKED';
+      }
+
+      // 4. Trigger global badge sync for related cards on the page
+      if (typeof window.swSyncBookedBadges === 'function') {
+        window.swSyncBookedBadges();
       }
     }
 
