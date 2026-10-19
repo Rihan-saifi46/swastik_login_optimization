@@ -490,6 +490,23 @@
           }
         }
 
+        // Filter not-yet-started discounts
+        const startsRaw = c.startsAt || c.start_date || null;
+        if (startsRaw) {
+          const startDate = new Date(startsRaw);
+          if (!isNaN(startDate.getTime()) && startDate.getTime() > Date.now()) {
+            return null; // Inactive / Future
+          }
+        }
+
+        // Filter inactive/disabled status
+        if (c.status && (c.status === 'inactive' || c.status === 'disabled' || c.status === 'draft' || c.status === 'expired')) {
+          return null;
+        }
+        if (c.active === false || c.is_active === false) {
+          return null;
+        }
+
         // Format human-readable expiry
         let formattedExpiry = '';
         if (expiryRaw) {
@@ -563,7 +580,16 @@
         if (!container) return;
 
         if (!coupons || coupons.length === 0) {
-          container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666; font-size: 13px; font-family: Inter, sans-serif;">Special offers available soon.</div>';
+          container.innerHTML = `
+            <div class="site-coupon-empty-state" style="text-align: center; padding: 28px 16px; color: #666; font-family: Inter, sans-serif;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 12px; color: #D4AF37; display: block;">
+                <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                <line x1="12" y1="4" x2="12" y2="20" stroke-dasharray="3 3"></line>
+              </svg>
+              <div style="font-weight: 600; font-size: 14px; color: #013F3E; margin-bottom: 4px;">No coupons currently available</div>
+              <div style="font-size: 12px; color: #888;">Check back soon for exclusive promotions on our luxury jewellery collections.</div>
+            </div>
+          `;
           return;
         }
 
@@ -606,6 +632,11 @@
       function openSiteCouponPopup(customCoupons, title, subtitle) {
         const overlay = document.getElementById('SiteCouponOverlay');
         if (!overlay) return;
+
+        // Ensure PDP Apply Coupon modal is closed if open
+        if (window.pdpCouponController && typeof window.pdpCouponController.closeModal === 'function') {
+          window.pdpCouponController.closeModal();
+        }
 
         let coupons = [];
         const isCustom = Array.isArray(customCoupons);
@@ -666,12 +697,23 @@
 
         overlay.classList.remove('is-active');
         overlay.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
+
+        // Only restore body scrolling if the PDP coupon modal is not currently open
+        const pdpOverlay = document.getElementById('PdpCouponModalOverlay');
+        if (!pdpOverlay || !pdpOverlay.classList.contains('is-active')) {
+          document.body.style.overflow = '';
+        }
+
         setTimeout(() => {
           if (!overlay.classList.contains('is-active')) {
             overlay.style.display = 'none';
           }
         }, 350);
+
+        const triggerBtn = document.getElementById('pp-coupon-trigger');
+        if (triggerBtn && triggerBtn.style.display !== 'none') {
+          triggerBtn.focus();
+        }
       }
 
       // Clipboard copy helper with fallback

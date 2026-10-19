@@ -447,35 +447,36 @@
                     </svg>
                     <span>Coupons Available</span>
                   </button>
-                  <script id="pp-coupons-data-json" type="application/json">
-                    {{ product_coupon_metafield | default: '[]' }}
-                  </script>
-
-                  <script id="pp-shop-coupons-json" type="application/json">
-                    {{ shop_coupon_metafield | default: '[]' }}
-                  </script>
-
-                  <script id="pp-collection-coupons-json" type="application/json">
-                    [
-                      {%- assign c_count = 0 -%}
-                      {%- for collection in product.collections -%}
-                        {%- if collection.metafields.custom.coupons != blank -%}
-                          {%- if c_count > 0 -%},{%- endif -%}
-                          {{ collection.metafields.custom.coupons }}
-                          {%- assign c_count = c_count | plus: 1 -%}
-                        {%- endif -%}
-                      {%- endfor -%}
-                    ]
-                  </script>
-                  
-                  <script id="pp-variant-coupons-json" type="application/json">
-                    {
-                      {% for variant in product.variants %}
-                        "{{ variant.id }}": {{ variant.metafields.custom.coupons | default: '[]' }}{% unless forloop.last %},{% endunless %}
-                      {% endfor %}
-                    }
-                  </script>
                 {%- endif -%}
+
+                <script id="pp-coupons-data-json" type="application/json">
+                  {{ product_coupon_metafield | default: '[]' }}
+                </script>
+
+                <script id="pp-shop-coupons-json" type="application/json">
+                  {{ shop_coupon_metafield | default: '[]' }}
+                </script>
+
+                <script id="pp-collection-coupons-json" type="application/json">
+                  [
+                    {%- assign c_count = 0 -%}
+                    {%- for collection in product.collections -%}
+                      {%- if collection.metafields.custom.coupons != blank -%}
+                        {%- if c_count > 0 -%},{%- endif -%}
+                        {{ collection.metafields.custom.coupons }}
+                        {%- assign c_count = c_count | plus: 1 -%}
+                      {%- endif -%}
+                    {%- endfor -%}
+                  ]
+                </script>
+                
+                <script id="pp-variant-coupons-json" type="application/json">
+                  {
+                    {% for variant in product.variants %}
+                      "{{ variant.id }}": {{ variant.metafields.custom.coupons | default: '[]' }}{% unless forloop.last %},{% endunless %}
+                    {% endfor %}
+                  }
+                </script>
               </div>
 
               {%- assign is_dhanteras_enabled = section.settings.dhanteras_enable | default: true -%}
@@ -3291,6 +3292,23 @@
       }
     }
 
+    // Filter not-yet-started discounts
+    const startsRaw = c.startsAt || c.start_date || null;
+    if (startsRaw) {
+      const startDate = new Date(startsRaw);
+      if (!isNaN(startDate.getTime()) && startDate.getTime() > Date.now()) {
+        return null; // Inactive / Future
+      }
+    }
+
+    // Filter inactive/disabled status
+    if (c.status && (c.status === 'inactive' || c.status === 'disabled' || c.status === 'draft' || c.status === 'expired')) {
+      return null;
+    }
+    if (c.active === false || c.is_active === false) {
+      return null;
+    }
+
     // Format human-friendly expiry date
     let formattedExpiry = '';
     if (expiryRaw) {
@@ -3444,9 +3462,7 @@
   };
 
   function openCoupons() {
-    if (window.pdpCouponController && typeof window.pdpCouponController.openModal === 'function') {
-      window.pdpCouponController.openModal();
-    } else if (typeof window.openSiteCouponPopup === 'function') {
+    if (typeof window.openSiteCouponPopup === 'function') {
       const currentCoupons = window.getCouponsForCurrentVariant();
       window.openSiteCouponPopup(currentCoupons);
     }
@@ -3456,6 +3472,10 @@
   document.addEventListener('click', function(e) {
     if (e.target.closest('#pp-coupon-trigger')) {
       e.preventDefault();
+      // Ensure Apply Coupon modal is closed if open
+      if (window.pdpCouponController && typeof window.pdpCouponController.closeModal === 'function') {
+        window.pdpCouponController.closeModal();
+      }
       openCoupons();
     }
   });

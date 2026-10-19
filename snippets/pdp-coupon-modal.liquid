@@ -22,35 +22,7 @@
 {%- assign product_coupon_metafield = product.metafields.custom.coupons -%}
 {%- assign shop_coupon_metafield = shop.metafields.custom.coupons | default: shop.metafields.custom.global_coupons -%}
 
-<!-- Sourced Authoritative CRM Discount Data JSON scripts -->
-<script id="pp-shop-coupons-json" type="application/json">
-  {{ shop_coupon_metafield | default: '[]' }}
-</script>
-
-<script id="pp-coupons-data-json" type="application/json">
-  {{ product_coupon_metafield | default: '[]' }}
-</script>
-
-<script id="pp-collection-coupons-json" type="application/json">
-  [
-    {%- assign c_count = 0 -%}
-    {%- for collection in product.collections -%}
-      {%- if collection.metafields.custom.coupons != blank -%}
-        {%- if c_count > 0 -%},{%- endif -%}
-        {{ collection.metafields.custom.coupons }}
-        {%- assign c_count = c_count | plus: 1 -%}
-      {%- endif -%}
-    {%- endfor -%}
-  ]
-</script>
-
-<script id="pp-variant-coupons-json" type="application/json">
-  {
-    {% for variant in product.variants %}
-      "{{ variant.id }}": {{ variant.metafields.custom.coupons | default: '[]' }}{% unless forloop.last %},{% endunless %}
-    {% endfor %}
-  }
-</script>
+<!-- CRM Discount Data JSON scripts are rendered in product.liquid to ensure single authoritative source -->
 
 <!-- PDP Coupon Modal / Drawer Overlay -->
 <div
@@ -499,85 +471,110 @@
 
   /* Manual Code Input */
   .pdp-coupon-manual-box {
-    display: flex;
-    align-items: stretch;
-    gap: 8px;
-    margin-bottom: 14px;
+    display: flex !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .pdp-coupon-input-group {
-    flex: 1;
-    position: relative;
-    display: flex;
-    align-items: center;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
   }
 
-  .pdp-coupon-input-icon {
-    position: absolute;
-    left: 12px;
-    color: #888888;
-    pointer-events: none;
+  .pdp-coupon-input-group .pdp-coupon-input-icon {
+    position: absolute !important;
+    left: 14px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    color: #888888 !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
   }
 
+  .pdp-coupon-input-group input.pdp-coupon-input,
   .pdp-coupon-input {
-    width: 100%;
-    height: 42px;
-    padding: 0 12px 0 36px;
-    background: #FFFFFF;
-    border: 1px solid rgba(1, 63, 62, 0.18);
-    border-radius: 8px;
-    font-family: var(--pp-font-sans, 'Inter', sans-serif);
-    font-size: 13px;
-    font-weight: 600;
-    color: #013F3E;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    box-sizing: border-box;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 44px !important;
+    line-height: normal !important;
+    padding: 0 14px 0 42px !important;
+    margin: 0 !important;
+    background: #FFFFFF !important;
+    border: 1px solid rgba(1, 63, 62, 0.18) !important;
+    border-radius: 8px !important;
+    font-family: var(--pp-font-sans, 'Inter', sans-serif) !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #013F3E !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    outline: none !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
   }
 
+  .pdp-coupon-input-group input.pdp-coupon-input::placeholder,
   .pdp-coupon-input::placeholder {
-    color: #999999;
-    text-transform: none;
-    font-weight: 400;
-    letter-spacing: normal;
+    color: #999999 !important;
+    text-transform: none !important;
+    font-weight: 400 !important;
+    letter-spacing: normal !important;
   }
 
+  .pdp-coupon-input-group input.pdp-coupon-input:focus,
   .pdp-coupon-input:focus {
-    border-color: #013F3E;
-    box-shadow: 0 0 0 3px rgba(1, 63, 62, 0.1);
+    border-color: #013F3E !important;
+    box-shadow: 0 0 0 3px rgba(1, 63, 62, 0.1) !important;
   }
 
   .pdp-coupon-manual-btn {
-    padding: 0 16px;
-    height: 42px;
-    border-radius: 8px;
-    background: #013F3E;
-    color: #FFFFFF;
-    border: none;
-    font-family: var(--pp-font-sans, 'Inter', sans-serif);
-    font-size: 11.5px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    outline: none;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    flex-shrink: 0 !important;
+    padding: 0 20px !important;
+    height: 44px !important;
+    border-radius: 8px !important;
+    background: #013F3E !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    font-family: var(--pp-font-sans, 'Inter', sans-serif) !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    outline: none !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
   }
 
   .pdp-coupon-manual-btn:hover {
-    background: #012B2A;
-    transform: translateY(-1px);
+    background: #012B2A !important;
+    transform: translateY(-1px) !important;
   }
 
   .pdp-coupon-manual-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
   }
 
   .pdp-coupon-alert-msg {
@@ -937,6 +934,32 @@
       align-items: flex-start !important;
     }
 
+    .pdp-coupon-manual-box {
+      gap: 8px !important;
+      margin-bottom: 12px !important;
+    }
+
+    .pdp-coupon-input-group .pdp-coupon-input-icon {
+      left: 12px !important;
+      width: 15px !important;
+      height: 15px !important;
+      min-width: 15px !important;
+      min-height: 15px !important;
+    }
+
+    .pdp-coupon-input-group input.pdp-coupon-input,
+    .pdp-coupon-input {
+      height: 42px !important;
+      padding: 0 10px 0 38px !important;
+      font-size: 12px !important;
+    }
+
+    .pdp-coupon-manual-btn {
+      height: 42px !important;
+      padding: 0 14px !important;
+      font-size: 11px !important;
+    }
+
     .pp-coupon-trigger-wrap {
       margin-left: 0;
       width: 100%;
@@ -1025,6 +1048,14 @@
       if (!isNaN(startDate.getTime()) && startDate.getTime() > Date.now()) {
         return null; // Inactive / Future
       }
+    }
+
+    // Filter inactive/disabled status
+    if (c.status && (c.status === 'inactive' || c.status === 'disabled' || c.status === 'draft' || c.status === 'expired')) {
+      return null;
+    }
+    if (c.active === false || c.is_active === false) {
+      return null;
     }
 
     let formattedExpiry = '';
@@ -1127,8 +1158,8 @@
   }
 
   // Authoritative CRM Loader: ONLY reads from CRM metafield elements
-  function loadCrmCoupons() {
-    if (isDataLoaded && cachedCoupons.length > 0) return cachedCoupons;
+  function loadCrmCoupons(forceReload = false) {
+    if (!forceReload && isDataLoaded && cachedCoupons.length > 0) return cachedCoupons;
 
     const rawList = [];
 
@@ -1624,6 +1655,14 @@
     const overlay = document.getElementById('PdpCouponModalOverlay');
     if (!overlay) return;
 
+    // Ensure site coupon popup is closed if open
+    if (typeof window.closeSiteCouponPopup === 'function') {
+      const siteOverlay = document.getElementById('SiteCouponOverlay');
+      if (siteOverlay && siteOverlay.classList.contains('is-active')) {
+        window.closeSiteCouponPopup();
+      }
+    }
+
     renderModalList();
 
     const input = document.getElementById('PdpManualCouponInput');
@@ -1648,7 +1687,12 @@
 
     overlay.classList.remove('is-active');
     overlay.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
+
+    // Only restore body scrolling if the site coupon overlay is not currently open
+    const siteOverlay = document.getElementById('SiteCouponOverlay');
+    if (!siteOverlay || !siteOverlay.classList.contains('is-active')) {
+      document.body.style.overflow = '';
+    }
 
     setTimeout(() => {
       if (!overlay.classList.contains('is-active')) {
@@ -1723,7 +1767,7 @@
 
   function initEvents() {
     document.addEventListener('click', function(e) {
-      const trigger = e.target.closest('#pp-apply-coupon-trigger, #pp-coupon-trigger');
+      const trigger = e.target.closest('#pp-apply-coupon-trigger');
       if (trigger) {
         e.preventDefault();
         openPdpModal();
@@ -1824,7 +1868,7 @@
       initEvents();
     },
     onVariantChange: function(matchedVariant) {
-      loadCrmCoupons();
+      loadCrmCoupons(true);
       updatePdpPriceUI(true, matchedVariant);
       const overlay = document.getElementById('PdpCouponModalOverlay');
       if (overlay && overlay.classList.contains('is-active')) {
