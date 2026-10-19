@@ -492,21 +492,27 @@
               {%- endif -%}
 
               {%- if is_dhanteras_enabled and is_dhanteras_eligible -%}
+                {%- assign dt_booking_amt = section.settings.dhanteras_booking_amount | default: 1000 -%}
                 <!-- DHANTERAS FLASH SALE PROMOTIONAL BANNER -->
                 <div class="pp-dt-promo-banner" id="pp-dt-promo-banner">
-                  <div class="pp-dt-promo-top">
-                    <div class="pp-dt-promo-tag">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  <div class="pp-dt-promo-header">
+                    <div class="pp-dt-promo-badge">
+                      <svg class="pp-dt-star-icon" width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                      </svg>
                       <span>DHANTERAS FLASH SALE</span>
                     </div>
                     <div class="pp-dt-countdown-pill" id="pp-dt-countdown-pill">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
                       <span id="pp-dt-countdown-text">Nov 6, 2:00 PM – 6:00 PM IST</span>
                     </div>
                   </div>
-                  <div class="pp-dt-promo-content">
-                    <div class="pp-dt-promo-title">Get 30% OFF on 6th &mdash; Valid for 4 Hours Only</div>
-                    <div class="pp-dt-promo-desc">Reserve your favourite 1-of-1 piece today for ₹1,000. 100% credited toward your final purchase.</div>
+                  <div class="pp-dt-promo-body">
+                    <div class="pp-dt-promo-offer">30% OFF ON 6TH</div>
+                    <div class="pp-dt-promo-sub">Limited-time offer &middot; Reserve for ₹{% if dt_booking_amt == 1000 %}1,000{% else %}{{ dt_booking_amt }}{% endif %}</div>
                   </div>
                 </div>
               {%- endif -%}
@@ -541,7 +547,7 @@
                       <line x1="8" y1="2" x2="8" y2="6"></line>
                       <line x1="3" y1="10" x2="21" y2="10"></line>
                     </svg>
-                    <span class="pp-btn-text">{% if is_already_reserved %}RESERVED{% elsif current_is_out_of_stock %}OUT OF STOCK{% else %}BOOK NOW &mdash; ₹1,000{% endif %}</span>
+                    <span class="pp-btn-text">{% if is_already_reserved %}RESERVED{% elsif current_is_out_of_stock %}OUT OF STOCK{% else %}{% if dt_booking_amt == 999 %}BOOK NOW &mdash; ₹999{% else %}BOOK NOW{% endif %}{% endif %}</span>
                   </button>
                 {%- endif -%}
 
@@ -1412,59 +1418,112 @@
   .pp-btn-wishlist.active svg { fill: #E25C5C !important; stroke: #E25C5C !important; }
   .pp-btn-wishlist svg { transition: all 0.25s ease !important; flex-shrink: 0 !important; }
 
-  /* Dhanteras Promotional Banner */
+  /* Dhanteras Promotional Banner — Premium Compact Redesign */
   .pp-dt-promo-banner {
-    background: linear-gradient(135deg, #FFFDF8 0%, #FBF6EB 100%);
-    border: 1.5px solid #E4CCA1;
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 14px;
-    box-shadow: 0 4px 16px rgba(200, 146, 52, 0.1);
+    background: linear-gradient(135deg, #FFFDF9 0%, #FAF5EB 100%);
+    border: 1px solid #E5D5BA;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 10px rgba(140, 98, 25, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
-  .pp-dt-promo-top {
+  .pp-dt-promo-banner:hover {
+    border-color: #D4AF37;
+    box-shadow: 0 4px 14px rgba(140, 98, 25, 0.1);
+  }
+  .pp-dt-promo-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 6px;
-    flex-wrap: wrap;
     gap: 8px;
+    flex-wrap: wrap;
   }
-  .pp-dt-promo-tag {
+  .pp-dt-promo-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     background: #013F3E;
-    color: #D4AF37;
-    font-size: 11px;
+    color: #FBF6EB;
+    font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.08em;
-    padding: 3px 10px;
-    border-radius: 20px;
+    padding: 3px 8px;
+    border-radius: 14px;
     text-transform: uppercase;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .pp-dt-star-icon {
+    color: #E5C578;
+    fill: #E5C578;
+    flex-shrink: 0;
   }
   .pp-dt-countdown-pill {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-size: 11px;
+    gap: 4px;
+    font-size: 10.5px;
     font-weight: 600;
     color: #8C6219;
-    background: rgba(200, 146, 52, 0.14);
-    padding: 3px 8px;
-    border-radius: 6px;
+    background: rgba(200, 146, 52, 0.12);
+    border: 1px solid rgba(200, 146, 52, 0.22);
+    padding: 2.5px 8px;
+    border-radius: 14px;
+    line-height: 1;
+    white-space: nowrap;
+    margin-left: auto;
   }
-  .pp-dt-promo-title {
-    font-family: 'Cinzel', serif;
-    font-size: 14px;
+  .pp-dt-countdown-pill svg {
+    color: #8C6219;
+    flex-shrink: 0;
+  }
+  .pp-dt-promo-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .pp-dt-promo-offer {
+    font-family: 'Cinzel', 'Playfair Display', Georgia, serif;
+    font-size: 17px;
     font-weight: 700;
     color: #013F3E;
-    line-height: 1.35;
-    margin-bottom: 3px;
+    line-height: 1.25;
+    letter-spacing: 0.04em;
   }
-  .pp-dt-promo-desc {
+  .pp-dt-promo-sub {
     font-size: 12px;
-    color: #555555;
-    line-height: 1.4;
+    color: #6B5D4D;
+    line-height: 1.35;
+    font-weight: 500;
+  }
+  @media (max-width: 480px) {
+    .pp-dt-promo-banner {
+      padding: 9px 12px;
+      margin-bottom: 10px;
+      gap: 5px;
+    }
+    .pp-dt-promo-header {
+      gap: 6px;
+    }
+    .pp-dt-promo-badge {
+      font-size: 9.5px;
+      padding: 2.5px 7px;
+    }
+    .pp-dt-countdown-pill {
+      font-size: 10px;
+      padding: 2px 7px;
+    }
+    .pp-dt-promo-offer {
+      font-size: 15px;
+    }
+    .pp-dt-promo-sub {
+      font-size: 11.5px;
+    }
   }
 
   /* Dual Action Checkout Row: Book Now + Buy Now */
@@ -2838,7 +2897,7 @@
                 elBtnBook.removeAttribute('disabled');
                 elBtnBook.classList.remove('is-disabled');
                 const bookText = elBtnBook.querySelector('.pp-btn-text');
-                if (bookText) bookText.textContent = 'BOOK NOW \u2014 \u20B91,000';
+                if (bookText) bookText.textContent = 'BOOK NOW';
               }
             } else {
               if (elStockStatus) {
@@ -2860,7 +2919,7 @@
                 elBtnBook.removeAttribute('disabled');
                 elBtnBook.classList.remove('is-disabled');
                 const bookText = elBtnBook.querySelector('.pp-btn-text');
-                if (bookText) bookText.textContent = 'BOOK NOW \u2014 \u20B91,000';
+                if (bookText) bookText.textContent = 'BOOK NOW';
               }
             }
             
@@ -3231,7 +3290,7 @@
                 elBtnBook.removeAttribute('disabled');
                 elBtnBook.classList.remove('is-disabled');
                 const bookText = elBtnBook.querySelector('.pp-btn-text');
-                if (bookText) bookText.textContent = 'BOOK NOW \u2014 \u20B91,000';
+                if (bookText) bookText.textContent = 'BOOK NOW';
               }
             } else {
               if (elStockStatus) {
@@ -3253,7 +3312,7 @@
                 elBtnBook.removeAttribute('disabled');
                 elBtnBook.classList.remove('is-disabled');
                 const bookText = elBtnBook.querySelector('.pp-btn-text');
-                if (bookText) bookText.textContent = 'BOOK NOW \u2014 \u20B91,000';
+                if (bookText) bookText.textContent = 'BOOK NOW';
               }
             }
 

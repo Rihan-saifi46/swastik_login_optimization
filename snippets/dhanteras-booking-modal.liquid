@@ -4,7 +4,7 @@
   - Promotional offer disclosures (30% OFF for 4 hours on Nov 6, 2026, 2:00 PM - 6:00 PM IST)
   - Selected product/variant details display (Title, SKU, Image, Metal, Purity)
   - Clear statutory non-refund and fulfillment terms
-  - Customer contact capture (Name, WhatsApp, Email)
+  - Customer contact capture (Name, WhatsApp)
   - Secure ₹1,000 booking payment initiation via CRM gateway with sandbox fallback
   - Server-side inventory reservation protection (1-of-1 piece guarantee)
   - Confirmation screen with unique Booking ID & reminder details
@@ -135,20 +135,6 @@
           </div>
         </div>
 
-        <div class="dt-form-field" style="margin-top: 12px;">
-          <label for="dt-customer-email" class="dt-field-label">Email Address <span class="dt-required">*</span></label>
-          <input
-            type="email"
-            id="dt-customer-email"
-            name="customer_email"
-            class="dt-field-input"
-            placeholder="e.g. aditi@example.com"
-            value="{{ customer.email | default: '' }}"
-            required
-          >
-          <span class="dt-field-hint">Your booking receipt and unique flash sale checkout link will be sent here.</span>
-        </div>
-
         <!-- Statutory Terms & Conditions Accordion -->
         <div class="dt-terms-box">
           <div class="dt-terms-header">
@@ -231,11 +217,11 @@
       <div class="dt-success-instructions">
         <div class="dt-instruct-item">
           <span class="dt-step-num">1</span>
-          <span>We have sent a confirmed reservation receipt to <strong id="dt-conf-email">your email</strong>.</span>
+          <span>We have sent a confirmed reservation receipt to your WhatsApp (<strong id="dt-conf-phone">WhatsApp</strong>).</span>
         </div>
         <div class="dt-instruct-item">
           <span class="dt-step-num">2</span>
-          <span>On <strong>November 6 at 1:30 PM IST</strong>, we will send a priority checkout link via WhatsApp &amp; Email.</span>
+          <span>On <strong>November 6 at 1:30 PM IST</strong>, we will send your priority checkout link via WhatsApp.</span>
         </div>
         <div class="dt-instruct-item">
           <span class="dt-step-num">3</span>
@@ -726,7 +712,8 @@
       bookingAmountCents: 100000, // ₹1,000 INR
       discountPercent: 30,
       productId: '{{ product.id }}',
-      crmEndpoint: 'https://backend-api.swastikjewel.in/api/dhanteras'
+      crmEndpoint: 'https://backend-api.swastikjewel.in/api/dhanteras',
+      customerEmail: '{{ customer.email | default: "" }}'
     };
 
     let currentVariantData = {
@@ -816,12 +803,10 @@
 
       const nameInput = document.getElementById('dt-customer-name');
       const phoneInput = document.getElementById('dt-customer-phone');
-      const emailInput = document.getElementById('dt-customer-email');
       const agreeCheck = document.getElementById('dt-terms-agree');
 
       const name = nameInput ? nameInput.value.trim() : '';
       const phone = phoneInput ? phoneInput.value.trim() : '';
-      const email = emailInput ? emailInput.value.trim() : '';
       const agreed = agreeCheck ? agreeCheck.checked : false;
 
       if (!name) {
@@ -832,11 +817,6 @@
       if (!phone || phone.length !== 10 || !/^\d{10}$/.test(phone)) {
         showError('Please enter a valid 10-digit WhatsApp number.');
         phoneInput.focus();
-        return;
-      }
-      if (!email || !/\S+@\S+\.\S+/.test(email)) {
-        showError('Please enter a valid email address.');
-        emailInput.focus();
         return;
       }
       if (!agreed) {
@@ -855,7 +835,6 @@
         sessionStorage.setItem('sw_dt_pending_booking', JSON.stringify({
           name: name,
           phone: phone,
-          email: email,
           variant_id: currentVariantData.id,
           sku: currentVariantData.sku,
           timestamp: Date.now()
@@ -864,6 +843,10 @@
 
       const returnUrl = window.location.origin + window.location.pathname;
 
+      // The backend CRM API requires a customer_email field to create Paytm order.
+      // Use authenticated customer email if logged in, or safe phone identifier fallback.
+      const customerEmail = CONFIG.customerEmail || (phone + '@customer.swastikjewel.in');
+
       const payload = {
         product_id: CONFIG.productId,
         variant_id: currentVariantData.id,
@@ -871,7 +854,7 @@
         booking_amount: 1000,
         customer_name: name,
         customer_phone: '+91' + phone,
-        customer_email: email,
+        customer_email: customerEmail,
         source: 'shopify_storefront',
         gateway: 'paytm',
         redirect_url: returnUrl,
@@ -943,10 +926,10 @@
               name: 'Swastik Jewels',
               description: 'Dhanteras Advance Reservation for ' + currentVariantData.sku,
               order_id: orderData.razorpay_order_id || orderData.order_id,
-              prefill: { name: name, email: email, contact: '+91' + phone },
+              prefill: { name: name, contact: '+91' + phone },
               theme: { color: '#013F3E' },
               handler: async function (response) {
-                showBookingSuccess(orderData.booking_id, email);
+                showBookingSuccess(orderData.booking_id, phone);
               }
             };
             const rzp = new window.Razorpay(options);
@@ -981,19 +964,19 @@
         );
 
         if (isSuccess && bookingId) {
-          let customerEmail = urlParams.get('customer_email') || urlParams.get('email') || '';
+          let customerPhone = urlParams.get('customer_phone') || urlParams.get('phone') || '';
           try {
             const pendingStr = sessionStorage.getItem('sw_dt_pending_booking');
             if (pendingStr) {
               const pending = JSON.parse(pendingStr);
-              if (pending && pending.email && !customerEmail) customerEmail = pending.email;
+              if (pending && pending.phone && !customerPhone) customerPhone = pending.phone;
               sessionStorage.removeItem('sw_dt_pending_booking');
             }
           } catch(e) {}
 
           const overlay = document.getElementById('DhanterasBookingModalOverlay');
           if (overlay) {
-            showBookingSuccess(bookingId, customerEmail || 'your email');
+            showBookingSuccess(bookingId, customerPhone || 'WhatsApp');
             overlay.classList.add('is-active');
             document.body.style.overflow = 'hidden';
           }
@@ -1024,16 +1007,18 @@
       }
     }
 
-    function showBookingSuccess(bookingId, email) {
+    function showBookingSuccess(bookingId, phone) {
       const stepForm = document.getElementById('dt-step-form');
       const stepSuccess = document.getElementById('dt-step-success');
       const confId = document.getElementById('dt-conf-booking-id');
-      const confEmail = document.getElementById('dt-conf-email');
+      const confPhone = document.getElementById('dt-conf-phone') || document.getElementById('dt-conf-email');
 
       if (stepForm) stepForm.style.display = 'none';
       if (stepSuccess) stepSuccess.style.display = 'block';
       if (confId) confId.textContent = bookingId;
-      if (confEmail) confEmail.textContent = email;
+      if (confPhone && phone) {
+        confPhone.textContent = phone.startsWith('+91') ? phone : (phone === 'WhatsApp' ? 'WhatsApp' : '+91 ' + phone);
+      }
 
       // Update PDP UI state dynamically to show item as Reserved
       const bookBtn = document.getElementById('pp-book-now');
