@@ -1509,6 +1509,9 @@
         if (calloutBox) calloutBox.style.display = 'flex';
         if (savingsTag) savingsTag.innerHTML = `✓ ${appliedCoupon.code} Applied (${evalResult.savingsLabel})`;
         if (savingsNote) savingsNote.textContent = 'Discount confirmed for this piece. Reflected at checkout.';
+        if (window.DiamondSale && typeof window.DiamondSale.onCouponChange === 'function') {
+          window.DiamondSale.onCouponChange(variant, appliedCoupon);
+        }
       } else {
         // Ineligible or Cart-level: Keep original price per CRITICAL PRICING RULE
         if (struckPriceEl) {
@@ -1546,6 +1549,10 @@
       priceEl.classList.remove('is-discounted', 'pp-price--discounted');
       priceEl.innerHTML = formatPriceINR(variant.price);
       if (calloutBox) calloutBox.style.display = 'none';
+
+      if (window.DiamondSale && typeof window.DiamondSale.onCouponChange === 'function') {
+        window.DiamondSale.onCouponChange(variant, null);
+      }
     }
   }
 

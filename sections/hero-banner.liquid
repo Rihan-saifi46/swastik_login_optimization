@@ -20,14 +20,14 @@
   {% if section.settings.hero_size == 'adapt' %}
     #Slideshow-{{ section.id }} {
       height: auto;
-      aspect-ratio: {{ desktop_aspect_ratio }};
+      aspect-ratio: 1024 / 402;
       max-height: 75vh;
     }
     @media screen and (max-width: 767px) {
       #Slideshow-{{ section.id }} {
         height: auto !important;
-        aspect-ratio: {{ mobile_aspect_ratio }} !important;
-        max-height: 65vh !important;
+        aspect-ratio: 853 / 1024 !important;
+        max-height: 85vh !important;
       }
     }
   {% else %}
@@ -36,7 +36,8 @@
     }
     @media screen and (max-width: 767px) {
       #Slideshow-{{ section.id }} {
-        height: 694px !important;
+        height: auto !important;
+        aspect-ratio: 853 / 1024 !important;
       }
     }
   {% endif %}
@@ -53,17 +54,60 @@
   <div class="slideshow__slides">
     {% for block in section.blocks %}
       {% if block.type == 'slide' %}
-        <div class="slideshow__slide {% if forloop.first %}is-active{% endif %} hero-banner--{{ block.settings.alignment }}" 
+        {%- assign is_mobile_only = false -%}
+        {%- if block.settings.image_desktop == blank and forloop.index > 4 -%}
+          {%- assign is_mobile_only = true -%}
+        {%- endif -%}
+
+        <div class="slideshow__slide {% if forloop.first %}is-active{% endif %} hero-banner--{{ block.settings.alignment }}{% if is_mobile_only %} slideshow__slide--mobile-only{% endif %}" 
              id="Slide-{{ block.id }}" 
              {{ block.shopify_attributes }}>
           
+          {%- comment -%} Clickable layer linking entire banner to Natural Diamonds collection {%- endcomment -%}
+          <a href="{{ routes.collections_url }}/natural-diamonds" class="slideshow__mobile-click-layer" aria-label="Explore Natural Diamonds Collection"></a>
+
           <picture class="slideshow__bg-image">
-            {% if block.settings.image_desktop != blank %}
-              {% if block.settings.image_mobile != blank %}
-                <source media="(max-width: 767px)" srcset="{{ block.settings.image_mobile | image_url: width: 780 }}">
-              {% else %}
-                <source media="(max-width: 767px)" srcset="{{ block.settings.image_desktop | image_url: width: 780 }}">
-              {% endif %}
+            {%- comment -%} Mobile Dhanteras promotional carousel images in exact uploaded order {%- endcomment -%}
+            {%- assign mobile_dhanteras_img = '' -%}
+            {%- if forloop.index == 1 -%}
+              {%- assign mobile_dhanteras_img = 'dhanteras_carousel_mobile_1.jpg' | asset_url -%}
+            {%- elsif forloop.index == 2 -%}
+              {%- assign mobile_dhanteras_img = 'dhanteras_carousel_mobile_2.jpg' | asset_url -%}
+            {%- elsif forloop.index == 3 -%}
+              {%- assign mobile_dhanteras_img = 'dhanteras_carousel_mobile_3.jpg' | asset_url -%}
+            {%- elsif forloop.index == 4 -%}
+              {%- assign mobile_dhanteras_img = 'dhanteras_carousel_mobile_4.jpg' | asset_url -%}
+            {%- endif -%}
+
+            {%- comment -%} Desktop Dhanteras promotional carousel images in exact approved order {%- endcomment -%}
+            {%- assign desktop_dhanteras_img = '' -%}
+            {%- if forloop.index == 1 -%}
+              {%- assign desktop_dhanteras_img = 'dhanteras_carousel_desktop_1.png' | asset_url -%}
+            {%- elsif forloop.index == 2 -%}
+              {%- assign desktop_dhanteras_img = 'dhanteras_carousel_desktop_2.png' | asset_url -%}
+            {%- elsif forloop.index == 3 -%}
+              {%- assign desktop_dhanteras_img = 'dhanteras_carousel_desktop_3.png' | asset_url -%}
+            {%- elsif forloop.index == 4 -%}
+              {%- assign desktop_dhanteras_img = 'dhanteras_carousel_desktop_4.png' | asset_url -%}
+            {%- endif -%}
+
+            {%- if mobile_dhanteras_img != blank -%}
+              <source media="(max-width: 767px)" srcset="{{ mobile_dhanteras_img }}">
+            {%- elsif block.settings.image_mobile != blank -%}
+              <source media="(max-width: 767px)" srcset="{{ block.settings.image_mobile | image_url: width: 780 }}">
+            {%- else -%}
+              <source media="(max-width: 767px)" srcset="{{ block.settings.image_desktop | image_url: width: 780 }}">
+            {%- endif -%}
+
+            {%- if desktop_dhanteras_img != blank -%}
+              <source media="(min-width: 768px)" srcset="{{ desktop_dhanteras_img }}">
+              <img src="{{ desktop_dhanteras_img }}" 
+                   alt="{{ block.settings.title | default: 'Swastik Jewels Dhanteras Special' }}" 
+                   class="slideshow__img" 
+                   loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
+                   width="1024"
+                   height="402">
+            {%- elsif block.settings.image_desktop != blank -%}
               <source media="(min-width: 768px)" srcset="{{ block.settings.image_desktop | image_url: width: 2880 }}">
               <img src="{{ block.settings.image_desktop | image_url: width: 1440 }}" 
                    alt="{{ block.settings.title | default: 'Swastik Jewels' }}" 
@@ -71,29 +115,14 @@
                    loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
                    width="1440"
                    height="700">
-            {% else %}
-              {% comment %} Fallback to the generated asset images if no merchant image is uploaded {% endcomment %}
-              {%- assign slide_index = forloop.index -%}
-              {%- if slide_index > 3 -%}
-                {%- assign slide_index = 3 -%}
-              {%- endif -%}
-              {%- if slide_index == 1 -%}
-                {%- assign desktop_fallback_name = 'Slideshow_Desktop_1_New.png' -%}
-                {%- assign mobile_fallback_name = 'Slideshow_Mobile_1.png' -%}
-              {%- else -%}
-                {%- assign desktop_fallback_name = 'hero_slide_' | append: slide_index | append: '_desktop.png' -%}
-                {%- assign mobile_fallback_name = 'hero_slide_' | append: slide_index | append: '_mobile.png' -%}
-              {%- endif -%}
-              
-              <source media="(max-width: 767px)" srcset="{{ mobile_fallback_name | asset_url }}">
-              <source media="(min-width: 768px)" srcset="{{ desktop_fallback_name | asset_url }}">
-              <img src="{{ desktop_fallback_name | asset_url }}" 
-                   alt="{{ block.settings.title | default: 'Swastik Jewels' }}" 
+            {%- else -%}
+              <img src="{{ mobile_dhanteras_img }}" 
+                   alt="{{ block.settings.title | default: 'Swastik Jewels Dhanteras' }}" 
                    class="slideshow__img" 
-                   loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
-                   width="1440"
-                   height="700">
-            {% endif %}
+                   loading="lazy"
+                   width="853"
+                   height="1024">
+            {%- endif -%}
           </picture>
 
           <div class="hero-banner__overlay"></div>
@@ -132,6 +161,8 @@
     {% else %}
       {% comment %} Fallback slide when no blocks have been added yet {% endcomment %}
       <div class="slideshow__slide is-active hero-banner--left">
+        {%- comment -%} Mobile-only clickable layer linking entire banner to Natural Diamonds collection {%- endcomment -%}
+        <a href="{{ routes.collections_url }}/natural-diamonds" class="slideshow__mobile-click-layer" aria-label="Explore Natural Diamonds Collection"></a>
         <picture class="slideshow__bg-image">
           <source media="(max-width: 767px)" srcset="{{ 'Slideshow_Mobile_1.png' | asset_url }}">
           <source media="(min-width: 768px)" srcset="{{ 'Slideshow_Desktop_1_New.png' | asset_url }}">
@@ -157,7 +188,11 @@
       <div class="slideshow__dots">
         {% for block in section.blocks %}
           {% if block.type == 'slide' %}
-            <button type="button" class="slideshow__dot {% if forloop.first %}is-active{% endif %}" data-index="{{ forloop.index0 }}" aria-label="Go to slide {{ forloop.index }}" aria-controls="Slide-{{ block.id }}">
+            {%- assign is_dot_mobile_only = false -%}
+            {%- if block.settings.image_desktop == blank and forloop.index > 4 -%}
+              {%- assign is_dot_mobile_only = true -%}
+            {%- endif -%}
+            <button type="button" class="slideshow__dot {% if forloop.first %}is-active{% endif %}{% if is_dot_mobile_only %} slideshow__dot--mobile-only{% endif %}" data-index="{{ forloop.index0 }}" aria-label="Go to slide {{ forloop.index }}" aria-controls="Slide-{{ block.id }}">
               <span class="slideshow__dot-inner"></span>
             </button>
           {% endif %}
@@ -185,28 +220,49 @@
       if (slideshow.dataset.initialized === 'true') return;
       slideshow.dataset.initialized = 'true';
 
-      const slides = slideshow.querySelectorAll('.slideshow__slide');
-      const dots = slideshow.querySelectorAll('.slideshow__dot');
+      const slides = Array.from(slideshow.querySelectorAll('.slideshow__slide'));
+      const dots = Array.from(slideshow.querySelectorAll('.slideshow__dot'));
       if (slides.length <= 1) return;
 
-      let currentSlide = 0;
+      let currentVisibleIndex = 0;
       let autoplayTimer = null;
-      const autoplaySpeed = parseInt(slideshow.dataset.autoplaySpeed) * 1000 || 6000;
+      const autoplaySpeed = parseInt(slideshow.dataset.autoplaySpeed) * 1000 || 5000;
       const autoplayEnabled = slideshow.dataset.autoplay === 'true';
 
-      function goToSlide(index) {
-        slides[currentSlide].classList.remove('is-active');
-        if (dots.length > 0) dots[currentSlide].classList.remove('is-active');
-        
-        currentSlide = index;
-        
-        slides[currentSlide].classList.add('is-active');
-        if (dots.length > 0) dots[currentSlide].classList.add('is-active');
+      function getVisibleSlides() {
+        return slides.filter(function(slide) {
+          return window.getComputedStyle(slide).display !== 'none';
+        });
+      }
+
+      function getVisibleDots() {
+        return dots.filter(function(dot) {
+          return window.getComputedStyle(dot).display !== 'none';
+        });
+      }
+
+      function goToSlide(targetIdx) {
+        const visibleSlides = getVisibleSlides();
+        const visibleDots = getVisibleDots();
+        if (visibleSlides.length === 0) return;
+
+        currentVisibleIndex = ((targetIdx % visibleSlides.length) + visibleSlides.length) % visibleSlides.length;
+
+        slides.forEach(function(slide) {
+          slide.classList.remove('is-active');
+        });
+        dots.forEach(function(dot) {
+          dot.classList.remove('is-active');
+        });
+
+        visibleSlides[currentVisibleIndex].classList.add('is-active');
+        if (visibleDots[currentVisibleIndex]) {
+          visibleDots[currentVisibleIndex].classList.add('is-active');
+        }
       }
 
       function nextSlide() {
-        let next = (currentSlide + 1) % slides.length;
-        goToSlide(next);
+        goToSlide(currentVisibleIndex + 1);
       }
 
       function startAutoplay() {
@@ -224,9 +280,12 @@
 
       dots.forEach(function(dot) {
         dot.addEventListener('click', function() {
-          const index = parseInt(this.dataset.index);
-          goToSlide(index);
-          startAutoplay(); // Reset timer on manual click
+          const visibleDots = getVisibleDots();
+          const clickedIndex = visibleDots.indexOf(this);
+          if (clickedIndex !== -1) {
+            goToSlide(clickedIndex);
+            startAutoplay(); // Reset timer on manual click
+          }
         });
       });
 
@@ -234,11 +293,65 @@
       slideshow.addEventListener('mouseenter', stopAutoplay);
       slideshow.addEventListener('mouseleave', startAutoplay);
 
+      // Mobile Touch / Swipe support
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchEndX = 0;
+      let isSwipeAction = false;
+
+      slideshow.addEventListener('touchstart', function(e) {
+        if (e.changedTouches && e.changedTouches[0]) {
+          touchStartX = e.changedTouches[0].screenX;
+          touchStartY = e.changedTouches[0].screenY;
+        }
+        isSwipeAction = false;
+        stopAutoplay();
+      }, { passive: true });
+
+      slideshow.addEventListener('touchmove', function(e) {
+        if (e.changedTouches && e.changedTouches[0]) {
+          const moveX = Math.abs(e.changedTouches[0].screenX - touchStartX);
+          const moveY = Math.abs(e.changedTouches[0].screenY - touchStartY);
+          if (moveX > 12 || moveY > 12) {
+            isSwipeAction = true;
+          }
+        }
+      }, { passive: true });
+
+      slideshow.addEventListener('touchend', function(e) {
+        if (e.changedTouches && e.changedTouches[0]) {
+          touchEndX = e.changedTouches[0].screenX;
+          const diff = touchEndX - touchStartX;
+          if (Math.abs(diff) > 40) {
+            if (diff < 0) {
+              nextSlide();
+            } else {
+              goToSlide(currentVisibleIndex - 1);
+            }
+          }
+        }
+        startAutoplay();
+        setTimeout(function() {
+          isSwipeAction = false;
+        }, 120);
+      }, { passive: true });
+
+      // Prevent mobile banner link navigation when swiping
+      slideshow.querySelectorAll('.slideshow__mobile-click-layer').forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          if (isSwipeAction) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        });
+      });
+
       // Listen for Shopify customizer select/deselect events
       document.addEventListener('shopify:block:select', function(event) {
         const selectedSlide = event.target;
         if (selectedSlide.classList.contains('slideshow__slide') && slideshow.contains(selectedSlide)) {
-          const index = Array.from(slides).indexOf(selectedSlide);
+          const visibleSlides = getVisibleSlides();
+          const index = visibleSlides.indexOf(selectedSlide);
           if (index !== -1) {
             goToSlide(index);
             stopAutoplay();
@@ -471,10 +584,52 @@
     box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
   }
 
+  .slideshow__mobile-click-layer {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 4;
+    cursor: pointer;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (min-width: 768px) {
+    .slideshow__slide--mobile-only,
+    .slideshow__dot--mobile-only {
+      display: none !important;
+    }
+  }
+
   /* Layout Breakpoints */
   @media (max-width: 767px) {
+    .slideshow__mobile-click-layer {
+      display: block !important;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 4;
+      cursor: pointer;
+      text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     .hero-banner--slideshow {
-      height: 694px !important; /* Mobile height requirement: 694px (9:16 aspect ratio) */
+      height: auto !important;
+      aspect-ratio: 853 / 1024 !important;
+      max-height: 85vh !important;
+    }
+
+    .slideshow__img {
+      object-fit: cover !important;
+      object-position: center top !important;
+      width: 100% !important;
+      height: 100% !important;
     }
 
     .hero-banner__content {
@@ -504,7 +659,7 @@
     }
 
     .slideshow__controls {
-      bottom: 25px;
+      bottom: 14px;
     }
   }
 {% endstylesheet %}

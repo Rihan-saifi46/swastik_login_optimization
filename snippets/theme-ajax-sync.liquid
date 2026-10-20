@@ -743,6 +743,35 @@
             e.stopPropagation();
             return;
           }
+
+          // Check Diamond Sale pre-sale acknowledgement before checkout
+          if (window.DiamondSale) {
+            const isBuyNow = target.classList.contains('pp-btn-buy') || target.classList.contains('btn-buy-now');
+            if (isBuyNow && typeof window.DiamondSale.shouldInterceptPDPBuyNow === 'function' && window.DiamondSale.shouldInterceptPDPBuyNow()) {
+              e.preventDefault();
+              e.stopPropagation();
+              const currentPriceAttr = document.getElementById('pp-price')?.getAttribute('data-inr-price');
+              window.DiamondSale.openPreSaleWarningModal({
+                source: 'pdp_buy_now',
+                originalPriceCents: currentPriceAttr,
+                onAcknowledge: function() {
+                  handleCheckoutInterception(target);
+                }
+              });
+              return;
+            } else if (!isBuyNow && typeof window.DiamondSale.shouldInterceptCartCheckout === 'function' && window.DiamondSale.shouldInterceptCartCheckout()) {
+              e.preventDefault();
+              e.stopPropagation();
+              window.DiamondSale.openPreSaleWarningModal({
+                source: 'cart_checkout',
+                onAcknowledge: function() {
+                  handleCheckoutInterception(target);
+                }
+              });
+              return;
+            }
+          }
+
           e.preventDefault();
           e.stopPropagation();
           handleCheckoutInterception(target);
@@ -757,6 +786,18 @@
                                  e.submitter?.name === 'checkout' ||
                                  e.submitter?.classList.contains('btn-checkout');
         if (isCheckoutSubmit) {
+          if (window.DiamondSale && typeof window.DiamondSale.shouldInterceptCartCheckout === 'function' && window.DiamondSale.shouldInterceptCartCheckout()) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.DiamondSale.openPreSaleWarningModal({
+              source: 'cart_checkout_form',
+              onAcknowledge: function() {
+                handleCheckoutInterception(e.submitter || form);
+              }
+            });
+            return;
+          }
+
           e.preventDefault();
           e.stopPropagation();
           handleCheckoutInterception(e.submitter || form);

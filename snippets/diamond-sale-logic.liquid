@@ -1,0 +1,1113 @@
+{% comment %}
+  Swastik Jewels — Scheduled 30% Diamond Sale Controller & Pre-Sale Warning Logic
+  Sale Window: 6 November 2026, 2:00 PM – 6:00 PM IST (Asia/Kolkata, UTC+05:30)
+  Discount: 30% on eligible diamond products
+  Gateway: Paytm (standard checkout reused, NO Razorpay)
+  Architecture: Strictly separates Shopify storefront promotional display from checkout discount enforcement.
+{% endcomment %}
+
+{%- assign is_diamond_product = false -%}
+{%- if product -%}
+  {%- assign p_title_lower = product.title | downcase -%}
+  {%- assign p_type_lower = product.type | downcase -%}
+  {%- if p_title_lower contains 'diamond' or p_type_lower contains 'diamond' -%}
+    {%- assign is_diamond_product = true -%}
+  {%- endif -%}
+  {%- for tag in product.tags -%}
+    {%- assign tag_lower = tag | downcase -%}
+    {%- if tag_lower contains 'diamond' or tag_lower == 'diamond-sale' or tag_lower == 'dhanteras-sale' -%}
+      {%- assign is_diamond_product = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for col in product.collections -%}
+    {%- assign col_h = col.handle | downcase -%}
+    {%- if col_h contains 'diamond' -%}
+      {%- assign is_diamond_product = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if product.metafields.custom.diamond_weight != blank -%}
+    {%- assign is_diamond_product = true -%}
+  {%- endif -%}
+  {%- for variant in product.variants -%}
+    {%- if variant.metafields.custom.diamond_value != blank and variant.metafields.custom.diamond_value > 0 -%}
+      {%- assign is_diamond_product = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+
+{%- assign cart_has_diamond = false -%}
+{%- for item in cart.items -%}
+  {%- assign item_title_l = item.product.title | downcase -%}
+  {%- assign item_type_l = item.product.type | downcase -%}
+  {%- if item_title_l contains 'diamond' or item_type_l contains 'diamond' -%}
+    {%- assign cart_has_diamond = true -%}
+  {%- endif -%}
+  {%- for t in item.product.tags -%}
+    {%- assign t_l = t | downcase -%}
+    {%- if t_l contains 'diamond' or t_l == 'diamond-sale' or t_l == 'dhanteras-sale' -%}
+      {%- assign cart_has_diamond = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for col in item.product.collections -%}
+    {%- assign c_h = col.handle | downcase -%}
+    {%- if c_h contains 'diamond' -%}
+      {%- assign cart_has_diamond = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if item.product.metafields.custom.diamond_weight != blank -%}
+    {%- assign cart_has_diamond = true -%}
+  {%- endif -%}
+  {%- if item.variant.metafields.custom.diamond_value != blank and item.variant.metafields.custom.diamond_value > 0 -%}
+    {%- assign cart_has_diamond = true -%}
+  {%- endif -%}
+{%- endfor -%}
+
+<!-- Server-Authoritative Metadata for Diamond Sale -->
+<script id="diamond-sale-config-json" type="application/json">
+{
+  "serverTimeUnix": {{ 'now' | date: '%s' | times: 1000 }},
+  "saleStartIso": "2026-11-06T14:00:00+05:30",
+  "saleEndIso": "2026-11-06T18:00:00+05:30",
+  "timezone": "Asia/Kolkata",
+  "discountPercent": 30,
+  "discountCode": "DIAMOND30",
+  "isCheckoutDiscountConfigured": true,
+  "isProductPage": {% if product %}true{% else %}false{% endif %},
+  "isCurrentProductEligible": {{ is_diamond_product | json }},
+  "cartHasDiamond": {{ cart_has_diamond | json }},
+  "currentVariantId": {{ product.selected_or_first_available_variant.id | default: 'null' }},
+  "currentVariantPrice": {{ product.selected_or_first_available_variant.price | default: 'null' }},
+  "currentVariantDiamondValue": {{ product.selected_or_first_available_variant.metafields.custom.diamond_value | default: 0 | times: 100 }}
+}
+</script>
+
+<!-- PRE-SALE ACKNOWLEDGEMENT WARNING MODAL (Appears before Buy Now / Checkout before Nov 6, 2:00 PM IST) -->
+<div id="DiamondSalePreSaleModal" class="sw-dia-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="swDiaModalTitle" style="display: none;">
+  <div class="sw-dia-modal-backdrop" onclick="window.DiamondSale && window.DiamondSale.closePreSaleWarningModal()"></div>
+  <div class="sw-dia-modal-container">
+    <button type="button" class="sw-dia-modal-close" aria-label="Close dialog" onclick="window.DiamondSale && window.DiamondSale.closePreSaleWarningModal()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+
+    <div class="sw-dia-modal-header">
+      <div class="sw-dia-modal-icon" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </div>
+      <div class="sw-dia-modal-title-wrap">
+        <span class="sw-dia-modal-badge">SCHEDULED FLASH SALE</span>
+        <h3 id="swDiaModalTitle" class="sw-dia-modal-title">Upcoming 30% Diamond Sale Notice</h3>
+      </div>
+    </div>
+
+    <div class="sw-dia-modal-body">
+      <div class="sw-dia-schedule-banner">
+        <span class="sw-dia-schedule-icon">⏰</span>
+        <div class="sw-dia-schedule-text">
+          <strong>Official Sale Window:</strong>
+          <span>November 6, 2026 &bull; 2:00 PM – 6:00 PM IST</span>
+        </div>
+      </div>
+
+      <p class="sw-dia-modal-desc">
+        This eligible diamond jewellery piece qualifies for our scheduled <strong>30% Diamond Flash Sale</strong>.
+        Because you are purchasing <strong>before the sale begins</strong>, the checkout order will be billed at the <strong>current original price</strong>.
+      </p>
+
+      <div class="sw-dia-price-comparison-box">
+        <div class="sw-dia-comp-col">
+          <span class="sw-dia-comp-label">Upcoming Sale Price</span>
+          <span class="sw-dia-comp-sub">(Nov 6, 2–6 PM IST)</span>
+          <span class="sw-dia-comp-val sw-dia-comp-val--promo" id="swDiaModalPromoPrice">Rs. 0.00</span>
+        </div>
+        <div class="sw-dia-comp-divider">vs</div>
+        <div class="sw-dia-comp-col sw-dia-comp-col--today">
+          <span class="sw-dia-comp-label">Current Payable Price</span>
+          <span class="sw-dia-comp-sub">(Paying Today)</span>
+          <span class="sw-dia-comp-val sw-dia-comp-val--today" id="swDiaModalTodayPrice">Rs. 0.00</span>
+        </div>
+      </div>
+
+      <div class="sw-dia-warning-callout">
+        <div class="sw-dia-warning-icon">⚠️</div>
+        <div class="sw-dia-warning-text">
+          <strong>Important Price Confirmation:</strong>
+          If you continue now, the 30% discount will <em>not</em> be applied. The promotional price is a reference price for the scheduled sale window only.
+        </div>
+      </div>
+
+      <!-- MANDATORY UNCHECKED ACKNOWLEDGEMENT CHECKBOX -->
+      <label class="sw-dia-ack-container" for="DiamondSaleAckCheckbox">
+        <input type="checkbox" id="DiamondSaleAckCheckbox" class="sw-dia-checkbox" unselectable="on">
+        <span class="sw-dia-ack-text">
+          I understand that the 30% Diamond Sale starts on <strong>November 6, 2026 at 2:00 PM IST</strong>, and I agree to proceed now at the current original payable price of <strong id="swDiaModalCheckPrice">Rs. 0.00</strong>.
+        </span>
+      </label>
+    </div>
+
+    <div class="sw-dia-modal-actions">
+      <button type="button" id="DiamondSaleModalContinueBtn" class="sw-dia-btn-continue" disabled>
+        <span>CONTINUE AT REGULAR PRICE</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+      <button type="button" id="DiamondSaleModalCancelBtn" class="sw-dia-btn-cancel" onclick="window.DiamondSale && window.DiamondSale.closePreSaleWarningModal()">
+        Wait for Nov 6 Sale
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* =========================================================
+     SWASTIK JEWELS — 30% DIAMOND SALE STYLING
+     Brand Colors: Dark Emerald #012827, Antique Gold #D4AF37
+     ========================================================= */
+
+  /* Product Price Area Badge */
+  .pp-diamond-sale-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #012827 0%, #034b4a 100%);
+    color: #FFF5D6;
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    font-family: var(--pp-font-sans, 'Inter', -apple-system, sans-serif);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(1, 40, 39, 0.18);
+    vertical-align: middle;
+    margin-left: 10px;
+  }
+  .pp-diamond-sale-badge svg {
+    color: #D4AF37;
+  }
+
+  /* Product Price Area Promotional Reference Notice */
+  .pp-diamond-sale-notice {
+    margin-top: 8px;
+    margin-bottom: 4px;
+    background: #FDFBF7;
+    border: 1px solid #EFE4CC;
+    border-left: 3px solid #D4AF37;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: var(--pp-font-sans, 'Inter', -apple-system, sans-serif);
+    transition: all 0.3s ease;
+  }
+  .pp-dia-notice-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .pp-dia-notice-pill {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #7A5308;
+    background: #FFF0CE;
+    border: 1px solid #E5C158;
+    border-radius: 4px;
+    padding: 2px 7px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .pp-dia-notice-pill--live {
+    color: #013F3E;
+    background: #D8F3DC;
+    border-color: #74C69D;
+  }
+  .pp-dia-notice-text {
+    font-size: 13px;
+    color: #4A3E2C;
+    line-height: 1.4;
+  }
+  .pp-dia-notice-text strong {
+    color: #111111;
+  }
+
+  /* Cart Diamond Reminder Notice */
+  .cart-diamond-sale-notice {
+    background: #FDFBF7;
+    border: 1px solid #EFE4CC;
+    border-left: 3px solid #D4AF37;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'Inter', -apple-system, sans-serif;
+  }
+  .cart-diamond-sale-notice__icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+  .cart-diamond-sale-notice__content {
+    font-size: 13px;
+    color: #4A3E2C;
+    line-height: 1.45;
+  }
+  .cart-diamond-sale-notice__content strong {
+    color: #012827;
+  }
+
+  /* Modal Backdrop & Container */
+  .sw-dia-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999999 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+  .sw-dia-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(1, 40, 39, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .sw-dia-modal-container {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    background: #FFFFFF;
+    border-radius: 16px;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    box-shadow: 
+      0 20px 48px rgba(0, 0, 0, 0.45),
+      0 0 35px rgba(212, 175, 55, 0.20);
+    padding: 28px 24px 24px;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #222222;
+    z-index: 2;
+    animation: swDiaModalPop 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes swDiaModalPop {
+    from { opacity: 0; transform: scale(0.94) translateY(12px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .sw-dia-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #F4F4F4;
+    color: #555555;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .sw-dia-modal-close:hover {
+    background: #EAEAEA;
+    color: #111111;
+  }
+
+  .sw-dia-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .sw-dia-modal-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: radial-gradient(circle at center, #034b4a 0%, #012827 100%);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .sw-dia-modal-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #9C6F13;
+    background: #FFF7DF;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+  .sw-dia-modal-title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    color: #012827;
+    line-height: 1.25;
+  }
+
+  .sw-dia-schedule-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #012827 0%, #023938 100%);
+    color: #FFF5D6;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    margin-bottom: 14px;
+    font-size: 13px;
+  }
+  .sw-dia-schedule-banner strong {
+    color: #FFE699;
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .sw-dia-modal-desc {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #444444;
+    margin: 0 0 16px;
+  }
+
+  .sw-dia-price-comparison-box {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    background: #F9F9F8;
+    border: 1px solid #EBE9E3;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .sw-dia-comp-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .sw-dia-comp-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #666666;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .sw-dia-comp-sub {
+    font-size: 10px;
+    color: #888888;
+  }
+  .sw-dia-comp-val {
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 4px;
+  }
+  .sw-dia-comp-val--promo {
+    color: #013F3E;
+  }
+  .sw-dia-comp-val--today {
+    color: #9C6F13;
+  }
+  .sw-dia-comp-divider {
+    font-size: 12px;
+    font-weight: 700;
+    color: #AAAAAA;
+    text-transform: uppercase;
+  }
+
+  .sw-dia-warning-callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: #FFF9E6;
+    border: 1px solid #FFE082;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+  }
+  .sw-dia-warning-icon {
+    font-size: 16px;
+    line-height: 1;
+    margin-top: 2px;
+  }
+  .sw-dia-warning-text {
+    font-size: 12.5px;
+    color: #614400;
+    line-height: 1.45;
+  }
+
+  /* Acknowledgement Checkbox Container */
+  .sw-dia-ack-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #FAFAFA;
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background 0.2s, border-color 0.2s;
+    user-select: none;
+  }
+  .sw-dia-ack-container:hover {
+    background: #F5F5F5;
+    border-color: #BDBDBD;
+  }
+  .sw-dia-checkbox {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: #012827;
+    flex-shrink: 0;
+  }
+  .sw-dia-ack-text {
+    font-size: 13px;
+    line-height: 1.45;
+    color: #222222;
+  }
+
+  .sw-dia-modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .sw-dia-btn-continue {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 20px;
+    background: #D4AF37;
+    background: linear-gradient(135deg, #C89234 0%, #B5822C 100%);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(181, 130, 44, 0.35);
+    transition: all 0.2s ease;
+  }
+  .sw-dia-btn-continue:not(:disabled):hover {
+    background: linear-gradient(135deg, #B5822C 0%, #A47424 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(181, 130, 44, 0.45);
+  }
+  .sw-dia-btn-continue:disabled {
+    background: #E0E0E0 !important;
+    color: #888888 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+    transform: none !important;
+  }
+  .sw-dia-btn-cancel {
+    background: transparent;
+    border: none;
+    color: #666666;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: color 0.2s;
+  }
+  .sw-dia-btn-cancel:hover {
+    color: #111111;
+  }
+
+  @media (max-width: 480px) {
+    .sw-dia-modal-container {
+      padding: 22px 18px 18px;
+    }
+    .sw-dia-modal-title {
+      font-size: 17px;
+    }
+    .sw-dia-price-comparison-box {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+    .sw-dia-comp-divider {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+(function() {
+  'use strict';
+
+  // Read server metadata
+  const configEl = document.getElementById('diamond-sale-config-json');
+  let config = {};
+  if (configEl) {
+    try {
+      config = JSON.parse(configEl.textContent || '{}');
+    } catch(e) {}
+  }
+
+  // Target timestamps in Asia/Kolkata (UTC+05:30)
+  // 6 November 2026, 2:00 PM IST = 1793953800000 UTC
+  // 6 November 2026, 6:00 PM IST = 1793968200000 UTC
+  const SALE_START_UTC = Date.parse(config.saleStartIso || '2026-11-06T14:00:00+05:30');
+  const SALE_END_UTC   = Date.parse(config.saleEndIso   || '2026-11-06T18:00:00+05:30');
+  const DISCOUNT_PERCENT = config.discountPercent || 30;
+
+  // Clock Synchronization with Server (immune to user client clock drift)
+  let serverTimeOffset = 0;
+  if (config.serverTimeUnix) {
+    serverTimeOffset = Number(config.serverTimeUnix) - Date.now();
+  }
+
+  // Active testing override support (?diamond_sale_test_phase=pre-sale|active|post-sale)
+  let manualTestPhase = null;
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const testParam = urlParams.get('diamond_sale_test_phase');
+    if (testParam && ['pre-sale', 'active', 'post-sale'].includes(testParam.toLowerCase())) {
+      manualTestPhase = testParam.toLowerCase();
+    }
+  } catch(e) {}
+
+  // Request atomic Date header from origin to guarantee accurate time synchronization
+  try {
+    fetch(window.location.href, { method: 'HEAD', cache: 'no-store' })
+      .then(res => {
+        const dateHeader = res.headers.get('date');
+        if (dateHeader) {
+          const atomicServerNow = new Date(dateHeader).getTime();
+          serverTimeOffset = atomicServerNow - Date.now();
+          if (DiamondSaleController) {
+            DiamondSaleController.recalculate();
+          }
+        }
+      })
+      .catch(() => {});
+  } catch(e) {}
+
+  function getAtomicNow() {
+    return Date.now() + serverTimeOffset;
+  }
+
+  function formatMoney(cents) {
+    const val = (Number(cents) || 0) / 100;
+    return 'Rs. ' + val.toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  // Controller Definition
+  const DiamondSaleController = {
+    config: config,
+    currentPhase: 'pre-sale',
+    isAcknowledgedForCheckout: false,
+    activePendingAction: null,
+
+    getSalePhase: function() {
+      if (manualTestPhase) return manualTestPhase;
+      const now = getAtomicNow();
+      if (now < SALE_START_UTC) {
+        return 'pre-sale';
+      } else if (now >= SALE_START_UTC && now < SALE_END_UTC) {
+        return 'active';
+      } else {
+        return 'post-sale';
+      }
+    },
+
+    setTestPhase: function(phase) {
+      if (!['pre-sale', 'active', 'post-sale', null].includes(phase)) {
+        console.warn('[DiamondSale] Invalid phase. Choose "pre-sale", "active", "post-sale", or null.');
+        return;
+      }
+      manualTestPhase = phase;
+      this.recalculate();
+      console.log('[DiamondSale] Test phase set to:', this.getSalePhase());
+    },
+
+    isProductEligible: function() {
+      return Boolean(config.isCurrentProductEligible);
+    },
+
+    cartHasDiamond: function() {
+      return Boolean(config.cartHasDiamond);
+    },
+
+    isCheckoutDiscountConfigured: function() {
+      return Boolean(config.isCheckoutDiscountConfigured);
+    },
+
+    getCurrentVariantDiamondValue: function(variantId) {
+      const targetId = variantId || config.currentVariantId;
+
+      // 1. Check pp-variant-metafields-json
+      const metaEl = document.getElementById('pp-variant-metafields-json');
+      if (metaEl && targetId) {
+        try {
+          const allMeta = JSON.parse(metaEl.textContent || '{}');
+          const vMeta = allMeta[String(targetId)] || allMeta[targetId];
+          if (vMeta && vMeta.diamond_value !== undefined && vMeta.diamond_value !== null) {
+            const parsed = parseFloat(String(vMeta.diamond_value).replace(/[^0-9.]/g, ''));
+            if (!isNaN(parsed) && parsed > 0) {
+              return Math.round(parsed * 100); // rupees to cents
+            }
+          }
+        } catch(e) {}
+      }
+
+      // 2. Check DOM element #ui-price-diamond
+      const domDiaEl = document.getElementById('ui-price-diamond');
+      if (domDiaEl) {
+        const inrAttr = domDiaEl.getAttribute('data-inr-price');
+        if (inrAttr) {
+          const val = parseFloat(inrAttr);
+          if (!isNaN(val) && val > 0) return Math.round(val);
+        }
+        const text = domDiaEl.textContent || '';
+        const match = text.replace(/,/g, '').match(/[0-9.]+/);
+        if (match) {
+          const val = parseFloat(match[0]);
+          if (!isNaN(val) && val > 0) return Math.round(val * 100);
+        }
+      }
+
+      // 3. Check config value passed from Liquid
+      if (config.currentVariantDiamondValue && Number(config.currentVariantDiamondValue) > 0) {
+        return Number(config.currentVariantDiamondValue);
+      }
+
+      return 0;
+    },
+
+    calculatePromotionalPrice: function(originalPriceCents, diamondValueCents) {
+      const orig = Number(originalPriceCents) || 0;
+      let diaVal = (diamondValueCents !== undefined && diamondValueCents !== null)
+        ? Number(diamondValueCents)
+        : this.getCurrentVariantDiamondValue();
+
+      if (diaVal && diaVal > 0) {
+        // 30% discount applies ONLY to the diamond component/value
+        const discount = Math.round((diaVal * DISCOUNT_PERCENT) / 100);
+        const promo = Math.max(0, orig - discount);
+        return {
+          originalCents: orig,
+          diamondValueCents: diaVal,
+          promoCents: promo,
+          discountCents: discount,
+          percent: DISCOUNT_PERCENT
+        };
+      } else {
+        // If diamond component is not available, do NOT guess or discount full price
+        return {
+          originalCents: orig,
+          diamondValueCents: 0,
+          promoCents: orig,
+          discountCents: 0,
+          percent: 0
+        };
+      }
+    },
+
+    // Update PDP UI based on current phase and variant
+    updatePdpPriceUI: function(variant, explicitCouponApplied) {
+      if (!config.isProductPage || !this.isProductEligible()) return;
+
+      const phase = this.getSalePhase();
+      this.currentPhase = phase;
+
+      const priceEl = document.getElementById('pp-price');
+      const struckPriceEl = document.getElementById('pp-price-original-struck');
+      const badgeEl = document.getElementById('pp-diamond-sale-badge');
+      const noticeEl = document.getElementById('pp-diamond-sale-notice');
+      const noticePill = document.getElementById('pp-dia-notice-pill');
+      const noticeText = document.getElementById('pp-dia-notice-text');
+
+      if (!priceEl) return;
+
+      const targetVariantPrice = variant ? Number(variant.price) : Number(config.currentVariantPrice || 0);
+      if (!targetVariantPrice) return;
+
+      const targetVariantId = variant ? variant.id : config.currentVariantId;
+      const diamondValCents = this.getCurrentVariantDiamondValue(targetVariantId);
+      const calc = this.calculatePromotionalPrice(targetVariantPrice, diamondValCents);
+      const hasRealDiscount = (calc.discountCents > 0 && calc.promoCents < calc.originalCents);
+
+      // If a valid coupon is applied via pdp-coupon-modal, avoid collision
+      if (explicitCouponApplied) {
+        if (noticeEl) noticeEl.style.display = 'none';
+        return;
+      }
+
+      if (phase === 'pre-sale') {
+        if (hasRealDiscount) {
+          priceEl.innerHTML = formatMoney(calc.promoCents);
+          priceEl.classList.add('pp-price--discounted');
+
+          if (struckPriceEl) {
+            struckPriceEl.innerHTML = formatMoney(calc.originalCents);
+            struckPriceEl.style.display = 'inline-block';
+            struckPriceEl.classList.add('pp-price--original');
+          }
+
+          if (badgeEl) badgeEl.style.display = 'inline-flex';
+
+          if (noticeEl) {
+            noticeEl.style.display = 'block';
+            if (noticePill) {
+              noticePill.textContent = 'PROMOTIONAL REFERENCE PRICE';
+              noticePill.classList.remove('pp-dia-notice-pill--live');
+            }
+            if (noticeText) {
+              noticeText.innerHTML = `Upcoming 30% Diamond Sale starts Nov 6, 2:00 PM–6:00 PM IST (30% off diamond component: save ${formatMoney(calc.discountCents)}). Current payable price today is original price (<strong id="pp-dia-today-price">${formatMoney(calc.originalCents)}</strong>).`;
+            }
+          }
+        } else {
+          // No diamond value available: display regular price
+          priceEl.innerHTML = formatMoney(calc.originalCents);
+          priceEl.classList.remove('pp-price--discounted');
+          if (struckPriceEl) struckPriceEl.style.display = 'none';
+          if (badgeEl) badgeEl.style.display = 'none';
+          if (noticeEl) noticeEl.style.display = 'none';
+        }
+      } else if (phase === 'active') {
+        if (this.isCheckoutDiscountConfigured() && hasRealDiscount) {
+          priceEl.innerHTML = formatMoney(calc.promoCents);
+          priceEl.classList.add('pp-price--discounted');
+
+          if (struckPriceEl) {
+            struckPriceEl.innerHTML = formatMoney(calc.originalCents);
+            struckPriceEl.style.display = 'inline-block';
+            struckPriceEl.classList.add('pp-price--original');
+          }
+
+          if (badgeEl) badgeEl.style.display = 'inline-flex';
+
+          if (noticeEl) {
+            noticeEl.style.display = 'block';
+            if (noticePill) {
+              noticePill.textContent = 'FLASH SALE LIVE';
+              noticePill.classList.add('pp-dia-notice-pill--live');
+            }
+            if (noticeText) {
+              noticeText.innerHTML = `30% Diamond Sale discount active! Save ${formatMoney(calc.discountCents)} on the diamond component automatically at checkout.`;
+            }
+          }
+        } else {
+          priceEl.innerHTML = formatMoney(calc.originalCents);
+          priceEl.classList.remove('pp-price--discounted');
+          if (struckPriceEl) struckPriceEl.style.display = 'none';
+          if (badgeEl) badgeEl.style.display = 'none';
+          if (noticeEl) {
+            noticeEl.style.display = 'block';
+            if (noticePill) noticePill.textContent = 'FLASH SALE ACTIVE';
+            if (noticeText) noticeText.innerHTML = 'Checkout discount is currently being finalized.';
+          }
+        }
+      } else {
+        // Phase 3: Post-Sale
+        priceEl.innerHTML = formatMoney(calc.originalCents);
+        priceEl.classList.remove('pp-price--discounted');
+        if (struckPriceEl) {
+          struckPriceEl.style.display = 'none';
+          struckPriceEl.classList.remove('pp-price--original');
+        }
+        if (badgeEl) badgeEl.style.display = 'none';
+        if (noticeEl) noticeEl.style.display = 'none';
+      }
+    },
+
+    onVariantChange: function(variant) {
+      if (!variant) return;
+      config.currentVariantId = variant.id;
+      config.currentVariantPrice = variant.price;
+      this.updatePdpPriceUI(variant, false);
+      this.updateModalPrices(variant.price, variant.id);
+    },
+
+    onCouponChange: function(variant, appliedCoupon) {
+      this.updatePdpPriceUI(variant, Boolean(appliedCoupon));
+    },
+
+    updateModalPrices: function(originalPriceCents, variantId) {
+      const orig = Number(originalPriceCents) || Number(config.currentVariantPrice) || 0;
+      const diaVal = this.getCurrentVariantDiamondValue(variantId || config.currentVariantId);
+      const calc = this.calculatePromotionalPrice(orig, diaVal);
+
+      const modalPromo = document.getElementById('swDiaModalPromoPrice');
+      const modalToday = document.getElementById('swDiaModalTodayPrice');
+      const modalCheck = document.getElementById('swDiaModalCheckPrice');
+
+      if (modalPromo) modalPromo.textContent = formatMoney(calc.promoCents);
+      if (modalToday) modalToday.textContent = formatMoney(calc.originalCents);
+      if (modalCheck) modalCheck.textContent = formatMoney(calc.originalCents);
+    },
+
+    shouldInterceptPDPBuyNow: function() {
+      if (this.isAcknowledgedForCheckout) return false;
+      const phase = this.getSalePhase();
+      return (phase === 'pre-sale' && this.isProductEligible());
+    },
+
+    shouldInterceptCartCheckout: function() {
+      if (this.isAcknowledgedForCheckout) return false;
+      const phase = this.getSalePhase();
+      return (phase === 'pre-sale' && this.cartHasDiamond());
+    },
+
+    openPreSaleWarningModal: function(options) {
+      const modal = document.getElementById('DiamondSalePreSaleModal');
+      const checkbox = document.getElementById('DiamondSaleAckCheckbox');
+      const continueBtn = document.getElementById('DiamondSaleModalContinueBtn');
+
+      if (!modal) return;
+
+      this.activePendingAction = options ? options.onAcknowledge : null;
+
+      // MANDATORY REQUIREMENT: Checkbox MUST be unchecked by default!
+      if (checkbox) {
+        checkbox.checked = false;
+      }
+      if (continueBtn) {
+        continueBtn.disabled = true;
+      }
+
+      const origPrice = options && options.originalPriceCents ? options.originalPriceCents : config.currentVariantPrice;
+      this.updateModalPrices(origPrice);
+
+      modal.style.display = 'flex';
+      document.body.classList.add('body-lock');
+    },
+
+    closePreSaleWarningModal: function() {
+      const modal = document.getElementById('DiamondSalePreSaleModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+      document.body.classList.remove('body-lock');
+      this.activePendingAction = null;
+    },
+
+    confirmPreSaleAcknowledgement: function() {
+      const checkbox = document.getElementById('DiamondSaleAckCheckbox');
+      if (!checkbox || !checkbox.checked) return;
+
+      this.isAcknowledgedForCheckout = true;
+      sessionStorage.setItem('sw_diamond_sale_acknowledged', 'true');
+
+      const action = this.activePendingAction;
+      this.closePreSaleWarningModal();
+
+      if (typeof action === 'function') {
+        action();
+      }
+    },
+
+    updateProductCardsPriceUI: function() {
+      const self = this;
+      const phase = self.getSalePhase();
+      const isDiscountConfigured = self.isCheckoutDiscountConfigured();
+
+      const selector = '.product-card-ui__price-row[data-diamond-eligible="true"], .pp-related-price-row[data-diamond-eligible="true"]';
+      document.querySelectorAll(selector).forEach(function(row) {
+        const currentEl = row.querySelector('.js-card-price-current') || row.querySelector('.price-current, .pp-rel-current');
+        const originalEl = row.querySelector('.js-card-price-original') || row.querySelector('.price-original, .pp-rel-compare');
+        if (!currentEl) return;
+
+        const origCents = Number(row.getAttribute('data-original-price')) || 0;
+        const promoCents = Number(row.getAttribute('data-promo-price')) || origCents;
+        const hasRealDiscount = (promoCents > 0 && promoCents < origCents);
+
+        function formatInr(cents) {
+          const rupees = Math.round((Number(cents) || 0) / 100);
+          return '₹' + rupees.toLocaleString('en-IN');
+        }
+
+        const card = row.closest('.product-card-ui, .pp-related-item-card');
+        const badgeEl = card ? card.querySelector('.pp-rel-badge') : null;
+
+        if (phase === 'pre-sale') {
+          if (hasRealDiscount) {
+            currentEl.textContent = formatInr(promoCents);
+            if (originalEl) {
+              originalEl.textContent = formatInr(origCents);
+              originalEl.style.display = 'inline';
+            }
+          } else {
+            currentEl.textContent = formatInr(origCents);
+            if (originalEl) originalEl.style.display = 'none';
+          }
+        } else if (phase === 'active') {
+          if (isDiscountConfigured && hasRealDiscount) {
+            currentEl.textContent = formatInr(promoCents);
+            if (originalEl) {
+              originalEl.textContent = formatInr(origCents);
+              originalEl.style.display = 'inline';
+            }
+          } else {
+            currentEl.textContent = formatInr(origCents);
+            if (originalEl) originalEl.style.display = 'none';
+          }
+        } else {
+          // Post-sale: Restore normal original price, hide strikethrough
+          currentEl.textContent = formatInr(origCents);
+          if (originalEl) originalEl.style.display = 'none';
+          if (badgeEl && badgeEl.getAttribute('data-original-badge')) {
+            badgeEl.textContent = badgeEl.getAttribute('data-original-badge');
+          }
+        }
+      });
+    },
+
+    recalculate: function() {
+      this.updatePdpPriceUI(null, false);
+      this.updateProductCardsPriceUI();
+    },
+
+    init: function() {
+      const self = this;
+
+      // Check session acknowledgement
+      if (sessionStorage.getItem('sw_diamond_sale_acknowledged') === 'true') {
+        self.isAcknowledgedForCheckout = true;
+      }
+
+      // Checkbox listener in modal
+      const checkbox = document.getElementById('DiamondSaleAckCheckbox');
+      const continueBtn = document.getElementById('DiamondSaleModalContinueBtn');
+
+      if (checkbox && continueBtn) {
+        checkbox.addEventListener('change', function() {
+          continueBtn.disabled = !checkbox.checked;
+        });
+
+        continueBtn.addEventListener('click', function() {
+          if (!continueBtn.disabled) {
+            self.confirmPreSaleAcknowledgement();
+          }
+        });
+      }
+
+      // Authoritative CRM Status Sync (Optional remote status & clock sync)
+      try {
+        const crmStatusUrl = window.DiamondSaleCrmEndpoint || 'https://backend-api.swastikjewel.in/api/diamond-sale/status';
+        fetch(crmStatusUrl, { method: 'GET', headers: { 'Accept': 'application/json' }, cache: 'no-cache' })
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.status === 'success') {
+              if (data.checkout_discount_active !== undefined) {
+                config.isCheckoutDiscountConfigured = Boolean(data.checkout_discount_active);
+              }
+              if (data.server_time_unix) {
+                serverTimeOffset = Number(data.server_time_unix) - Date.now();
+              }
+              self.recalculate();
+            }
+          })
+          .catch(() => {
+            // Gracefully retain Liquid server metadata if CRM endpoint is unreachable or in dev
+          });
+      } catch(e) {}
+
+      // Initial price display
+      self.updatePdpPriceUI(null, false);
+      self.updateProductCardsPriceUI();
+
+      // Re-apply on dynamic section or filter reload
+      document.addEventListener('shopify:section:load', function() {
+        self.updateProductCardsPriceUI();
+      });
+
+      // Heartbeat timer every 10 seconds to detect sale start (2:00 PM) and end (6:00 PM) transitions
+      setInterval(function() {
+        const nextPhase = self.getSalePhase();
+        if (nextPhase !== self.currentPhase) {
+          self.currentPhase = nextPhase;
+          self.recalculate();
+        }
+      }, 10000);
+
+      // Global fallback click interceptor for checkout / buy-now buttons
+      document.addEventListener('click', function(e) {
+        if (self.isAcknowledgedForCheckout) return;
+        const target = e.target.closest('a[href*="/checkout"], button[name="checkout"], .btn-checkout, .pp-btn-buy, .btn-buy-now');
+        if (!target) return;
+        if (target.disabled || target.classList.contains('is-out-of-stock') || target.getAttribute('aria-disabled') === 'true') return;
+
+        const isBuyNow = target.classList.contains('pp-btn-buy') || target.classList.contains('btn-buy-now');
+        if (isBuyNow && self.shouldInterceptPDPBuyNow()) {
+          e.preventDefault();
+          e.stopPropagation();
+          const currentPriceAttr = document.getElementById('pp-price')?.getAttribute('data-inr-price');
+          self.openPreSaleWarningModal({
+            source: 'global_click_buy_now',
+            originalPriceCents: currentPriceAttr,
+            onAcknowledge: function() {
+              if (target.tagName.toLowerCase() === 'button' && target.type === 'submit') {
+                target.form ? target.form.submit() : target.click();
+              } else {
+                target.click();
+              }
+            }
+          });
+        } else if (!isBuyNow && self.shouldInterceptCartCheckout()) {
+          e.preventDefault();
+          e.stopPropagation();
+          self.openPreSaleWarningModal({
+            source: 'global_click_checkout',
+            onAcknowledge: function() {
+              if (target.tagName.toLowerCase() === 'a' && target.href) {
+                window.location.href = target.href;
+              } else if (target.form) {
+                target.form.submit();
+              } else {
+                target.click();
+              }
+            }
+          });
+        }
+      });
+    }
+  };
+
+  // Expose Globally
+  window.DiamondSale = DiamondSaleController;
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      DiamondSaleController.init();
+    });
+  } else {
+    DiamondSaleController.init();
+  }
+})();
+</script>

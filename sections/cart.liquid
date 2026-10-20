@@ -6,7 +6,34 @@
 
 {%- assign shop_coupon_metafield = shop.metafields.custom.coupons | default: shop.metafields.custom.global_coupons -%}
 
-<div class="swastik-cart-page" id="SwastikCartPage">
+{%- assign cart_has_diamond = false -%}
+{%- for item in cart.items -%}
+  {%- assign it_title = item.product.title | downcase -%}
+  {%- assign it_type = item.product.type | downcase -%}
+  {%- if it_title contains 'diamond' or it_type contains 'diamond' -%}
+    {%- assign cart_has_diamond = true -%}
+  {%- endif -%}
+  {%- for tag in item.product.tags -%}
+    {%- assign tag_l = tag | downcase -%}
+    {%- if tag_l contains 'diamond' or tag_l == 'diamond-sale' or tag_l == 'dhanteras-sale' -%}
+      {%- assign cart_has_diamond = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for col in item.product.collections -%}
+    {%- assign col_h = col.handle | downcase -%}
+    {%- if col_h contains 'diamond' -%}
+      {%- assign cart_has_diamond = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if item.product.metafields.custom.diamond_weight != blank -%}
+    {%- assign cart_has_diamond = true -%}
+  {%- endif -%}
+  {%- if item.variant.metafields.custom.diamond_value != blank and item.variant.metafields.custom.diamond_value > 0 -%}
+    {%- assign cart_has_diamond = true -%}
+  {%- endif -%}
+{%- endfor -%}
+
+<div class="swastik-cart-page" id="SwastikCartPage" data-cart-has-diamond="{{ cart_has_diamond }}">
   <!-- Breadcrumb -->
   <div class="cart-breadcrumb-wrapper">
     <div class="cart-container">
@@ -191,6 +218,17 @@
             <!-- Dynamically populated from shop/metafields/fallback coupons -->
           </div>
         </div>
+
+        {%- if cart_has_diamond -%}
+          <!-- Diamond Sale Promotional Notice for Cart -->
+          <div class="cart-diamond-sale-notice" id="cart-diamond-sale-notice">
+            <span class="cart-diamond-sale-notice__icon">💎</span>
+            <div class="cart-diamond-sale-notice__content">
+              <strong>Upcoming 30% Diamond Sale (Nov 6, 2:00 PM–6:00 PM IST):</strong>
+              <span>Eligible diamond piece(s) in your bag qualify for 30% OFF during the scheduled sale. Purchasing now before the sale starts means paying the current regular price.</span>
+            </div>
+          </div>
+        {%- endif -%}
 
         <!-- ORDER SUMMARY CARD -->
         <div class="cart-summary-card">
@@ -1307,12 +1345,25 @@
   };
 
   window.handleProceedToCheckout = function() {
-    const appliedCode = getAppliedCouponCode();
-    let checkoutUrl = '/checkout';
-    if (appliedCode) {
-      checkoutUrl += '?discount=' + encodeURIComponent(appliedCode);
+    const doProceed = function() {
+      const appliedCode = getAppliedCouponCode();
+      let checkoutUrl = '/checkout';
+      if (appliedCode) {
+        checkoutUrl += '?discount=' + encodeURIComponent(appliedCode);
+      }
+      window.location.href = checkoutUrl;
+    };
+
+    if (window.DiamondSale && typeof window.DiamondSale.shouldInterceptCartCheckout === 'function' && window.DiamondSale.shouldInterceptCartCheckout()) {
+      window.DiamondSale.openPreSaleWarningModal({
+        source: 'cart_page',
+        originalPriceCents: {{ cart.total_price | json }},
+        onAcknowledge: doProceed
+      });
+      return;
     }
-    window.location.href = checkoutUrl;
+
+    doProceed();
   };
 
   window.handleCartQtyChange = function(key, quantity) {

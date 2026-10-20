@@ -56,12 +56,28 @@
             "button_2_label": "Discover the Vibe",
             "button_2_link": ""
           }
+        },
+        "slide_dhanteras_4": {
+          "type": "slide",
+          "settings": {
+            "image_desktop": "",
+            "image_mobile": "",
+            "alignment": "left",
+            "subheading": "",
+            "title": "",
+            "description": "",
+            "button_1_label": "",
+            "button_1_link": "",
+            "button_2_label": "",
+            "button_2_link": ""
+          }
         }
       },
       "block_order": [
         "slide_pMGFNc",
         "slide_WxzxDN",
-        "slide_4LQDeb"
+        "slide_4LQDeb",
+        "slide_dhanteras_4"
       ],
       "settings": {
         "autoplay": true,

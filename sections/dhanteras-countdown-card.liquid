@@ -1,0 +1,742 @@
+{% comment %}
+  Swastik Jewels — Dhanteras Special Sale Countdown Floating Card
+  Positioned directly below the WhatsApp floating button in the bottom-right corner.
+  Luxury dark emerald and gold festive aesthetic with live countdown, booking statistics, and viewport-constrained draggable positioning.
+{% endcomment %}
+
+{%- if section.settings.enable_card -%}
+  {%- if section.settings.show_only_homepage and request.page_type != 'index' -%}
+    {%- comment -%} Hidden when non-homepage and show_only_homepage is enabled {%- endcomment -%}
+  {%- else -%}
+    {%- assign deadline_iso = section.settings.sale_deadline | default: '2026-11-06T18:00:00+05:30' -%}
+
+    <div
+      id="DhanterasCountdownCard"
+      class="dhanteras-countdown-card"
+      data-deadline="{{ deadline_iso | escape }}"
+      role="region"
+      aria-label="Dhanteras Special Sale Offer"
+    >
+      <!-- Close Button -->
+      <button
+        type="button"
+        id="DhanterasCardClose"
+        class="sw-dt-close-btn"
+        aria-label="Close Dhanteras special card"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <!-- Festive Kalash & Header -->
+      <div class="sw-dt-header">
+        <div class="sw-dt-kalash-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="swDtGold1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFF5D6"/>
+                <stop offset="45%" stop-color="#E5C158"/>
+                <stop offset="100%" stop-color="#9C6F13"/>
+              </linearGradient>
+              <linearGradient id="swDtGold2" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#FFE899"/>
+                <stop offset="60%" stop-color="#D4AF37"/>
+                <stop offset="100%" stop-color="#7A5308"/>
+              </linearGradient>
+              <linearGradient id="swDtLeaf" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#80B865"/>
+                <stop offset="50%" stop-color="#B2DF8A"/>
+                <stop offset="100%" stop-color="#FFE082"/>
+              </linearGradient>
+            </defs>
+            <!-- Mango Leaves behind coconut -->
+            <path d="M32 20 C24 16 16 22 13 28 C20 28 26 25 32 20Z" fill="url(#swDtLeaf)" opacity="0.95"/>
+            <path d="M32 20 C40 16 48 22 51 28 C44 28 38 25 32 20Z" fill="url(#swDtLeaf)" opacity="0.95"/>
+            <path d="M32 17 C28 9 20 12 18 19 C23 18 28 18 32 17Z" fill="url(#swDtLeaf)"/>
+            <path d="M32 17 C36 9 44 12 46 19 C41 18 36 18 32 17Z" fill="url(#swDtLeaf)"/>
+            <!-- Coconut (Shriphala) -->
+            <ellipse cx="32" cy="18" rx="8" ry="10" fill="url(#swDtGold1)"/>
+            <path d="M32 8 C30 11 31 14 32 15 C33 14 34 11 32 8Z" fill="#7A5308"/>
+            <!-- Kalash Pot Rim / Neck -->
+            <path d="M22 26 H42 V29 C42 30.5 40 32 38 32 H26 C24 32 22 30.5 22 29 V26Z" fill="url(#swDtGold2)"/>
+            <rect x="20" y="24" width="24" height="3" rx="1.5" fill="url(#swDtGold1)"/>
+            <!-- Kalash Body -->
+            <path d="M25 32 C17 35 15 48 22 54 C25 56.5 39 56.5 42 54 C49 48 47 35 39 32 Z" fill="url(#swDtGold1)"/>
+            <!-- Pot base -->
+            <path d="M24 54 H40 L42 58 H22 L24 54 Z" fill="url(#swDtGold2)"/>
+            <!-- Auspicious emblem on pot -->
+            <circle cx="32" cy="43" r="5" fill="none" stroke="#7A5308" stroke-width="1.2" opacity="0.75"/>
+            <path d="M32 40 V46 M29 43 H35" stroke="#7A5308" stroke-width="1.2" stroke-linecap="round" opacity="0.8"/>
+          </svg>
+        </div>
+        <div class="sw-dt-title-wrap">
+          <span class="sw-dt-badge">FESTIVE EXCLUSIVE</span>
+          <h4 class="sw-dt-title">{{ section.settings.heading | default: 'DHANTERAS SPECIAL' | escape }}</h4>
+          <p class="sw-dt-subtitle">{{ section.settings.subtitle | default: 'Enjoy festive savings' | escape }}</p>
+        </div>
+      </div>
+
+      <!-- Real Continuously Updating Countdown Timer -->
+      <div class="sw-dt-countdown-container" id="DhanterasCountdownContainer">
+        <div class="sw-dt-timer-row" id="DhanterasTimerRow">
+          <div class="sw-dt-time-unit">
+            <span class="sw-dt-time-number" id="sw-dt-days">00</span>
+            <span class="sw-dt-time-label">Days</span>
+          </div>
+          <span class="sw-dt-time-colon">:</span>
+          <div class="sw-dt-time-unit">
+            <span class="sw-dt-time-number" id="sw-dt-hours">00</span>
+            <span class="sw-dt-time-label">Hours</span>
+          </div>
+          <span class="sw-dt-time-colon">:</span>
+          <div class="sw-dt-time-unit">
+            <span class="sw-dt-time-number" id="sw-dt-mins">00</span>
+            <span class="sw-dt-time-label">Mins</span>
+          </div>
+          <span class="sw-dt-time-colon">:</span>
+          <div class="sw-dt-time-unit">
+            <span class="sw-dt-time-number" id="sw-dt-secs">00</span>
+            <span class="sw-dt-time-label">Secs</span>
+          </div>
+        </div>
+
+        <div class="sw-dt-sale-ended" id="DhanterasSaleEnded" style="display: none;">
+          <span>{{ section.settings.sale_ended_message | default: 'Dhanteras Sale has ended' | escape }}</span>
+        </div>
+      </div>
+
+      <!-- Prominent Booking Statistics -->
+      <div class="sw-dt-stats-container">
+        <div class="sw-dt-stat-box sw-dt-stat-box--booked">
+          <span class="sw-dt-stat-label">BOOKED</span>
+          <span class="sw-dt-stat-value">10</span>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      /* =========================================================
+         SWASTIK JEWELS — DHANTERAS COUNTDOWN FLOATING CARD
+         Positioned directly below WhatsApp floating button
+         Intensified Gold Glow & Fast Breathing Animation (2.2s)
+         ========================================================= */
+      @keyframes swDhanterasBreathe {
+        0%, 100% {
+          transform: scale(1.0);
+          box-shadow: 
+            0 14px 36px rgba(0, 0, 0, 0.50),
+            0 0 20px rgba(212, 175, 55, 0.40),
+            0 0 45px rgba(212, 175, 55, 0.22),
+            0 0 70px rgba(212, 175, 55, 0.12),
+            inset 0 1px 0 rgba(255, 235, 170, 0.35);
+          border-color: rgba(212, 175, 55, 0.55);
+        }
+        50% {
+          transform: scale(1.022);
+          box-shadow: 
+            0 18px 44px rgba(0, 0, 0, 0.58),
+            0 0 30px rgba(212, 175, 55, 0.65),
+            0 0 60px rgba(212, 175, 55, 0.38),
+            0 0 90px rgba(212, 175, 55, 0.20),
+            inset 0 1px 0 rgba(255, 235, 170, 0.50);
+          border-color: rgba(212, 175, 55, 0.85);
+        }
+      }
+
+      .dhanteras-countdown-card {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 396px;
+        max-width: calc(100vw - 32px);
+        box-sizing: border-box;
+        background: radial-gradient(ellipse at 50% 0%, #034b4a 0%, #012827 70%, #001e1d 100%);
+        border: 1px solid rgba(212, 175, 55, 0.55);
+        border-radius: 18px;
+        box-shadow: 
+          0 14px 36px rgba(0, 0, 0, 0.50),
+          0 0 20px rgba(212, 175, 55, 0.40),
+          0 0 45px rgba(212, 175, 55, 0.22),
+          0 0 70px rgba(212, 175, 55, 0.12),
+          inset 0 1px 0 rgba(255, 235, 170, 0.35);
+        padding: 20px 22px;
+        z-index: 9990;
+        opacity: 1;
+        visibility: visible;
+        transform: scale(1.0);
+        transform-origin: center center;
+        animation: swDhanterasBreathe 2.2s ease-in-out infinite;
+        will-change: transform, box-shadow;
+        transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease, visibility 0.3s;
+        pointer-events: auto;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        cursor: grab;
+        touch-action: none;
+      }
+
+      .dhanteras-countdown-card:hover {
+        border-color: rgba(212, 175, 55, 0.85);
+      }
+
+      .dhanteras-countdown-card.is-dragging {
+        cursor: grabbing !important;
+        animation-play-state: paused;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: none !important;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .dhanteras-countdown-card {
+          animation: none !important;
+          transform: none !important;
+          box-shadow: 
+            0 14px 36px rgba(0, 0, 0, 0.50),
+            0 0 20px rgba(212, 175, 55, 0.40),
+            inset 0 1px 0 rgba(255, 235, 170, 0.35) !important;
+        }
+      }
+
+      /* Hidden when closed by user */
+      .dhanteras-countdown-card.is-dismissed {
+        animation: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        transform: scale(0.95) !important;
+        pointer-events: none !important;
+      }
+
+      /* Clean fade out when WhatsApp menu or site drawers are open */
+      body.whatsapp-menu-open .dhanteras-countdown-card,
+      body.drawer-open .dhanteras-countdown-card,
+      body.cart-drawer-open .dhanteras-countdown-card,
+      body.body-lock .dhanteras-countdown-card {
+        animation: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        transform: scale(0.96) !important;
+      }
+
+      /* Close Button (x) in top-right corner */
+      .sw-dt-close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        color: rgba(243, 229, 171, 0.75);
+        cursor: pointer;
+        padding: 0;
+        border-radius: 50%;
+        transition: color 0.2s, background-color 0.2s, transform 0.2s;
+        outline: none;
+        z-index: 2;
+        pointer-events: auto;
+      }
+      .sw-dt-close-btn:hover {
+        color: #D4AF37;
+        background: rgba(255, 255, 255, 0.08);
+        transform: rotate(90deg);
+      }
+      .sw-dt-close-btn:focus-visible {
+        box-shadow: 0 0 0 2px #D4AF37;
+      }
+
+      /* Header Layout */
+      .sw-dt-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 15px;
+        padding-right: 22px;
+      }
+      .sw-dt-kalash-icon {
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.22) 0%, rgba(1, 63, 62, 0.25) 70%);
+        border: 1px solid rgba(212, 175, 55, 0.45);
+        border-radius: 50%;
+        padding: 7px;
+        box-sizing: border-box;
+        box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+      }
+      .sw-dt-title-wrap {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+      .sw-dt-badge {
+        display: inline-block;
+        align-self: flex-start;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #D4AF37;
+        background: rgba(212, 175, 55, 0.14);
+        padding: 2.5px 8px;
+        border-radius: 4px;
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        margin-bottom: 4px;
+        line-height: 1.2;
+      }
+      .sw-dt-title {
+        margin: 0;
+        font-family: 'Cinzel', 'Outfit', 'Cormorant Garamond', Georgia, serif;
+        font-size: 16.5px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #FFF2D1;
+        background: linear-gradient(135deg, #FFF3D6 0%, #E6C265 50%, #D4AF37 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.25;
+      }
+      .sw-dt-subtitle {
+        margin: 2px 0 0;
+        font-size: 13px;
+        color: #D5D2C7;
+        font-weight: 400;
+        line-height: 1.3;
+      }
+
+      /* Countdown Container */
+      .sw-dt-countdown-container {
+        margin-bottom: 16px;
+      }
+      .sw-dt-timer-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+        background: rgba(0, 24, 23, 0.65);
+        padding: 11px 16px;
+        border-radius: 12px;
+        border: 1px solid rgba(212, 175, 55, 0.28);
+      }
+      .sw-dt-time-unit {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        min-width: 0;
+      }
+      .sw-dt-time-number {
+        font-family: 'Inter', -apple-system, monospace, sans-serif;
+        font-size: 19px;
+        font-weight: 700;
+        color: #FFFFFF;
+        line-height: 1.2;
+      }
+      .sw-dt-time-label {
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        color: #D4AF37;
+        text-transform: uppercase;
+        margin-top: 2px;
+      }
+      .sw-dt-time-colon {
+        color: rgba(212, 175, 55, 0.7);
+        font-weight: 700;
+        font-size: 16px;
+        line-height: 1;
+        margin-bottom: 12px;
+      }
+      .sw-dt-sale-ended {
+        background: rgba(212, 175, 55, 0.14);
+        border: 1px solid rgba(212, 175, 55, 0.38);
+        border-radius: 8px;
+        padding: 8px 12px;
+        text-align: center;
+        color: #FFE082;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+      }
+
+      /* Prominent Booking Statistics Section */
+      .sw-dt-stats-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.16) 0%, rgba(1, 40, 39, 0.8) 50%, rgba(0, 24, 23, 0.9) 100%);
+        border: 1px solid rgba(212, 175, 55, 0.45);
+        border-radius: 12px;
+        padding: 11px 18px;
+        box-shadow: inset 0 1px 0 rgba(255, 235, 170, 0.25), 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+      .sw-dt-stat-box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        width: 100%;
+        text-align: center;
+      }
+      .sw-dt-stat-label {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #D4AF37;
+        line-height: 1.2;
+        margin-bottom: 0;
+      }
+      .sw-dt-stat-value {
+        font-family: 'Inter', -apple-system, monospace, sans-serif;
+        font-size: 21px;
+        font-weight: 800;
+        color: #FFFFFF;
+        line-height: 1.2;
+        letter-spacing: 0.04em;
+        text-shadow: 0 0 10px rgba(212, 175, 55, 0.45);
+      }
+      .sw-dt-stat-box--booked .sw-dt-stat-value {
+        color: #FFE082;
+        text-shadow: 0 0 12px rgba(255, 224, 130, 0.65);
+      }
+
+      /* Responsive Adaptations */
+      @media screen and (max-width: 768px) {
+        .dhanteras-countdown-card {
+          bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+          right: 16px;
+          left: 16px;
+          margin: 0 auto;
+          width: auto;
+          max-width: 380px;
+          padding: 16px 18px;
+          z-index: 9998;
+          transform-origin: center center;
+        }
+        .sw-dt-countdown-container {
+          margin-bottom: 14px;
+        }
+        .sw-dt-title {
+          font-size: 15.5px;
+        }
+        .sw-dt-time-number {
+          font-size: 17.5px;
+        }
+        .sw-dt-stat-value {
+          font-size: 19px;
+        }
+      }
+
+      @media screen and (max-width: 360px) {
+        .dhanteras-countdown-card {
+          right: 8px;
+          left: 8px;
+          padding: 13px 14px;
+          max-width: calc(100vw - 16px);
+        }
+        .sw-dt-countdown-container {
+          margin-bottom: 12px;
+        }
+        .sw-dt-title {
+          font-size: 14px;
+        }
+        .sw-dt-time-number {
+          font-size: 15.5px;
+        }
+        .sw-dt-time-label {
+          font-size: 7.5px;
+        }
+        .sw-dt-stat-label {
+          font-size: 8.5px;
+        }
+        .sw-dt-stat-value {
+          font-size: 17px;
+        }
+      }
+    </style>
+
+    <script>
+      (function() {
+        const CARD_STORAGE_KEY = 'sw_dhanteras_card_dismissed';
+        const POS_STORAGE_KEY = 'sw_dt_card_pos';
+
+        function initDhanterasCard() {
+          const card = document.getElementById('DhanterasCountdownCard');
+          if (!card) return;
+
+          // Check session dismissal state (do not hide in Theme Editor design mode)
+          const isDesignMode = Boolean(window.Shopify && Shopify.designMode);
+          try {
+            if (!isDesignMode && sessionStorage.getItem(CARD_STORAGE_KEY) === 'true') {
+              card.style.display = 'none';
+              return;
+            }
+          } catch(e) {}
+
+          // 1. Close Button Handler
+          const closeBtn = document.getElementById('DhanterasCardClose');
+          if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              card.classList.add('is-dismissed');
+              try {
+                sessionStorage.setItem(CARD_STORAGE_KEY, 'true');
+              } catch(err) {}
+              setTimeout(function() {
+                card.style.display = 'none';
+              }, 300);
+            });
+          }
+
+          // 2. Continuous Real Countdown Timer
+          const daysEl = document.getElementById('sw-dt-days');
+          const hoursEl = document.getElementById('sw-dt-hours');
+          const minsEl = document.getElementById('sw-dt-mins');
+          const secsEl = document.getElementById('sw-dt-secs');
+          const timerRow = document.getElementById('DhanterasTimerRow');
+          const saleEndedEl = document.getElementById('DhanterasSaleEnded');
+
+          // Read deadline configured in data attribute (defaults to Nov 6, 2026 6:00 PM IST)
+          const deadlineAttr = card.getAttribute('data-deadline') || '2026-11-06T18:00:00+05:30';
+          let deadlineMs = new Date(deadlineAttr).getTime();
+
+          // Fallback if parsing fails
+          if (isNaN(deadlineMs)) {
+            deadlineMs = new Date('2026-11-06T18:00:00+05:30').getTime();
+          }
+
+          function updateCountdown() {
+            const now = Date.now();
+            const diff = deadlineMs - now;
+
+            if (diff <= 0) {
+              if (timerRow) timerRow.style.display = 'none';
+              if (saleEndedEl) saleEndedEl.style.display = 'block';
+              return true; // Stop timer
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+            if (daysEl) daysEl.textContent = String(days).padStart(2, '0');
+            if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
+            if (minsEl) minsEl.textContent = String(mins).padStart(2, '0');
+            if (secsEl) secsEl.textContent = String(secs).padStart(2, '0');
+
+            return false;
+          }
+
+          // Run immediately
+          const isEnded = updateCountdown();
+          if (!isEnded) {
+            const timerInterval = setInterval(function() {
+              const ended = updateCountdown();
+              if (ended) {
+                clearInterval(timerInterval);
+              }
+            }, 1000);
+          }
+
+          // 3. Viewport-Constrained Draggable Card (Mouse on Desktop + Touch on Mobile)
+          let isPointerDown = false;
+          let isDragging = false;
+          let startX = 0;
+          let startY = 0;
+          let startLeft = 0;
+          let startTop = 0;
+
+          // Restore saved session position if valid
+          try {
+            const savedPos = sessionStorage.getItem(POS_STORAGE_KEY);
+            if (savedPos) {
+              const parsed = JSON.parse(savedPos);
+              if (parsed && typeof parsed.left === 'number' && typeof parsed.top === 'number') {
+                const margin = 8;
+                const cardW = card.offsetWidth || 356;
+                const cardH = card.offsetHeight || 180;
+                const maxL = Math.max(margin, window.innerWidth - cardW - margin);
+                const maxT = Math.max(margin, window.innerHeight - cardH - margin);
+                const validLeft = Math.max(margin, Math.min(parsed.left, maxL));
+                const validTop = Math.max(margin, Math.min(parsed.top, maxT));
+
+                card.style.bottom = 'auto';
+                card.style.right = 'auto';
+                card.style.left = validLeft + 'px';
+                card.style.top = validTop + 'px';
+              }
+            }
+          } catch (err) {}
+
+          // Keep card within viewport on window resize
+          window.addEventListener('resize', function() {
+            if (card.style.left && card.style.top) {
+              const margin = 8;
+              const rect = card.getBoundingClientRect();
+              const maxL = Math.max(margin, window.innerWidth - rect.width - margin);
+              const maxT = Math.max(margin, window.innerHeight - rect.height - margin);
+              const curL = parseFloat(card.style.left) || 0;
+              const curT = parseFloat(card.style.top) || 0;
+              card.style.left = Math.max(margin, Math.min(curL, maxL)) + 'px';
+              card.style.top = Math.max(margin, Math.min(curT, maxT)) + 'px';
+            }
+          });
+
+          card.addEventListener('pointerdown', function(e) {
+            // Do not drag if clicking close button or other interactive controls
+            if (e.target.closest('#DhanterasCardClose')) return;
+
+            isPointerDown = true;
+            isDragging = false;
+            startX = e.clientX;
+            startY = e.clientY;
+
+            const rect = card.getBoundingClientRect();
+            startLeft = rect.left;
+            startTop = rect.top;
+
+            if (card.setPointerCapture) {
+              try {
+                card.setPointerCapture(e.pointerId);
+              } catch(err) {}
+            }
+          });
+
+          card.addEventListener('pointermove', function(e) {
+            if (!isPointerDown) return;
+
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+
+            if (!isDragging && Math.hypot(dx, dy) > 4) {
+              isDragging = true;
+              card.classList.add('is-dragging');
+            }
+
+            if (isDragging) {
+              e.preventDefault();
+              const margin = 8;
+              const cardW = card.offsetWidth;
+              const cardH = card.offsetHeight;
+              const maxL = Math.max(margin, window.innerWidth - cardW - margin);
+              const maxT = Math.max(margin, window.innerHeight - cardH - margin);
+
+              let newL = startLeft + dx;
+              let newT = startTop + dy;
+
+              newL = Math.max(margin, Math.min(newL, maxL));
+              newT = Math.max(margin, Math.min(newT, maxT));
+
+              card.style.bottom = 'auto';
+              card.style.right = 'auto';
+              card.style.left = newL + 'px';
+              card.style.top = newT + 'px';
+            }
+          });
+
+          function endDrag(e) {
+            if (!isPointerDown) return;
+            isPointerDown = false;
+
+            if (isDragging) {
+              isDragging = false;
+              card.classList.remove('is-dragging');
+
+              if (card.releasePointerCapture && e && e.pointerId) {
+                try {
+                  card.releasePointerCapture(e.pointerId);
+                } catch(err) {}
+              }
+
+              // Persist position for current browsing session
+              try {
+                const curLeft = parseFloat(card.style.left);
+                const curTop = parseFloat(card.style.top);
+                if (!isNaN(curLeft) && !isNaN(curTop)) {
+                  sessionStorage.setItem(POS_STORAGE_KEY, JSON.stringify({
+                    left: curLeft,
+                    top: curTop
+                  }));
+                }
+              } catch(err) {}
+            }
+          }
+
+          card.addEventListener('pointerup', endDrag);
+          card.addEventListener('pointercancel', endDrag);
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initDhanterasCard);
+        } else {
+          initDhanterasCard();
+        }
+
+        // Shopify Theme Editor support
+        document.addEventListener('shopify:section:load', function(e) {
+          if (e.target && e.target.querySelector('#DhanterasCountdownCard')) {
+            initDhanterasCard();
+          }
+        });
+      })();
+    </script>
+  {%- endif -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Dhanteras Sale Card",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable_card",
+      "label": "Enable Dhanteras Card",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_only_homepage",
+      "label": "Show Only on Homepage",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "DHANTERAS SPECIAL"
+    },
+    {
+      "type": "text",
+      "id": "subtitle",
+      "label": "Subtitle",
+      "default": "Enjoy festive savings"
+    },
+    {
+      "type": "text",
+      "id": "sale_deadline",
+      "label": "Sale Deadline (ISO 8601)",
+      "default": "2026-11-06T18:00:00+05:30",
+      "info": "Configured Dhanteras Sale Window End (Nov 6, 2026 6:00 PM IST). Format: YYYY-MM-DDTHH:MM:SS+05:30"
+    },
+    {
+      "type": "text",
+      "id": "sale_ended_message",
+      "label": "Sale Ended Message",
+      "default": "Dhanteras Sale has ended"
+    }
+  ]
+}
+{% endschema %}

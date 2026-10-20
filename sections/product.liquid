@@ -92,12 +92,63 @@
             </div>
 
           {%- when 'price' -%}
-            <div class="pp-price-box">
+            {%- assign is_diamond_product = false -%}
+            {%- assign p_title_lower = product.title | downcase -%}
+            {%- assign p_type_lower = product.type | downcase -%}
+            {%- if p_title_lower contains 'diamond' or p_type_lower contains 'diamond' -%}
+              {%- assign is_diamond_product = true -%}
+            {%- endif -%}
+            {%- for tag in product.tags -%}
+              {%- assign tag_lower = tag | downcase -%}
+              {%- if tag_lower contains 'diamond' or tag_lower == 'diamond-sale' or tag_lower == 'dhanteras-sale' -%}
+                {%- assign is_diamond_product = true -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- for col in product.collections -%}
+              {%- assign col_h = col.handle | downcase -%}
+              {%- if col_h contains 'diamond' -%}
+                {%- assign is_diamond_product = true -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- if product.metafields.custom.diamond_weight != blank -%}
+              {%- assign is_diamond_product = true -%}
+            {%- endif -%}
+            {%- for variant in product.variants -%}
+              {%- if variant.metafields.custom.diamond_value != blank and variant.metafields.custom.diamond_value > 0 -%}
+                {%- assign is_diamond_product = true -%}
+              {%- endif -%}
+            {%- endfor -%}
+
+            {%- assign original_inr_price = current_variant.price -%}
+            {%- assign variant_diamond_val = current_variant.metafields.custom.diamond_value | default: 0 | plus: 0 -%}
+            {%- if is_diamond_product and variant_diamond_val > 0 -%}
+              {%- assign diamond_val_cents = variant_diamond_val | times: 100 -%}
+              {%- assign diamond_discount_amt = diamond_val_cents | times: 30 | divided_by: 100 -%}
+              {%- assign promo_discounted_price = original_inr_price | minus: diamond_discount_amt | divided_by: 100 | round | times: 100 -%}
+            {%- else -%}
+              {%- assign diamond_val_cents = 0 -%}
+              {%- assign diamond_discount_amt = 0 -%}
+              {%- assign promo_discounted_price = original_inr_price -%}
+            {%- endif -%}
+
+            <div class="pp-price-box" data-is-diamond="{{ is_diamond_product }}">
               <div class="pp-price-box-top">
                 <div class="pp-price-display-wrap">
                   <div class="pp-price-row">
-                    <span class="pp-price-current money" id="pp-price" data-inr-price="{{ current_variant.price }}">{{ current_variant.price | money }}</span>
-                    <span class="pp-price-original-struck money" id="pp-price-original-struck" style="display: none;"></span>
+                    <span class="pp-price-current money{% if is_diamond_product and promo_discounted_price < original_inr_price %} pp-price--discounted{% endif %}" id="pp-price" data-inr-price="{{ original_inr_price }}">
+                      {%- if is_diamond_product and promo_discounted_price < original_inr_price -%}
+                        {{ promo_discounted_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}
+                      {%- else -%}
+                        {{ original_inr_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}
+                      {%- endif -%}
+                    </span>
+                    <span class="pp-price-original-struck money{% if is_diamond_product and promo_discounted_price < original_inr_price %} pp-price--original{% endif %}" id="pp-price-original-struck" {% unless is_diamond_product and promo_discounted_price < original_inr_price %}style="display: none;"{% endunless %}>
+                      {%- if is_diamond_product and promo_discounted_price < original_inr_price -%}{{ original_inr_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}{%- endif -%}
+                    </span>
+                    <span class="pp-diamond-sale-badge" id="pp-diamond-sale-badge" {% unless is_diamond_product and promo_discounted_price < original_inr_price %}style="display: none;"{% endunless %}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      30% OFF ON DIAMONDS
+                    </span>
                   </div>
                   <span class="pp-price-tax-label">(Incl. of all taxes)</span>
                 </div>
@@ -129,6 +180,16 @@
                 <div class="pp-coupon-applied-callout" id="pp-coupon-applied-callout" style="display: none;">
                   <span class="pp-coupon-savings-tag" id="pp-coupon-savings-tag"></span>
                   <span class="pp-coupon-savings-explanation" id="pp-coupon-savings-explanation"></span>
+                </div>
+
+                <!-- 30% DIAMOND SALE STATUS / REFERENCE CALLOUT -->
+                <div class="pp-diamond-sale-notice" id="pp-diamond-sale-notice" {% unless is_diamond_product %}style="display: none;"{% endunless %}>
+                  <div class="pp-dia-notice-content">
+                    <span class="pp-dia-notice-pill" id="pp-dia-notice-pill">PROMOTIONAL REFERENCE PRICE</span>
+                    <span class="pp-dia-notice-text" id="pp-dia-notice-text">
+                      Upcoming 30% Diamond Sale starts Nov 6, 2:00 PM–6:00 PM IST. Today's payable price is original price (<strong id="pp-dia-today-price">{{ original_inr_price | money }}</strong>).
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -938,22 +999,61 @@
             {%- unless rel_product.id == product.id -%}
               {%- if rel_count < 4 -%}
                 {%- assign rel_count = rel_count | plus: 1 -%}
-                {%- assign badge_disc = 25 -%}
-                {%- if rel_product.compare_at_price > rel_product.price -%}
-                  {%- assign badge_disc = rel_product.compare_at_price | minus: rel_product.price | times: 100 | divided_by: rel_product.compare_at_price -%}
-                {%- elsif rel_count == 1 -%}
-                  {%- assign badge_disc = 60 -%}
-                {%- elsif rel_count == 2 -%}
-                  {%- assign badge_disc = 61 -%}
-                {%- elsif rel_count == 3 -%}
-                  {%- assign badge_disc = 55 -%}
-                {%- else -%}
-                  {%- assign badge_disc = 50 -%}
-                {%- endif -%}
                 {%- assign rel_variant = rel_product.selected_or_first_available_variant -%}
+                {%- assign rel_is_diamond = false -%}
+                {%- assign rel_p_title_lower = rel_product.title | downcase -%}
+                {%- assign rel_p_type_lower = rel_product.type | downcase -%}
+                {%- if rel_p_title_lower contains 'diamond' or rel_p_type_lower contains 'diamond' -%}
+                  {%- assign rel_is_diamond = true -%}
+                {%- endif -%}
+                {%- for tag in rel_product.tags -%}
+                  {%- assign tag_lower = tag | downcase -%}
+                  {%- if tag_lower contains 'diamond' or tag_lower == 'diamond-sale' or tag_lower == 'dhanteras-sale' -%}
+                    {%- assign rel_is_diamond = true -%}
+                  {%- endif -%}
+                {%- endfor -%}
+                {%- for col in rel_product.collections -%}
+                  {%- assign col_h = col.handle | downcase -%}
+                  {%- if col_h contains 'diamond' -%}
+                    {%- assign rel_is_diamond = true -%}
+                  {%- endif -%}
+                {%- endfor -%}
+                {%- if rel_product.metafields.custom.diamond_weight != blank -%}
+                  {%- assign rel_is_diamond = true -%}
+                {%- endif -%}
+                {%- for v in rel_product.variants -%}
+                  {%- if v.metafields.custom.diamond_value != blank and v.metafields.custom.diamond_value > 0 -%}
+                    {%- assign rel_is_diamond = true -%}
+                  {%- endif -%}
+                {%- endfor -%}
+
+                {%- assign rel_orig_price = rel_variant.price -%}
+                {%- assign rel_diamond_val = rel_variant.metafields.custom.diamond_value | default: 0 | plus: 0 -%}
+                {%- if rel_is_diamond and rel_diamond_val > 0 -%}
+                  {%- assign rel_dia_cents = rel_diamond_val | times: 100 -%}
+                  {%- assign rel_dia_discount = rel_dia_cents | times: 30 | divided_by: 100 -%}
+                  {%- assign rel_promo_price = rel_orig_price | minus: rel_dia_discount | divided_by: 100 | round | times: 100 -%}
+                {%- else -%}
+                  {%- assign rel_dia_cents = 0 -%}
+                  {%- assign rel_dia_discount = 0 -%}
+                  {%- assign rel_promo_price = rel_orig_price -%}
+                {%- endif -%}
+
+                {%- if rel_is_diamond and rel_promo_price < rel_orig_price -%}
+                  {%- assign badge_disc = 30 -%}
+                {%- elsif rel_product.compare_at_price > rel_orig_price -%}
+                  {%- assign badge_disc = rel_product.compare_at_price | minus: rel_orig_price | times: 100 | divided_by: rel_product.compare_at_price -%}
+                {%- else -%}
+                  {%- assign badge_disc = 25 -%}
+                {%- endif -%}
+
                 <a href="{{ rel_product.url }}" class="pp-related-item-card" data-product-id="{{ rel_product.id }}" data-variant-id="{{ rel_variant.id }}" style="text-decoration: none;">
                   <div class="pp-related-img-wrap">
-                    <span class="pp-rel-badge">-{{ badge_disc }}%</span>
+                    {%- if rel_is_diamond and rel_promo_price < rel_orig_price -%}
+                      <span class="pp-rel-badge" style="background: #013f3e; border: 1px solid #d4af37; color: #ffe082;">30% OFF</span>
+                    {%- else -%}
+                      <span class="pp-rel-badge">-{{ badge_disc }}%</span>
+                    {%- endif -%}
                     {%- if rel_product.featured_image -%}
                       <img src="{{ rel_product.featured_image | image_url: width: 400 }}" alt="{{ rel_product.title | escape }}" width="400" height="400" loading="lazy">
                     {%- else -%}
@@ -1014,13 +1114,15 @@
                       <span class="pp-rel-stars">★★★★★</span>
                       <span class="pp-rel-rev-count">({{ rev_count }})</span>
                     </div>
-                    <div class="pp-related-price-row">
-                      <span class="pp-rel-current">{{ rel_product.price | money | replace: '$', '₹' | replace: 'USD', '₹' }}</span>
-                      {%- if rel_product.compare_at_price > rel_product.price -%}
-                        <s class="pp-rel-compare">{{ rel_product.compare_at_price | money | replace: '$', '₹' | replace: 'USD', '₹' }}</s>
+                    <div class="pp-related-price-row" data-diamond-eligible="{{ rel_is_diamond }}" data-original-price="{{ rel_orig_price }}" data-diamond-value="{{ rel_dia_cents }}" data-promo-price="{{ rel_promo_price }}">
+                      {%- if rel_is_diamond and rel_promo_price < rel_orig_price -%}
+                        <span class="pp-rel-current money js-card-price-current" data-inr-price="{{ rel_promo_price }}">{{ rel_promo_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</span>
+                        <s class="pp-rel-compare money js-card-price-original" data-inr-price="{{ rel_orig_price }}">{{ rel_orig_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</s>
                       {%- else -%}
-                        {%- assign approx_comp = rel_product.price | times: 1.6 | divided_by: 100 | round | times: 100 -%}
-                        <s class="pp-rel-compare">{{ approx_comp | money | replace: '$', '₹' | replace: 'USD', '₹' }}</s>
+                        <span class="pp-rel-current money js-card-price-current" data-inr-price="{{ rel_orig_price }}">{{ rel_orig_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</span>
+                        {%- if rel_product.compare_at_price > rel_orig_price -%}
+                          <s class="pp-rel-compare money js-card-price-original" data-inr-price="{{ rel_product.compare_at_price }}">{{ rel_product.compare_at_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</s>
+                        {%- endif -%}
                       {%- endif -%}
                     </div>
                     <div class="pp-rel-view-btn">
@@ -3009,18 +3111,33 @@
       if (buyBtn.disabled || buyBtn.classList.contains('is-out-of-stock')) {
         return;
       }
-      const form = document.getElementById('pp-product-form');
-      if (form) {
-        let retInput = form.querySelector('input[name="return_to"]');
-        if (!retInput) {
-          retInput = document.createElement('input');
-          retInput.type = 'hidden';
-          retInput.name = 'return_to';
-          form.appendChild(retInput);
+
+      const proceedWithBuyNow = function() {
+        const form = document.getElementById('pp-product-form');
+        if (form) {
+          let retInput = form.querySelector('input[name="return_to"]');
+          if (!retInput) {
+            retInput = document.createElement('input');
+            retInput.type = 'hidden';
+            retInput.name = 'return_to';
+            form.appendChild(retInput);
+          }
+          retInput.value = '/checkout';
+          form.submit();
         }
-        retInput.value = '/checkout';
-        form.submit();
+      };
+
+      if (window.DiamondSale && typeof window.DiamondSale.shouldInterceptPDPBuyNow === 'function' && window.DiamondSale.shouldInterceptPDPBuyNow()) {
+        const currentPriceAttr = document.getElementById('pp-price')?.getAttribute('data-inr-price');
+        window.DiamondSale.openPreSaleWarningModal({
+          source: 'pdp_buy_now',
+          originalPriceCents: currentPriceAttr,
+          onAcknowledge: proceedWithBuyNow
+        });
+        return;
       }
+
+      proceedWithBuyNow();
       return;
     }
 
@@ -3098,6 +3215,9 @@
                   sku: matched.sku,
                   image: matched.featured_image ? matched.featured_image.src : null
                 });
+              }
+              if (window.DiamondSale && typeof window.DiamondSale.onVariantChange === 'function') {
+                window.DiamondSale.onVariantChange(matched);
               }
             }
 

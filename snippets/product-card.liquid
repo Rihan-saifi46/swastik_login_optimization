@@ -10,6 +10,47 @@
 {% assign original_price = current_variant.compare_at_price %}
 {% assign price = current_variant.price %}
 
+{%- assign is_diamond_product = false -%}
+{%- if product -%}
+  {%- assign p_title_lower = product.title | downcase -%}
+  {%- assign p_type_lower = product.type | downcase -%}
+  {%- if p_title_lower contains 'diamond' or p_type_lower contains 'diamond' -%}
+    {%- assign is_diamond_product = true -%}
+  {%- endif -%}
+  {%- for tag in product.tags -%}
+    {%- assign tag_lower = tag | downcase -%}
+    {%- if tag_lower contains 'diamond' or tag_lower == 'diamond-sale' or tag_lower == 'dhanteras-sale' -%}
+      {%- assign is_diamond_product = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for col in product.collections -%}
+    {%- assign col_h = col.handle | downcase -%}
+    {%- if col_h contains 'diamond' -%}
+      {%- assign is_diamond_product = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if product.metafields.custom.diamond_weight != blank -%}
+    {%- assign is_diamond_product = true -%}
+  {%- endif -%}
+  {%- for variant in product.variants -%}
+    {%- if variant.metafields.custom.diamond_value != blank and variant.metafields.custom.diamond_value > 0 -%}
+      {%- assign is_diamond_product = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+
+{%- if is_diamond_product -%}
+  {%- assign variant_diamond_val = current_variant.metafields.custom.diamond_value | default: 0 | plus: 0 -%}
+  {%- if variant_diamond_val > 0 -%}
+    {%- assign diamond_val_cents = variant_diamond_val | times: 100 -%}
+    {%- assign diamond_discount = diamond_val_cents | times: 30 | divided_by: 100 -%}
+    {%- assign diamond_sale_promo_price = price | minus: diamond_discount | divided_by: 100 | round | times: 100 -%}
+  {%- else -%}
+    {%- assign diamond_val_cents = 0 -%}
+    {%- assign diamond_sale_promo_price = price -%}
+  {%- endif -%}
+{%- endif -%}
+
 {% assign class_prefix_default = class_prefix | default: 'best-sellers' %}
 {% assign product_url = product.url %}
 {% assign product_title = product.title %}
@@ -90,11 +131,16 @@
       <span class="product-card-ui__review-count">({{ rev_count }})</span>
     </div>
 
-    <div class="product-card-ui__price-row">
-      <span class="price-current money" data-inr-price="{{ price }}">{{ price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</span>
-      {% if original_price > price %}
-        <s class="price-original money" data-inr-price="{{ original_price }}">{{ original_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</s>
-      {% endif %}
+    <div class="product-card-ui__price-row" data-diamond-eligible="{{ is_diamond_product }}" data-original-price="{{ price }}" data-diamond-value="{{ diamond_val_cents | default: 0 }}" data-promo-price="{{ diamond_sale_promo_price | default: price }}">
+      {%- if is_diamond_product and diamond_sale_promo_price < price -%}
+        <span class="price-current money js-card-price-current" data-inr-price="{{ diamond_sale_promo_price }}">{{ diamond_sale_promo_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</span>
+        <s class="price-original money js-card-price-original" data-inr-price="{{ price }}">{{ price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</s>
+      {%- else -%}
+        <span class="price-current money js-card-price-current" data-inr-price="{{ price }}">{{ price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</span>
+        {% if original_price > price %}
+          <s class="price-original money js-card-price-original" data-inr-price="{{ original_price }}">{{ original_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</s>
+        {% endif %}
+      {%- endif -%}
     </div>
 
     <div class="product-card-ui__view-btn">

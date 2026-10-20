@@ -539,6 +539,23 @@
     }, 400);
   };
 
+  document.addEventListener('DOMContentLoaded', function() {
+    const drawerForm = document.getElementById('cart-drawer-form');
+    if (drawerForm) {
+      drawerForm.addEventListener('submit', function(e) {
+        if (window.DiamondSale && typeof window.DiamondSale.shouldInterceptCartCheckout === 'function' && window.DiamondSale.shouldInterceptCartCheckout()) {
+          e.preventDefault();
+          e.stopPropagation();
+          window.DiamondSale.openPreSaleWarningModal({
+            source: 'cart_drawer',
+            onAcknowledge: function() {
+              drawerForm.submit();
+            }
+          });
+        }
+      });
+    }
+  });
 </script>
 
 {% schema %}
