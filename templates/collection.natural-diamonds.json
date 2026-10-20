@@ -12,6 +12,7 @@
     "banner": {
       "type": "main-collection-banner",
       "settings": {
+        "show_text": false,
         "title": "NATURAL DIAMONDS",
         "subtitle": "<p>The Ultimate Expression of Forever. Responsibly Sourced. Impeccably Cut.</p>",
         "button_label": "EXPLORE COLLECTION",
@@ -20,7 +21,7 @@
         "bg_color": "#0a2a26",
         "btn_bg_color": "#ffffff",
         "btn_text_color": "#0a2a26",
-        "image": "shopify:\/\/shop_images\/new_b6_collection.png"
+        "image": ""
       }
     },
     "product_grid": {

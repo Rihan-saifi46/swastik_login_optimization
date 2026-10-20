@@ -4,14 +4,33 @@
   }
 </script>
 
+{%- assign is_natural_diamonds_collection = false -%}
+{%- if template.suffix == 'natural-diamonds' 
+    or collection.handle == 'natural-diamonds' 
+    or collection.handle == 'eternal-promises' 
+    or collection.handle == 'everyday-sparkle' 
+    or collection.handle == 'close-to-heart' 
+    or collection.handle == 'forever-classics' -%}
+  {%- assign is_natural_diamonds_collection = true -%}
+{%- endif -%}
+
 {%- assign desktop_image = collection.image | default: section.settings.image -%}
 {%- assign mobile_image = collection.metafields.custom.mobile_banner | default: section.settings.image_mobile | default: desktop_image -%}
 
-{%- if desktop_image != blank or mobile_image != blank or section.settings.show_text -%}
-  <div class="collection-banner" style="background-color: {{ section.settings.bg_color }};">
-    {%- if desktop_image != blank or mobile_image != blank -%}
-      <div class="collection-banner__image-wrapper">
-        <picture>
+{%- if is_natural_diamonds_collection or desktop_image != blank or mobile_image != blank or section.settings.show_text -%}
+  <div class="collection-banner{% if is_natural_diamonds_collection %} collection-banner--natural-diamonds{% endif %}" style="background-color: {{ section.settings.bg_color }};">
+    <div class="collection-banner__image-wrapper">
+      <picture>
+        {%- if is_natural_diamonds_collection -%}
+          <source media="(max-width: 768px)" srcset="{{ 'dhanteras_carousel_mobile_1.jpg' | asset_url }}">
+          <source media="(min-width: 769px)" srcset="{{ 'dhanteras_carousel_desktop_1.png' | asset_url }}">
+          <img src="{{ 'dhanteras_carousel_desktop_1.png' | asset_url }}" 
+               loading="eager" 
+               class="collection-banner__image" 
+               alt="{{ collection.title | escape | default: 'Natural Diamonds' }}" 
+               width="1024" 
+               height="402">
+        {%- else -%}
           {%- if mobile_image != blank -%}
             <source media="(max-width: 768px)" srcset="{{ mobile_image | image_url: width: 800 }}">
           {%- endif -%}
@@ -21,11 +40,11 @@
           {%- else -%}
             <img src="{{ mobile_image | image_url: width: 800 }}" loading="eager" class="collection-banner__image" alt="{{ mobile_image.alt | escape | default: collection.title }}" width="{{ mobile_image.width }}" height="{{ mobile_image.height }}">
           {%- endif -%}
-        </picture>
-      </div>
-    {%- endif -%}
+        {%- endif -%}
+      </picture>
+    </div>
     
-    {%- if section.settings.show_text -%}
+    {%- if section.settings.show_text and is_natural_diamonds_collection == false -%}
       <div class="collection-banner__content">
         <h1 class="collection-banner__title serif-font" style="color: {{ section.settings.text_color }};">
           {%- if section.settings.title != blank -%}
@@ -133,6 +152,19 @@
     }
     .collection-banner__title {
       font-size: 2.5rem;
+    }
+  }
+
+  .collection-banner--natural-diamonds {
+    min-height: 380px;
+    aspect-ratio: 1024 / 402;
+    max-height: 520px;
+  }
+  @media screen and (max-width: 768px) {
+    .collection-banner--natural-diamonds {
+      min-height: 280px;
+      aspect-ratio: 853 / 1024;
+      max-height: 80vh;
     }
   }
 {% endstylesheet %}
