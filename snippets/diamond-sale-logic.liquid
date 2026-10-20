@@ -114,11 +114,6 @@
         </div>
       </div>
 
-      <p class="sw-dia-modal-desc">
-        This eligible diamond jewellery piece qualifies for our scheduled <strong>30% Diamond Flash Sale</strong>.
-        Because you are purchasing <strong>before the sale begins</strong>, the checkout order will be billed at the <strong>current original price</strong>.
-      </p>
-
       <div class="sw-dia-price-comparison-box">
         <div class="sw-dia-comp-col">
           <span class="sw-dia-comp-label">Upcoming Sale Price</span>
@@ -130,14 +125,6 @@
           <span class="sw-dia-comp-label">Current Payable Price</span>
           <span class="sw-dia-comp-sub">(Paying Today)</span>
           <span class="sw-dia-comp-val sw-dia-comp-val--today" id="swDiaModalTodayPrice">Rs. 0.00</span>
-        </div>
-      </div>
-
-      <div class="sw-dia-warning-callout">
-        <div class="sw-dia-warning-icon">⚠️</div>
-        <div class="sw-dia-warning-text">
-          <strong>Important Price Confirmation:</strong>
-          If you continue now, the 30% discount will <em>not</em> be applied. The promotional price is a reference price for the scheduled sale window only.
         </div>
       </div>
 
@@ -873,13 +860,13 @@
     },
 
     shouldInterceptPDPBuyNow: function() {
-      if (this.isAcknowledgedForCheckout) return false;
+      if (this.isExecutingAcknowledgedAction) return false;
       const phase = this.getSalePhase();
       return (phase === 'pre-sale' && this.isProductEligible());
     },
 
     shouldInterceptCartCheckout: function() {
-      if (this.isAcknowledgedForCheckout) return false;
+      if (this.isExecutingAcknowledgedAction) return false;
       const phase = this.getSalePhase();
       return (phase === 'pre-sale' && this.cartHasDiamond());
     },
@@ -890,8 +877,10 @@
       const continueBtn = document.getElementById('DiamondSaleModalContinueBtn');
 
       if (!modal) return;
+      if (modal.style.display === 'flex') return;
 
       this.activePendingAction = options ? options.onAcknowledge : null;
+      this.isExecutingAcknowledgedAction = false;
 
       // MANDATORY REQUIREMENT: Checkbox MUST be unchecked by default!
       if (checkbox) {
@@ -915,20 +904,26 @@
       }
       document.body.classList.remove('body-lock');
       this.activePendingAction = null;
+      this.isExecutingAcknowledgedAction = false;
     },
 
     confirmPreSaleAcknowledgement: function() {
       const checkbox = document.getElementById('DiamondSaleAckCheckbox');
       if (!checkbox || !checkbox.checked) return;
 
-      this.isAcknowledgedForCheckout = true;
-      sessionStorage.setItem('sw_diamond_sale_acknowledged', 'true');
-
       const action = this.activePendingAction;
       this.closePreSaleWarningModal();
 
       if (typeof action === 'function') {
-        action();
+        this.isExecutingAcknowledgedAction = true;
+        try {
+          action();
+        } finally {
+          const self = this;
+          setTimeout(function() {
+            self.isExecutingAcknowledgedAction = false;
+          }, 500);
+        }
       }
     },
 
@@ -996,11 +991,6 @@
     init: function() {
       const self = this;
 
-      // Check session acknowledgement
-      if (sessionStorage.getItem('sw_diamond_sale_acknowledged') === 'true') {
-        self.isAcknowledgedForCheckout = true;
-      }
-
       // Checkbox listener in modal
       const checkbox = document.getElementById('DiamondSaleAckCheckbox');
       const continueBtn = document.getElementById('DiamondSaleModalContinueBtn');
@@ -1058,7 +1048,7 @@
 
       // Global fallback click interceptor for checkout / buy-now buttons
       document.addEventListener('click', function(e) {
-        if (self.isAcknowledgedForCheckout) return;
+        if (self.isExecutingAcknowledgedAction) return;
         const target = e.target.closest('a[href*="/checkout"], button[name="checkout"], .btn-checkout, .pp-btn-buy, .btn-buy-now');
         if (!target) return;
         if (target.disabled || target.classList.contains('is-out-of-stock') || target.getAttribute('aria-disabled') === 'true') return;

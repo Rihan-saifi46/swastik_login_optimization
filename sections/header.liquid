@@ -341,8 +341,15 @@
 
       <!-- Profile Link -->
       {%- if shop.customer_accounts_enabled -%}
+        {%- capture current_page_return_url -%}
+          {{ request.path }}{%- if request.query_string != blank -%}?{{ request.query_string }}{%- endif -%}
+        {%- endcapture -%}
+        {%- assign current_page_return_url = current_page_return_url | strip -%}
+        {%- if current_page_return_url == blank or current_page_return_url contains '//' or current_page_return_url contains ':' -%}
+          {%- assign current_page_return_url = '/' -%}
+        {%- endif -%}
         {%- if customer -%}
-          <shopify-account menu="customer-account-main-menu" sign-in-url="/customer_authentication/login?return_to=/" class="header__profile-component">
+          <shopify-account menu="customer-account-main-menu" sign-in-url="/customer_authentication/login?return_to={{ current_page_return_url | url_encode }}" class="header__profile-component">
             <div slot="signed-out-avatar" class="header__icon-link header__profile-trigger" aria-label="Account" style="cursor: pointer;">
               <svg class="icon icon-profile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -350,7 +357,7 @@
             </div>
           </shopify-account>
         {%- else -%}
-          <shopify-account menu="guest-account-menu" sign-in-url="/customer_authentication/login?return_to=/" class="header__profile-component" id="storefront-shopify-account">
+          <shopify-account menu="guest-account-menu" sign-in-url="/customer_authentication/login?return_to={{ current_page_return_url | url_encode }}" class="header__profile-component" id="storefront-shopify-account">
             <div slot="signed-out-avatar" class="header__icon-link header__profile-trigger" aria-label="Account" style="cursor: pointer;" id="shopify-account-trigger">
               <svg class="icon icon-profile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
@@ -2740,6 +2747,8 @@
       accountEl.addEventListener('close', function(e) {
         document.body.classList.remove('login-active');
         sessionStorage.removeItem('post_login_redirect'); // Clear intent if canceled
+        sessionStorage.removeItem('sw_post_login_return_url');
+        document.cookie = 'sw_post_login_return_url=; path=/; max-age=0; SameSite=Lax';
       });
     }
 
@@ -2749,6 +2758,54 @@
       initLoginOverlay();
     }
     document.addEventListener('shopify:section:load', initLoginOverlay);
+  })();
+
+  // Handle Post-Login Storefront-Relative Redirection (Return to Product Page)
+  (function() {
+    function getCookie(name) {
+      const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+      return match ? decodeURIComponent(match[3]) : null;
+    }
+
+    function clearPostLoginTracking() {
+      try {
+        sessionStorage.removeItem('sw_post_login_return_url');
+        sessionStorage.removeItem('post_login_redirect');
+        document.cookie = 'sw_post_login_return_url=; path=/; max-age=0; SameSite=Lax';
+      } catch(e) {}
+    }
+
+    function isSafeRelativeUrl(url) {
+      if (!url || typeof url !== 'string') return false;
+      const trimmed = url.trim();
+      return trimmed.startsWith('/') &&
+             !trimmed.startsWith('//') &&
+             !trimmed.includes('\\') &&
+             !trimmed.includes('://') &&
+             !trimmed.toLowerCase().includes('javascript:') &&
+             !trimmed.toLowerCase().includes('data:') &&
+             trimmed !== '/';
+    }
+
+    try {
+      const savedReturnUrl = sessionStorage.getItem('sw_post_login_return_url') || getCookie('sw_post_login_return_url');
+      if (savedReturnUrl && isSafeRelativeUrl(savedReturnUrl)) {
+        const currentPath = window.location.pathname;
+        const targetPath = savedReturnUrl.split('?')[0];
+
+        // If customer was redirected to homepage/root after login, route them back to the exact product
+        if (currentPath === '/' || currentPath === '') {
+          clearPostLoginTracking();
+          window.location.replace(savedReturnUrl);
+          return;
+        }
+
+        // If customer already arrived on the target product page, clean up the stored return URL
+        if (currentPath === targetPath) {
+          clearPostLoginTracking();
+        }
+      }
+    } catch(e) {}
   })();
 
   // Dynamic injection of Logout button inside the shadow DOM of <shopify-account>

@@ -815,9 +815,13 @@
         document.body.style.overflow = '';
       }
 
+      const isBuyNow = triggerElement && (triggerElement.classList.contains('pp-btn-buy') || triggerElement.classList.contains('btn-buy-now'));
+      const isProductPage = window.location.pathname.startsWith('/products/') || document.getElementById('pp-product-form') !== null;
+      const pdpUrl = (isBuyNow || isProductPage) ? (window.location.pathname + window.location.search) : null;
+
       // If it's a "Buy Now" action, add to cart via AJAX first so guest doesn't lose their selection
-      const form = triggerElement.closest('form');
-      if (form && (triggerElement.classList.contains('pp-btn-buy') || triggerElement.classList.contains('btn-buy-now'))) {
+      const form = triggerElement ? triggerElement.closest('form') : null;
+      if (form && isBuyNow) {
         if (triggerElement.disabled || triggerElement.classList.contains('is-out-of-stock') || triggerElement.getAttribute('aria-disabled') === 'true') {
           return;
         }
@@ -830,31 +834,58 @@
         })
         .then(response => {
           submitBtn.classList.remove('btn-loading');
-          triggerLoginAndRedirectCheckout();
+          triggerLoginAndRedirectCheckout(pdpUrl);
         })
         .catch(() => {
           submitBtn.classList.remove('btn-loading');
-          triggerLoginAndRedirectCheckout();
+          triggerLoginAndRedirectCheckout(pdpUrl);
         });
         return;
       }
 
-      triggerLoginAndRedirectCheckout();
+      triggerLoginAndRedirectCheckout(pdpUrl);
     }
 
-    function triggerLoginAndRedirectCheckout() {
-      // Store intent in sessionStorage for reliable post-login redirection with applied coupon
-      const appliedCoupon = localStorage.getItem('swastik_applied_coupon') || sessionStorage.getItem('swastik_applied_coupon') || '';
-      let targetCheckoutUrl = '/checkout';
-      if (appliedCoupon) {
-        targetCheckoutUrl += '?discount=' + encodeURIComponent(appliedCoupon);
+    function sanitizeStorefrontUrl(url) {
+      if (!url || typeof url !== 'string') return null;
+      const trimmed = url.trim();
+      if (!trimmed.startsWith('/') || trimmed.startsWith('//') || trimmed.includes('\\') || trimmed.includes('://') || trimmed.toLowerCase().includes('javascript:') || trimmed.toLowerCase().includes('data:')) {
+        return null;
       }
-      sessionStorage.setItem('post_login_redirect', targetCheckoutUrl);
+      return trimmed;
+    }
+
+    function triggerLoginAndRedirectCheckout(targetReturnUrl) {
+      const appliedCoupon = localStorage.getItem('swastik_applied_coupon') || sessionStorage.getItem('swastik_applied_coupon') || '';
+      let safeReturnUrl = sanitizeStorefrontUrl(targetReturnUrl);
+
+      // If no valid product return URL provided, check if current page is PDP
+      if (!safeReturnUrl) {
+        if (window.location.pathname.startsWith('/products/') || document.getElementById('pp-product-form')) {
+          safeReturnUrl = sanitizeStorefrontUrl(window.location.pathname + window.location.search);
+        }
+      }
+
+      // Default fallback destination for non-PDP checkout triggers (e.g. cart drawer / cart page)
+      if (!safeReturnUrl) {
+        let targetCheckoutUrl = '/checkout';
+        if (appliedCoupon) {
+          targetCheckoutUrl += '?discount=' + encodeURIComponent(appliedCoupon);
+        }
+        safeReturnUrl = targetCheckoutUrl;
+      }
+
+      // Persist the exact safe return destination across session and cookies
+      try {
+        sessionStorage.setItem('sw_post_login_return_url', safeReturnUrl);
+        sessionStorage.setItem('post_login_redirect', safeReturnUrl);
+        document.cookie = 'sw_post_login_return_url=' + encodeURIComponent(safeReturnUrl) + '; path=/; max-age=1800; SameSite=Lax';
+      } catch(e) {}
       
       const accountEl = document.getElementById('storefront-shopify-account');
       if (accountEl) {
-        // Dynamically update the sign-in URL redirection parameter (fallback)
-        accountEl.setAttribute('sign-in-url', '/customer_authentication/login?return_to=' + encodeURIComponent(targetCheckoutUrl));
+        // Dynamically update the sign-in URL redirection parameter
+        accountEl.setAttribute('sign-in-url', '/customer_authentication/login?return_to=' + encodeURIComponent(safeReturnUrl));
 
         // Trigger the login overlay via click on the profile icon
         const trigger = accountEl.querySelector('[slot="signed-out-avatar"]');
@@ -863,7 +894,7 @@
         }
       } else {
         // Fallback redirection to hosted login
-        window.location.href = '/customer_authentication/login?return_to=' + encodeURIComponent(targetCheckoutUrl);
+        window.location.href = '/customer_authentication/login?return_to=' + encodeURIComponent(safeReturnUrl);
       }
     }
 
