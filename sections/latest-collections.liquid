@@ -77,16 +77,33 @@
           assign font_weight = block.settings.title_font_weight | default: '400'
           
           assign fallback_image_name = 'fallback-image.png'
+
+          assign is_unavailable = false
+          assign link_check = link | downcase
+          assign title_check = title | downcase
+          if link_check contains 'lab-grown' or link_check contains 'gold-jewel' or title_check contains 'lab grown' or title_check contains 'gold jewel'
+            assign is_unavailable = true
+          endif
         -%}
         
         <div class="latest-collections__col {% if forloop.index0 == active_index %}is-active{% endif %}" data-index="{{ forloop.index0 }}">
-          <div class="latest-collections__card" {{ block.shopify_attributes }}>
-            <a href="{{ link }}" class="latest-collections__card-link" aria-label="{{ title | escape }}">
+          <div class="latest-collections__card{% if is_unavailable %} latest-collections__card--unavailable{% endif %}" {{ block.shopify_attributes }}>
+            {%- if is_unavailable -%}
+              <div class="latest-collections__card-link latest-collections__card-link--disabled" aria-label="{{ title | escape }}" aria-disabled="true">
+            {%- else -%}
+              <a href="{{ link }}" class="latest-collections__card-link" aria-label="{{ title | escape }}">
+            {%- endif -%}
               <div class="latest-collections__image-wrap">
                 {%- if image != blank -%}
                   {{ image | image_url: width: 800 | image_tag: loading: 'lazy', alt: title, class: 'latest-collections__img' }}
                 {%- else -%}
                   <img src="{{ fallback_image_name | asset_url }}" alt="{{ title | escape }}" loading="lazy" class="latest-collections__img" width="800" height="550">
+                {%- endif -%}
+
+                {%- if is_unavailable -%}
+                  <div class="latest-collections__unavailable-overlay">
+                    <span class="latest-collections__unavailable-badge">NOT AVAILABLE</span>
+                  </div>
                 {%- endif -%}
               </div>
               
@@ -103,7 +120,11 @@
                   {%- endif -%}
                 </div>
               </div>
-            </a>
+            {%- if is_unavailable -%}
+              </div>
+            {%- else -%}
+              </a>
+            {%- endif -%}
           </div>
         </div>
       {%- endfor -%}
@@ -275,6 +296,63 @@
 
   .latest-collections__card:hover .latest-collections__img {
     transform: scale(1.05);
+  }
+
+  .latest-collections__card--unavailable {
+    cursor: default;
+  }
+  .latest-collections__card--unavailable:hover {
+    transform: none !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06) !important;
+    border-color: rgba(1, 63, 62, 0.03) !important;
+  }
+  .latest-collections__card--unavailable:hover .latest-collections__img {
+    transform: none !important;
+  }
+  .latest-collections__card-link--disabled {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    cursor: default !important;
+  }
+  .latest-collections__card-link--disabled,
+  .latest-collections__card-link--disabled * {
+    pointer-events: none !important;
+  }
+  .latest-collections__unavailable-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(45, 45, 45, 0.62);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 4;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .latest-collections__unavailable-badge {
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    background: rgba(15, 15, 15, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  @media screen and (max-width: 768px) {
+    .latest-collections__unavailable-badge {
+      font-size: 11px;
+      padding: 6px 14px;
+      letter-spacing: 0.12em;
+    }
   }
 
   .latest-collections__card-overlay {

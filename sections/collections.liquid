@@ -12,25 +12,60 @@
   style="--grid-gap: {{ section.settings.grid_gap }}px"
 >
   {% for collection in collections %}
-    <a class="collection-card" href="{{ collection.url }}">
-      {% if collection.featured_image %}
-        {% render 'image',
-          class: 'collection-card__image',
-          image: collection.featured_image,
-          width: 600,
-          height: 600,
-          crop: 'center'
-        %}
-      {% endif %}
+    {%- liquid
+      assign is_unavailable = false
+      assign handle_downcase = collection.handle | downcase
+      assign title_downcase = collection.title | downcase
+      if handle_downcase contains 'lab-grown' or handle_downcase contains 'gold' or title_downcase contains 'lab grown' or title_downcase contains 'gold'
+        assign is_unavailable = true
+      endif
+    -%}
+    {%- if is_unavailable -%}
+      <div class="collection-card collection-card--unavailable" aria-disabled="true">
+        <div class="collection-card__image-container">
+          {% if collection.featured_image %}
+            {% render 'image',
+              class: 'collection-card__image',
+              image: collection.featured_image,
+              width: 600,
+              height: 600,
+              crop: 'center'
+            %}
+          {% endif %}
+          <div class="collection-card__unavailable-overlay">
+            <span class="collection-card__unavailable-badge">NOT AVAILABLE</span>
+          </div>
+        </div>
 
-      <div class="collection-card__content">
-        <p>{{ collection.title }}</p>
+        <div class="collection-card__content">
+          <p>{{ collection.title }}</p>
 
-        {% if collection.description %}
-          <p>{{ collection.description | strip_html | truncatewords: 15 }}</p>
-        {% endif %}
+          {% if collection.description %}
+            <p>{{ collection.description | strip_html | truncatewords: 15 }}</p>
+          {% endif %}
+        </div>
       </div>
-    </a>
+    {%- else -%}
+      <a class="collection-card" href="{{ collection.url }}">
+        {% if collection.featured_image %}
+          {% render 'image',
+            class: 'collection-card__image',
+            image: collection.featured_image,
+            width: 600,
+            height: 600,
+            crop: 'center'
+          %}
+        {% endif %}
+
+        <div class="collection-card__content">
+          <p>{{ collection.title }}</p>
+
+          {% if collection.description %}
+            <p>{{ collection.description | strip_html | truncatewords: 15 }}</p>
+          {% endif %}
+        </div>
+      </a>
+    {%- endif -%}
   {% endfor %}
 </div>
 
@@ -50,6 +85,52 @@
     display: flex;
     flex-direction: column;
     width: 100%;
+  }
+  .collection-card--unavailable {
+    cursor: default;
+  }
+  .collection-card--unavailable,
+  .collection-card--unavailable * {
+    pointer-events: none !important;
+  }
+  .collection-card__image-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: inherit;
+  }
+  .collection-card__unavailable-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(45, 45, 45, 0.62);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  .collection-card__unavailable-badge {
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 8px 18px;
+    background: rgba(15, 15, 15, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  @media screen and (max-width: 768px) {
+    .collection-card__unavailable-badge {
+      font-size: 11px;
+      padding: 6px 14px;
+      letter-spacing: 0.12em;
+    }
   }
 {% endstylesheet %}
 

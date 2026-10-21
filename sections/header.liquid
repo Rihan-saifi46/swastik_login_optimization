@@ -92,6 +92,9 @@
         {% if section.settings.menu != blank %}
           {% for link in section.settings.menu.links %}
             {%- assign downcase_title = link.title | downcase -%}
+            {%- if downcase_title contains 'lab grown' or downcase_title contains 'lab-grown' or link.url contains 'lab-grown' -%}
+              {%- continue -%}
+            {%- endif -%}
             {%- assign show_dropdown = false -%}
             {%- if link.links != blank -%}
               {%- if downcase_title != 'our story' -%}
@@ -148,20 +151,7 @@
               <li><a href="{{ routes.collections_url }}/forever-classics">Bangles & Bracelets</a></li>
             </ul>
           </li>
-          <li class="header__menu-item header__menu-item--has-dropdown">
-            <a href="{{ routes.collections_url }}/lab-grown" class="header__menu-link">
-              Lab Grown Diamonds
-              <svg class="icon icon-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-              </svg>
-            </a>
-            <ul class="header__dropdown-menu">
-              <li><a href="{{ routes.collections_url }}/lab-grown">Rings</a></li>
-              <li><a href="{{ routes.collections_url }}/lab-grown">Earrings</a></li>
-              <li><a href="{{ routes.collections_url }}/lab-grown">Necklaces & Pendants</a></li>
-              <li><a href="{{ routes.collections_url }}/lab-grown">Bangles & Bracelets</a></li>
-            </ul>
-          </li>
+
           <li class="header__menu-item header__menu-item--has-dropdown">
             <a href="{{ routes.collections_url }}/all" class="header__menu-link">
               Gifts
@@ -503,9 +493,12 @@
           {%- assign menu_links = section.settings.menu.links -%}
           {%- if menu_links != blank -%}
             {%- for link in menu_links -%}
+              {%- assign downcase_t = link.title | downcase -%}
+              {%- if downcase_t contains 'lab grown' or downcase_t contains 'lab-grown' or link.url contains 'lab-grown' -%}
+                {%- continue -%}
+              {%- endif -%}
               {%- assign has_sub = false -%}
               {%- if link.links != blank -%}
-                {%- assign downcase_t = link.title | downcase -%}
                 {%- if downcase_t != 'our story' -%}
                   {%- assign has_sub = true -%}
                 {%- endif -%}
@@ -561,18 +554,7 @@
               </ul>
             </li>
 
-            <li class="mobile-menu-item mobile-menu-item--has-sub">
-              <button type="button" class="mobile-menu-trigger" aria-expanded="false">
-                <span class="mobile-menu-title">LAB GROWN DIAMONDS</span>
-                <svg class="mobile-menu-arrow" viewBox="0 0 24 24" fill="none" stroke="#222222" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" /></svg>
-              </button>
-              <ul class="mobile-submenu" style="display: none;">
-                <li><a href="{{ routes.collections_url }}/lab-grown">Rings</a></li>
-                <li><a href="{{ routes.collections_url }}/lab-grown">Earrings</a></li>
-                <li><a href="{{ routes.collections_url }}/lab-grown">Necklaces & Pendants</a></li>
-                <li><a href="{{ routes.collections_url }}/lab-grown">Bangles & Bracelets</a></li>
-              </ul>
-            </li>
+
 
             <li class="mobile-menu-item mobile-menu-item--has-sub">
               <button type="button" class="mobile-menu-trigger" aria-expanded="false">

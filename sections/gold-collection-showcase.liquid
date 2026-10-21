@@ -63,12 +63,8 @@
             
             assign collection_url = collection.url | default: routes.all_products_collection_url
           -%}
-          <div class="gold-showcase__item{% if is_coming_soon %} gold-showcase__item--coming-soon{% endif %}" {{ block.shopify_attributes }}>
-            {%- if is_coming_soon -%}
-              <div class="gold-showcase__img-link" aria-label="{{ collection_title | escape }}">
-            {%- else -%}
-              <a href="{{ collection_url }}" class="gold-showcase__img-link" aria-label="{{ collection_title | escape }}">
-            {%- endif -%}
+          <div class="gold-showcase__item gold-showcase__item--unavailable" {{ block.shopify_attributes }}>
+            <div class="gold-showcase__img-link gold-showcase__img-link--disabled" aria-label="{{ collection_title | escape }}" aria-disabled="true">
               <div class="gold-showcase__img-container">
                 {%- if collection_image != blank -%}
                   {{ collection_image | image_url: width: 400, height: 550, crop: 'center' | image_tag: loading: 'lazy', alt: collection_title, class: 'gold-showcase__img' }}
@@ -76,12 +72,12 @@
                   {%- capture placeholder_index -%}{% cycle 1, 2, 3, 4, 5 %}{%- endcapture -%}
                   {{ 'collection-' | append: placeholder_index | placeholder_svg_tag: 'gold-showcase__img placeholder-svg' }}
                 {%- endif -%}
+
+                <div class="gold-showcase__unavailable-overlay">
+                  <span class="gold-showcase__unavailable-badge">NOT AVAILABLE</span>
+                </div>
               </div>
-            {%- if is_coming_soon -%}
-              </div>
-            {%- else -%}
-              </a>
-            {%- endif -%}
+            </div>
             
             <div class="gold-showcase__item-divider">
               <svg viewBox="0 0 24 24" fill="currentColor">
@@ -89,18 +85,12 @@
               </svg>
             </div>
 
-            <h3 class="gold-showcase__item-title">{{ collection_title | escape }}</h3>
+            <h3 class="gold-showcase__item-title gold-showcase__item-title--disabled">{{ collection_title | escape }}</h3>
             
-            {%- if is_coming_soon -%}
-              <span class="gold-showcase__explore gold-showcase__explore--disabled">
-                COMING SOON
-              </span>
-            {%- else -%}
-              <a href="{{ collection_url }}" class="gold-showcase__explore">
-                {{ 'sections.gold_collection_showcase.explore' | t | default: 'EXPLORE' }}
-                <span class="gold-showcase__explore-arrow">&rarr;</span>
-              </a>
-            {%- endif -%}
+            <span class="gold-showcase__explore gold-showcase__explore--disabled" aria-disabled="true">
+              {{ 'sections.gold_collection_showcase.explore' | t | default: 'EXPLORE' }}
+              <span class="gold-showcase__explore-arrow">&rarr;</span>
+            </span>
           </div>
         {%- endfor -%}
       </div>
@@ -400,6 +390,73 @@
 
 .gold-showcase__explore--disabled::after {
   display: none;
+}
+
+.gold-showcase__item--unavailable {
+  cursor: default;
+}
+
+.gold-showcase__item--unavailable .gold-showcase__img-link,
+.gold-showcase__item--unavailable .gold-showcase__img-container,
+.gold-showcase__item--unavailable .gold-showcase__item-title,
+.gold-showcase__item--unavailable .gold-showcase__explore {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.gold-showcase__item--unavailable:hover .gold-showcase__img-container {
+  transform: none !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02) !important;
+}
+
+.gold-showcase__item--unavailable:hover .gold-showcase__img {
+  transform: none !important;
+}
+
+.gold-showcase__item--unavailable .gold-showcase__explore {
+  opacity: 0.45;
+  text-decoration: none;
+}
+
+.gold-showcase__item--unavailable .gold-showcase__explore::after {
+  display: none !important;
+}
+
+.gold-showcase__unavailable-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(45, 45, 45, 0.62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.gold-showcase__unavailable-badge {
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  background: rgba(15, 15, 15, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@media screen and (max-width: 768px) {
+  .gold-showcase__unavailable-badge {
+    font-size: 10px;
+    padding: 5px 10px;
+    letter-spacing: 0.1em;
+  }
 }
 
 .gold-showcase__slider-container {
