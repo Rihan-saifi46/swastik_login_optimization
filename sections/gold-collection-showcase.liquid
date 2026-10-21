@@ -34,10 +34,10 @@
       {%- endif -%}
 
       {%- if section.settings.button_label != blank -%}
-        <a href="{{ section.settings.button_link | default: routes.all_products_collection_url }}" class="gold-showcase__btn">
+        <span class="gold-showcase__btn" role="button" aria-disabled="true" style="pointer-events: none; cursor: default;">
           {{ section.settings.button_label | escape }}
           <span class="gold-showcase__btn-arrow">&rarr;</span>
-        </a>
+        </span>
       {%- endif -%}
     </div>
 
