@@ -1,19 +1,67 @@
 {% doc %}
-  Dhanteras Flash Sale + ₹1,000 Product Booking Modal Component
+  Dhanteras Flash Sale + ₹999 Product Booking Modal Component
   Includes:
   - Promotional offer disclosures (30% OFF for 4 hours on Nov 6, 2026, 2:00 PM - 6:00 PM IST)
   - Selected product/variant details display (Title, SKU, Image, Metal, Purity)
   - Clear statutory non-refund and fulfillment terms
   - Customer contact capture (Name, WhatsApp)
-  - Secure ₹1,000 booking payment initiation via CRM gateway with sandbox fallback
+  - Secure ₹999 booking payment initiation via CRM gateway with sandbox fallback
   - Server-side inventory reservation protection (1-of-1 piece guarantee)
   - Confirmation screen with unique Booking ID & reminder details
 
   @param {product} product - The Shopify product object
   @param {variant} current_variant - The active product variant
+  @param {number} [booking_amount=999] - The advance booking deposit in INR (default: 999)
 {% enddoc %}
 
+{%- assign is_diamond_product = false -%}
+{%- if product -%}
+  {%- assign p_title_lower = product.title | downcase -%}
+  {%- assign p_type_lower = product.type | downcase -%}
+  {%- if p_title_lower contains 'diamond' or p_type_lower contains 'diamond' -%}
+    {%- assign is_diamond_product = true -%}
+  {%- endif -%}
+  {%- for tag in product.tags -%}
+    {%- assign tag_lower = tag | downcase -%}
+    {%- if tag_lower contains 'diamond' or tag_lower == 'diamond-sale' or tag_lower == 'dhanteras-sale' -%}
+      {%- assign is_diamond_product = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for col in product.collections -%}
+    {%- assign col_h = col.handle | downcase -%}
+    {%- if col_h contains 'diamond' -%}
+      {%- assign is_diamond_product = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if product.metafields.custom.diamond_weight != blank -%}
+    {%- assign is_diamond_product = true -%}
+  {%- endif -%}
+  {%- for variant in product.variants -%}
+    {%- if variant.metafields.custom.diamond_value != blank and variant.metafields.custom.diamond_value > 0 -%}
+      {%- assign is_diamond_product = true -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+
 {%- assign active_variant = current_variant | default: product.selected_or_first_available_variant -%}
+{%- assign active_orig_price = active_variant.price | default: 0 -%}
+{%- assign active_diamond_val = active_variant.metafields.custom.diamond_value | default: 0 | plus: 0 -%}
+
+{%- if is_diamond_product and active_diamond_val > 0 -%}
+  {%- assign diamond_val_cents = active_diamond_val | times: 100 -%}
+  {%- assign diamond_discount_cents = diamond_val_cents | times: 30 | divided_by: 100 -%}
+  {%- assign sale_product_price = active_orig_price | minus: diamond_discount_cents | divided_by: 100 | round | times: 100 -%}
+{%- else -%}
+  {%- assign diamond_val_cents = 0 -%}
+  {%- assign diamond_discount_cents = 0 -%}
+  {%- assign sale_product_price = active_orig_price -%}
+{%- endif -%}
+
+{%- assign booking_amount_rupees = booking_amount | default: 999 -%}
+{%- if booking_amount_rupees == 1000 -%}{%- assign booking_amount_rupees = 999 -%}{%- endif -%}
+{%- assign booking_deposit_cents = booking_amount_rupees | times: 100 -%}
+{%- assign final_payable = sale_product_price | minus: booking_deposit_cents -%}
+{%- if final_payable < 0 %}{% assign final_payable = 0 %}{% endif -%}
 
 <div
   id="DhanterasBookingModalOverlay"
@@ -47,7 +95,7 @@
         </div>
         <h2 class="dt-modal-title" id="dt-modal-title">Reserve Your Exclusive Piece</h2>
         <p class="dt-modal-subtitle">
-          Lock this 1-of-1 piece for <strong>₹1,000</strong>. Get <strong>30% OFF</strong> during the 4-Hour Flash Sale on <strong>November 6, 2026 (2:00 PM – 6:00 PM IST)</strong>.
+          Lock this 1-of-1 piece for <strong>₹999</strong>. Get <strong>30% OFF on Diamonds</strong> during the 4-Hour Flash Sale on <strong>November 6, 2026 (2:00 PM – 6:00 PM IST)</strong>.
         </p>
       </div>
 
@@ -75,30 +123,35 @@
           <div class="dt-pricing-calc">
             <div class="dt-calc-row">
               <span class="dt-calc-label">Normal Product Price:</span>
-              <span class="dt-calc-val money" id="dt-normal-price">{{ active_variant.price | money }}</span>
+              <span class="dt-calc-val money" id="dt-normal-price">{{ active_orig_price | money }}</span>
             </div>
             <div class="dt-calc-row dt-calc-row--discount">
               <span class="dt-calc-label">Dhanteras 30% Flash Sale:</span>
-              <span class="dt-calc-val dt-calc-val--green" id="dt-discounted-price">
-                {% assign disc_price = active_variant.price | times: 70 | divided_by: 100 %}
-                {{ disc_price | money }}
-              </span>
+              <span class="dt-calc-val dt-calc-val--green" id="dt-discounted-price">{{ sale_product_price | money }}</span>
+            </div>
+            <div class="dt-calc-row dt-calc-row--diamond-sub" id="dt-diamond-discount-row" style="{% unless diamond_discount_cents > 0 %}display:none;{% endunless %}">
+              <span class="dt-diamond-sub-text">↳ 30% off diamond component (<span id="dt-diamond-value-text">{{ active_diamond_val | times: 100 | money }}</span>): <strong id="dt-diamond-discount-text">-{{ diamond_discount_cents | money }}</strong></span>
             </div>
             <div class="dt-calc-row dt-calc-row--booking">
               <span class="dt-calc-label">Advance Booking Deposit:</span>
-              <span class="dt-calc-val dt-calc-val--gold">₹1,000</span>
+              <span class="dt-calc-val dt-calc-val--gold">₹999</span>
             </div>
             <div class="dt-calc-row dt-calc-row--balance">
               <span class="dt-calc-label">Final Payable on Nov 6th (2–6 PM):</span>
-              <span class="dt-calc-val dt-calc-val--bold" id="dt-balance-payable">
-                {% assign bal_price = disc_price | minus: 100000 %}
-                {% if bal_price < 0 %}{% assign bal_price = 0 %}{% endif %}
-                {{ bal_price | money }}
-              </span>
+              <span class="dt-calc-val dt-calc-val--bold" id="dt-balance-payable">{{ final_payable | money }}</span>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Local Variant Diamond Values JSON for Modal -->
+      <script id="dt-variant-diamond-values-json" type="application/json">
+        {
+          {% for variant in product.variants %}
+            "{{ variant.id }}": {{ variant.metafields.custom.diamond_value | default: 0 | json }}{% unless forloop.last %},{% endunless %}
+          {% endfor %}
+        }
+      </script>
 
       <!-- Customer Contact Inputs -->
       <form id="dt-booking-form" class="dt-booking-form" onsubmit="return false;">
@@ -147,9 +200,9 @@
           </div>
           <ul class="dt-terms-list">
             <li><strong>Single Physical Piece:</strong> This certified jewellery piece is 1-of-1. Reserving locks inventory and withdraws it from all other buyers.</li>
-            <li><strong>Official Sale Window:</strong> The 30% discount is valid <em>strictly</em> on <strong>November 6, 2026, from 2:00 PM to 6:00 PM IST</strong>.</li>
-            <li><strong>₹1,000 Full Credit:</strong> When you purchase during the 4-hour window, the entire ₹1,000 booking amount is credited against your final balance.</li>
-            <li><strong>Non-Refund Policy:</strong> In consideration of withdrawing this single piece from public sale, if the purchase is not completed within the official 4-hour window, the ₹1,000 reservation amount is non-refundable.</li>
+            <li><strong>Official Sale Window:</strong> The 30% discount applies to the diamond component and is valid <em>strictly</em> on <strong>November 6, 2026, from 2:00 PM to 6:00 PM IST</strong>.</li>
+            <li><strong>₹999 Full Credit:</strong> When you purchase during the 4-hour window, the entire ₹999 booking amount is credited against your final balance.</li>
+            <li><strong>Non-Refund Policy:</strong> In consideration of withdrawing this single piece from public sale, if the purchase is not completed within the official 4-hour window, the ₹999 reservation amount is non-refundable.</li>
           </ul>
 
           <label class="dt-terms-checkbox-wrap">
@@ -167,7 +220,7 @@
         <div class="dt-actions-row">
           <button type="button" id="dt-pay-booking-btn" class="dt-btn-primary">
             <span class="dt-btn-spinner" style="display: none;"></span>
-            <span class="dt-btn-text">PAY ₹1,000 TO RESERVE NOW</span>
+            <span class="dt-btn-text">PAY ₹999 TO RESERVE NOW</span>
             <svg class="dt-btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
               <line x1="1" y1="10" x2="23" y2="10"></line>
@@ -187,7 +240,7 @@
 
       <h2 class="dt-success-title">Piece Reserved Successfully!</h2>
       <p class="dt-success-subtitle">
-        Your booking payment of <strong>₹1,000</strong> has been confirmed. This exclusive piece is now reserved exclusively for you.
+        Your booking payment of <strong>₹999</strong> has been confirmed. This exclusive piece is now reserved exclusively for you.
       </p>
 
       <div class="dt-confirmation-card">
@@ -208,7 +261,7 @@
           <span class="dt-conf-val dt-conf-val--gold">Nov 6, 2026 | 2:00 PM – 6:00 PM IST</span>
         </div>
         <div class="dt-conf-row">
-          <span class="dt-conf-label">₹1,000 Adjustment:</span>
+          <span class="dt-conf-label">₹999 Adjustment:</span>
           <span class="dt-conf-val dt-conf-val--green">Applied automatically during checkout</span>
         </div>
       </div>
@@ -224,7 +277,7 @@
         </div>
         <div class="dt-instruct-item">
           <span class="dt-step-num">3</span>
-          <span>Complete the remaining balance between <strong>2:00 PM and 6:00 PM IST</strong> to receive your 30% discount and ₹1,000 credit.</span>
+          <span>Complete the remaining balance between <strong>2:00 PM and 6:00 PM IST</strong> to receive your 30% discount and ₹999 credit.</span>
         </div>
       </div>
 
@@ -412,6 +465,24 @@
   .dt-calc-row--discount {
     color: #0E7040;
     font-weight: 600;
+  }
+  .dt-calc-row--diamond-sub {
+    font-size: 11px;
+    color: #4A5568;
+    background: #F4F8F6;
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin: 2px 0 4px 0;
+  }
+  .dt-diamond-sub-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .dt-diamond-sub-text strong {
+    color: #0E7040;
   }
   .dt-calc-row--booking {
     color: #B5822C;
@@ -708,7 +779,8 @@
       saleStartTime: '14:00', // 2:00 PM IST
       saleEndTime: '18:00',   // 6:00 PM IST
       timezoneOffsetMinutes: 330, // IST is UTC+5:30
-      bookingAmountCents: 100000, // ₹1,000 INR
+      bookingAmountCents: {{ booking_deposit_cents | default: 99900 }}, // ₹999 INR
+      bookingAmountRupees: {{ booking_amount_rupees | default: 999 }},
       discountPercent: 30,
       productId: '{{ product.id }}',
       crmEndpoint: 'https://backend-api.swastikjewel.in/api/dhanteras',
@@ -718,18 +790,111 @@
     let currentVariantData = {
       id: '{{ active_variant.id }}',
       title: '{{ active_variant.title | escape }}',
-      price: {{ active_variant.price | default: 0 }},
+      price: {{ active_orig_price }},
       sku: '{{ active_variant.sku | default: "SJ-EXCLUSIVE" }}',
-      image: '{% if active_variant.image %}{{ active_variant.image | image_url: width: 240 }}{% elsif product.featured_image %}{{ product.featured_image | image_url: width: 240 }}{% else %}{{ "fallback-image.png" | asset_url }}{% endif %}'
+      image: '{% if active_variant.image %}{{ active_variant.image | image_url: width: 240 }}{% elsif product.featured_image %}{{ product.featured_image | image_url: width: 240 }}{% else %}{{ "fallback-image.png" | asset_url }}{% endif %}',
+      diamond_value: {{ active_diamond_val }}
     };
 
     function formatINR(cents) {
       const amount = (Number(cents) / 100.0) || 0;
+      const hasPaise = (amount % 1 !== 0);
       return new Intl.NumberFormat('en-IN', {
         style: 'currency',
         currency: 'INR',
-        maximumFractionDigits: 0
+        minimumFractionDigits: hasPaise ? 2 : 0,
+        maximumFractionDigits: hasPaise ? 2 : 0
       }).format(amount);
+    }
+
+    function getVariantDiamondValue(v) {
+      // 1. Direct properties on passed variant object
+      if (v && v.diamond_value !== undefined && v.diamond_value !== null) {
+        const parsed = parseFloat(String(v.diamond_value).replace(/[^0-9.]/g, ''));
+        if (!isNaN(parsed) && parsed > 0) return Math.round(parsed * 100);
+      }
+      if (v && v.diamondValue !== undefined && v.diamondValue !== null) {
+        const parsed = parseFloat(String(v.diamondValue).replace(/[^0-9.]/g, ''));
+        if (!isNaN(parsed) && parsed > 0) return Math.round(parsed * 100);
+      }
+
+      const targetId = v ? String(v.id) : String(currentVariantData.id);
+
+      // 2. Reuse window.DiamondSale controller if present
+      if (window.DiamondSale && typeof window.DiamondSale.getCurrentVariantDiamondValue === 'function') {
+        const valCents = window.DiamondSale.getCurrentVariantDiamondValue(targetId);
+        if (valCents && Number(valCents) > 0) return Number(valCents);
+      }
+
+      // 3. Check local dt-variant-diamond-values-json embedded in modal
+      const localJsonEl = document.getElementById('dt-variant-diamond-values-json');
+      if (localJsonEl) {
+        try {
+          const map = JSON.parse(localJsonEl.textContent || '{}');
+          const raw = map[targetId];
+          if (raw !== undefined && raw !== null) {
+            const parsed = parseFloat(String(raw).replace(/[^0-9.]/g, ''));
+            if (!isNaN(parsed) && parsed > 0) return Math.round(parsed * 100);
+          }
+        } catch (e) {}
+      }
+
+      // 4. Check global PDP variant metafields JSON
+      const metaEl = document.getElementById('pp-variant-metafields-json');
+      if (metaEl) {
+        try {
+          const allMeta = JSON.parse(metaEl.textContent || '{}');
+          const vMeta = allMeta[targetId];
+          if (vMeta && vMeta.diamond_value !== undefined && vMeta.diamond_value !== null) {
+            const parsed = parseFloat(String(vMeta.diamond_value).replace(/[^0-9.]/g, ''));
+            if (!isNaN(parsed) && parsed > 0) return Math.round(parsed * 100);
+          }
+        } catch (e) {}
+      }
+
+      // 5. Check DOM breakdown element #ui-price-diamond
+      const domDiaEl = document.getElementById('ui-price-diamond');
+      if (domDiaEl) {
+        const inrAttr = domDiaEl.getAttribute('data-inr-price');
+        if (inrAttr) {
+          const val = parseFloat(inrAttr);
+          if (!isNaN(val) && val > 0) return Math.round(val);
+        }
+        const text = domDiaEl.textContent || '';
+        const match = text.replace(/,/g, '').match(/[0-9.]+/);
+        if (match) {
+          const val = parseFloat(match[0]);
+          if (!isNaN(val) && val > 0) return Math.round(val * 100);
+        }
+      }
+
+      return 0;
+    }
+
+    function calculatePricing(priceCents, diamondValCents) {
+      const orig = Number(priceCents) || 0;
+      const diaVal = Number(diamondValCents) || 0;
+
+      // Business rule: The 30% discount applies ONLY to the diamond component/value
+      let diamondDiscount = 0;
+      let salePrice = orig;
+
+      if (diaVal > 0) {
+        diamondDiscount = Math.round((diaVal * CONFIG.discountPercent) / 100);
+        salePrice = Math.max(0, orig - diamondDiscount);
+      }
+
+      const bookingDeposit = CONFIG.bookingAmountCents; // ₹999 = 99,900 cents
+      const finalPayable = Math.max(0, salePrice - bookingDeposit);
+
+      return {
+        originalPrice: orig,
+        diamondValue: diaVal,
+        diamondDiscount: diamondDiscount,
+        saleProductPrice: salePrice,
+        bookingDeposit: bookingDeposit,
+        finalPayable: finalPayable
+      };
     }
 
     function updateModalVariantUI(v) {
@@ -745,16 +910,32 @@
       const skuLabel = document.getElementById('dt-product-sku');
       if (skuLabel && v.sku) skuLabel.textContent = v.sku;
 
+      const diaValCents = getVariantDiamondValue(v);
+      currentVariantData.diamond_value_cents = diaValCents;
+
+      const calc = calculatePricing(currentVariantData.price, diaValCents);
+
       const normalPriceEl = document.getElementById('dt-normal-price');
-      if (normalPriceEl) normalPriceEl.textContent = formatINR(v.price);
+      if (normalPriceEl) normalPriceEl.textContent = formatINR(calc.originalPrice);
 
-      const discPrice = Math.round(v.price * 0.7);
       const discPriceEl = document.getElementById('dt-discounted-price');
-      if (discPriceEl) discPriceEl.textContent = formatINR(discPrice);
+      if (discPriceEl) discPriceEl.textContent = formatINR(calc.saleProductPrice);
 
-      const balPrice = Math.max(0, discPrice - CONFIG.bookingAmountCents);
       const balPriceEl = document.getElementById('dt-balance-payable');
-      if (balPriceEl) balPriceEl.textContent = formatINR(balPrice);
+      if (balPriceEl) balPriceEl.textContent = formatINR(calc.finalPayable);
+
+      const diaRow = document.getElementById('dt-diamond-discount-row');
+      const diaValText = document.getElementById('dt-diamond-value-text');
+      const diaDiscText = document.getElementById('dt-diamond-discount-text');
+      if (diaRow) {
+        if (calc.diamondDiscount > 0) {
+          diaRow.style.display = 'flex';
+          if (diaValText) diaValText.textContent = formatINR(calc.diamondValue);
+          if (diaDiscText) diaDiscText.textContent = '-' + formatINR(calc.diamondDiscount);
+        } else {
+          diaRow.style.display = 'none';
+        }
+      }
     }
 
     function openModal() {
@@ -770,6 +951,9 @@
           }
         } catch(e) {}
       }
+
+      // Ensure modal UI is always fresh for the active variant
+      updateModalVariantUI(currentVariantData);
 
       const overlay = document.getElementById('DhanterasBookingModalOverlay');
       if (overlay) {
@@ -850,7 +1034,7 @@
         product_id: CONFIG.productId,
         variant_id: currentVariantData.id,
         sku: currentVariantData.sku,
-        booking_amount: 1000,
+        booking_amount: CONFIG.bookingAmountRupees || 999,
         customer_name: name,
         customer_phone: '+91' + phone,
         customer_email: customerEmail,
@@ -992,7 +1176,7 @@
           if (overlay) {
             overlay.classList.add('is-active');
             document.body.style.overflow = 'hidden';
-            showError('Paytm payment was not completed or was cancelled. If ₹1,000 was debited, it will be refunded back to your source account within 24–48 hours.');
+            showError('Paytm payment was not completed or was cancelled. If ₹999 was debited, it will be refunded back to your source account within 24–48 hours.');
           }
         }
       } catch (err) {

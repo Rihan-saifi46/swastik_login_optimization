@@ -582,7 +582,8 @@
               {%- endif -%}
 
               {%- if is_dhanteras_enabled and is_dhanteras_eligible -%}
-                {%- assign dt_booking_amt = section.settings.dhanteras_booking_amount | default: 1000 -%}
+                {%- assign dt_booking_amt = section.settings.dhanteras_booking_amount | default: 999 -%}
+                {%- if dt_booking_amt == 1000 -%}{%- assign dt_booking_amt = 999 -%}{%- endif -%}
                 <!-- DHANTERAS FLASH SALE PROMOTIONAL BANNER -->
                 <div class="pp-dt-promo-banner" id="pp-dt-promo-banner">
                   <div class="pp-dt-promo-header">
@@ -602,7 +603,7 @@
                   </div>
                   <div class="pp-dt-promo-body">
                     <div class="pp-dt-promo-offer">30% OFF ON 6TH</div>
-                    <div class="pp-dt-promo-sub">Limited-time offer &middot; Reserve for ₹{% if dt_booking_amt == 1000 %}1,000{% else %}{{ dt_booking_amt }}{% endif %}</div>
+                    <div class="pp-dt-promo-sub">Limited-time offer &middot; Reserve for ₹999</div>
                   </div>
                 </div>
               {%- endif -%}
@@ -2901,7 +2902,7 @@
         elBtnBook.removeAttribute('disabled');
         elBtnBook.classList.remove('is-disabled', 'is-booked', 'is-reserved');
         const bookText = elBtnBook.querySelector('.pp-btn-text');
-        if (bookText) bookText.textContent = 'BOOK NOW';
+        if (bookText) bookText.textContent = 'BOOK NOW \u2014 \u20B9999';
       }
     } else {
       if (elStockStatus) {
@@ -2923,7 +2924,7 @@
         elBtnBook.removeAttribute('disabled');
         elBtnBook.classList.remove('is-disabled', 'is-booked', 'is-reserved');
         const bookText = elBtnBook.querySelector('.pp-btn-text');
-        if (bookText) bookText.textContent = 'BOOK NOW';
+        if (bookText) bookText.textContent = 'BOOK NOW \u2014 \u20B9999';
       }
     }
   }
@@ -3366,6 +3367,16 @@
               
               if (window.updateVariantCoupons) {
                 window.updateVariantCoupons(matched.id, isOutOfStock);
+              }
+              if (window.dhanterasBookingController && typeof window.dhanterasBookingController.onVariantChange === 'function') {
+                window.dhanterasBookingController.onVariantChange({
+                  id: matched.id,
+                  title: matched.title,
+                  price: matched.price,
+                  sku: matched.sku,
+                  image: matched.featured_image ? matched.featured_image.src : null,
+                  diamond_value: diamondValue
+                });
               }
             }
           }
@@ -3867,7 +3878,7 @@
 {%- endif -%}
 
 {% render 'pdp-coupon-modal', product: product, current_variant: current_variant %}
-{% render 'dhanteras-booking-modal', product: product, current_variant: current_variant %}
+{% render 'dhanteras-booking-modal', product: product, current_variant: current_variant, booking_amount: dt_booking_amt %}
 
 {% schema %}
 {
@@ -3917,7 +3928,7 @@
       "type": "number",
       "id": "dhanteras_booking_amount",
       "label": "Booking Amount (INR)",
-      "default": 1000
+      "default": 999
     },
     {
       "type": "range",

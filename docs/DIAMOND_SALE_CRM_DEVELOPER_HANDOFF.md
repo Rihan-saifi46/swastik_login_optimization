@@ -6,6 +6,104 @@
 **Scope Boundary**: Backend Services, Database, Shopify Admin GraphQL API, Paytm Payment Gateway, Webhooks, and Checkout Total Enforcement.  
 *(Storefront UI, promotional price display, badges, reference notices, and pre-sale warning acknowledgement modals are implemented in the Shopify theme `Login-opt`).*
 
+> [!IMPORTANT]
+> **DEVELOPER INSTRUCTION**: Please read the **NEW CHANGES — ACTION REQUIRED** section below first. Consult the remainder of this document only for supporting technical details, architectural context, and existing API contracts.
+
+---
+
+# NEW CHANGES — ACTION REQUIRED
+**Change date: 23 October 2026**
+
+### Purpose of this Update
+This section outlines the latest pending work and updated business logic following the Shopify theme updates in `Login-opt`. It allows the CRM & backend engineering team to identify active development tasks immediately without reviewing every historical requirement in the document.
+
+> [!NOTE]
+> The storefront frontend UI (PDP, product cards, collection banners, and Dhanteras reservation modal) has been updated in Shopify theme `Login-opt`. The backend API contracts, CRM database, and Shopify Admin API checkout discount mechanisms must now be verified and implemented by the CRM team to match this business logic. Do not assume backend changes are complete.
+
+---
+
+### 1. Diamond-Only 30% Discount Calculation Rule
+
+The 30% flash sale discount must apply **STRICTLY to the eligible diamond component/value**, and **NOT** to the complete jewellery product price (gold/metal, making charges, or GST).
+
+#### Backend & API Deliverables:
+1. **Verify Authoritative Source of Diamond Component Value**:
+   - Check whether the backend/CRM exposes the authoritative diamond component value for each eligible SKU.
+   - Authoritative Shopify data source: `variant.metafields.custom.diamond_value` (stored in INR rupees).
+   - If missing from backend data models, define and implement the required API/database field.
+2. **Authoritative Discount & Pricing Formula**:
+   $$\text{diamond\_discount} = \text{diamond\_component\_value} \times 0.30$$
+   $$\text{sale\_product\_price} = \text{original\_product\_price} - \text{diamond\_discount}$$
+3. **Consistency Across All Touchpoints**:
+   - Ensure reservation modal pricing, product detail page pricing, collection card pricing, and actual checkout/order discount calculations (`POST /api/diamond-sale/calculate-order`) are consistent.
+4. **Strict Calculation Prohibitions**:
+   - **Do NOT** calculate the discount as $\text{original\_product\_price} \times 0.30$.
+   - **Do NOT** estimate the diamond component as an arbitrary percentage of the total product price.
+   - **Do NOT** invent diamond values. If a product or variant has no diamond component (`diamond_value <= 0` or missing), the discount is **₹0**.
+
+---
+
+### 2. Pre-Reservation Deposit Credit Updated to ₹999
+
+For customers with Dhanteras advance reservations checking out during the 4-hour sale window:
+1. **Booking Amount Update**:
+   - The Dhanteras reservation amount is changing from ₹1,000 to **₹999**.
+   - Verify and update the authoritative backend booking amount, payment request, server-side validation, booking records, and API contract where applicable (refer to [`DHANTERAS_CRM_DEVELOPER_HANDOFF.md`](file:///d:/swastik%20shopify%20R/Login-opt/docs/DHANTERAS_CRM_DEVELOPER_HANDOFF.md)).
+   - Ensure the actual Paytm payment amount is ₹999, not just the frontend display.
+   - Do not change unrelated ₹1,000 amounts outside this Dhanteras reservation flow.
+2. **Draft Order Balance Due Formula (`POST /admin/api/2024-01/draft_orders.json`)**:
+   - Ensure the ₹999 deposit is credited against the final balance **exactly once**:
+     $$\text{final\_balance\_due} = \text{sale\_product\_price} - 999$$
+     $$\text{draft\_order\_applied\_discount} = \text{diamond\_discount} + 999$$
+   - Example (Product ₹53,716 with ₹10,000 diamond value):
+     - Diamond discount (30%): ₹3,000
+     - Sale product price: ₹50,716
+     - Paid reservation credit: ₹999
+     - Total Draft Order applied discount: ₹3,999 ($3,000 + 999$)
+     - Final balance due at checkout: **₹49,717** ($50,716 - 999$).
+
+---
+
+### 3. Reservation Modal and Final Payable Integration
+
+- The Dhanteras booking modal ([`snippets/dhanteras-booking-modal.liquid`](file:///d:/swastik%20shopify%20R/Login-opt/snippets/dhanteras-booking-modal.liquid)) uses the diamond-only discount and ₹999 advance deposit.
+- The CRM developer must verify the final payable amount and ensure the actual checkout/order amount matches the frontend display.
+- Preserve existing single-piece inventory locking (`available = 0`), `BOOKED` badge synchronization, customer login flow, and Paytm payment gateway functionality.
+
+---
+
+### 4. Scheduled Sale & Server-Side Enforcement (6 Nov 2026, 2:00 PM – 6:00 PM IST)
+
+- **Sale Date**: Friday, 6 November 2026.
+- **Sale Window**: 2:00:00 PM IST (`14:00:00+05:30` / `2026-11-06T08:30:00Z` UTC) to 6:00:00 PM IST (`18:00:00+05:30` / `2026-11-06T12:30:00Z` UTC).
+- **Duration**: Exactly 4 hours (14,400 seconds).
+- **Discount Scope**: 30% strictly on the diamond component.
+- **Backend Features Requiring Verification / Implementation**:
+  - `GET /api/diamond-sale/status`: Status endpoint must return server time in IST and active discount status. *(Requires implementation / verification).*
+  - `POST /api/diamond-sale/calculate-order`: Server-authoritative calculation applying 30% diamond discount. *(Requires implementation / verification).*
+  - Programmatic Shopify Admin GraphQL discount lifecycle (`discountAutomaticBasicCreate`). *(Requires verification of `write_discounts` scope).*
+  - Hard cutoff at 6:00:00 PM IST for stale carts and checkout attempts. *(Requires implementation / verification).*
+
+---
+
+### Developer Action Checklist
+
+- [ ] Verify the existing backend implementation and API contracts against production codebase.
+- [ ] Verify the authoritative diamond component value field (`variant.metafields.custom.diamond_value`).
+- [ ] Add the required backend/API field if diamond component value is missing.
+- [ ] Update discount calculation in `POST /api/diamond-sale/calculate-order` to 30% of diamond value only.
+- [ ] Update the authoritative booking amount to ₹999 for Dhanteras reservations.
+- [ ] Verify actual Paytm payment amount is ₹999 and final payable balance deducts ₹999 exactly once.
+- [ ] Implement/verify `GET /api/diamond-sale/status` endpoint and schedule enforcement (6 Nov, 2–6 PM IST).
+- [ ] Test sale start/end timing, stale cart cutoff (6:00:00 PM IST), and product eligibility rules.
+- [ ] Report changed backend files, endpoints, and test results.
+
+---
+
+### Change Log
+- **23 October 2026**: Added "NEW CHANGES — ACTION REQUIRED" section specifying diamond-only 30% discount calculation, Dhanteras reservation deposit update to ₹999, Draft Order balance formulas, and backend verification checklist.
+- **Pre-23 October 2026**: Initial technical handoff specification for CRM-managed programmatic discount enforcement.
+
 ---
 
 ## 1. Executive Summary & Architectural Scope
@@ -255,10 +353,10 @@ If Swastik Jewels operates on a Shopify Plus or compatible architecture utilizin
 ---
 
 ### 3.4 Custom Order / Pre-Reservation Mechanism: Shopify Draft Orders API
-For customers with Dhanteras ₹1,000 reservation tokens or CRM VIP purchase links:
+For customers with Dhanteras ₹999 reservation tokens or CRM VIP purchase links:
 - Route: `POST /admin/api/2024-01/draft_orders.json`
 - The CRM backend computes the exact balance:
-  $$\text{Balance} = \text{OriginalPrice} - (\text{OriginalPrice} \times 0.30) - 1000$$
+  $$\text{Balance} = \text{OriginalPrice} - (\text{DiamondComponentValue} \times 0.30) - 999$$
 - Creates a Draft Order with `applied_discount` and returns `invoice_url`.
 - The customer is redirected directly into Paytm payment checkout with the server-locked total.
 
