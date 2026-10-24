@@ -428,7 +428,6 @@
                     </div>
                     <div class="header__trending-card-info">
                       <span class="header__trending-card-title">{{ product.title }}</span>
-                      <span class="header__trending-card-price">{{ product.price | money }}</span>
                     </div>
                   </a>
                 {%- endfor -%}
@@ -3148,7 +3147,6 @@
               <img src="${imgUrl}" alt="${product.title}" class="desktop-live-search-item__img" onerror="this.src='${fallbackUrl}'">
               <div class="desktop-live-search-item__info">
                 <div class="desktop-live-search-item__title">${highlightedTitle}</div>
-                <div class="desktop-live-search-item__price">${priceFormatted}</div>
               </div>
             </a>
           `;
