@@ -1103,12 +1103,30 @@
     const code = c.code || c.promo_code || '';
     if (!code || typeof code !== 'string') return null;
 
+    // Filter expired discounts based on CRM timestamps
     const expiryRaw = c.expiry_date || c.endsAt || c.end_date || null;
     if (expiryRaw) {
       const expDate = new Date(expiryRaw);
       if (!isNaN(expDate.getTime()) && expDate.getTime() < Date.now()) {
         return null;
       }
+    }
+
+    // Filter not-yet-started discounts
+    const startsRaw = c.startsAt || c.start_date || null;
+    if (startsRaw) {
+      const startDate = new Date(startsRaw);
+      if (!isNaN(startDate.getTime()) && startDate.getTime() > Date.now()) {
+        return null;
+      }
+    }
+
+    // Filter inactive/disabled status
+    if (c.status && ['inactive', 'disabled', 'draft', 'expired'].includes(String(c.status).toLowerCase())) {
+      return null;
+    }
+    if (c.active === false || c.is_active === false) {
+      return null;
     }
 
     let formattedExpiry = '';
@@ -1127,14 +1145,15 @@
       value = Math.round(value * 100);
     }
 
-    const minOrder = c.min_order_value || c.minimum_order_value || c.minimumRequirement?.subtotal?.greaterThanOrEqualToSubtotal || null;
+    const minOrder = c.min_order_value !== undefined && c.min_order_value !== null ? c.min_order_value : (c.minimum_order_value !== undefined && c.minimum_order_value !== null ? c.minimum_order_value : (c.minimumRequirement?.subtotal?.greaterThanOrEqualToSubtotal || null));
     const desc = c.short_description || c.campaign_name || c.title || '';
 
     return {
       code: code.trim().toUpperCase(),
+      title: c.title || '',
       type: type,
-      value: value,
-      min_order_value: minOrder ? parseFloat(minOrder) : null,
+      value: parseFloat(value) || 0,
+      min_order_value: minOrder !== null ? parseFloat(minOrder) : null,
       expiry_date: formattedExpiry,
       short_description: desc
     };
@@ -1195,7 +1214,7 @@
 
   function getAppliedCouponCode() {
     try {
-      return localStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || sessionStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || '';
+      return (localStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || sessionStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || '').trim().toUpperCase();
     } catch(e) {
       return '';
     }
@@ -1203,12 +1222,15 @@
 
   function setAppliedCouponCode(code) {
     try {
-      if (code) {
-        localStorage.setItem(APPLIED_COUPON_STORAGE_KEY, code);
-        sessionStorage.setItem(APPLIED_COUPON_STORAGE_KEY, code);
+      const clean = (code || '').trim().toUpperCase();
+      if (clean) {
+        localStorage.setItem(APPLIED_COUPON_STORAGE_KEY, clean);
+        sessionStorage.setItem(APPLIED_COUPON_STORAGE_KEY, clean);
+        document.cookie = 'discount_code=' + encodeURIComponent(clean) + '; path=/; SameSite=Lax';
       } else {
         localStorage.removeItem(APPLIED_COUPON_STORAGE_KEY);
         sessionStorage.removeItem(APPLIED_COUPON_STORAGE_KEY);
+        document.cookie = 'discount_code=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
       }
     } catch(e) {}
   }
@@ -1221,7 +1243,7 @@
     let html = '';
 
     availableCouponsList.forEach(c => {
-      const isApplied = appliedCode && appliedCode.toUpperCase() === c.code.toUpperCase();
+      const isApplied = appliedCode && appliedCode === c.code;
       let discountText = '';
       if (c.type === 'percentage') {
         discountText = `${c.value}% OFF`;
@@ -1268,37 +1290,48 @@
     let appliedCoupon = null;
 
     if (appliedCode) {
-      appliedCoupon = availableCouponsList.find(c => c.code.toUpperCase() === appliedCode.toUpperCase());
+      appliedCoupon = availableCouponsList.find(c => c.code === appliedCode);
 
-      if (appliedCoupon) {
-        discountCents = calculateDiscount(appliedCoupon, currentSubtotalCents);
-
-        // Check min order value requirement
-        if (appliedCoupon.min_order_value && (currentSubtotalCents / 100) < appliedCoupon.min_order_value) {
-          showCouponMsg(`Add ₹${(appliedCoupon.min_order_value - (currentSubtotalCents / 100)).toLocaleString('en-IN')} more to use ${appliedCoupon.code}`, 'error');
-          discountCents = 0;
+      if (!appliedCoupon) {
+        // Unknown, arbitrary, or expired coupon in storage - purge it immediately
+        setAppliedCouponCode('');
+      } else {
+        const subtotalRs = currentSubtotalCents / 100;
+        if (appliedCoupon.min_order_value && subtotalRs < appliedCoupon.min_order_value) {
+          const shortfall = appliedCoupon.min_order_value - subtotalRs;
+          showCouponMsg(`Add ${formatMoney(Math.ceil(shortfall) * 100)} more to use ${appliedCoupon.code}`, 'error');
+          setAppliedCouponCode('');
+          appliedCoupon = null;
+        } else {
+          discountCents = calculateDiscount(appliedCoupon, currentSubtotalCents);
         }
       }
     }
 
-    if (appliedCode && discountCents > 0) {
+    if (appliedCoupon && discountCents > 0) {
       if (discountRow) {
         discountRow.style.display = 'flex';
-        if (discountTag) discountTag.textContent = appliedCoupon ? appliedCoupon.code : appliedCode;
+        if (discountTag) discountTag.textContent = appliedCoupon.code;
         if (discountVal) discountVal.textContent = '-' + formatMoney(discountCents);
       }
       if (appliedBanner) {
         appliedBanner.style.display = 'flex';
-        if (appliedCodeLabel) appliedCodeLabel.textContent = appliedCoupon ? appliedCoupon.code : appliedCode;
+        if (appliedCodeLabel) appliedCodeLabel.textContent = appliedCoupon.code;
         if (appliedDescLabel) appliedDescLabel.textContent = `You saved ${formatMoney(discountCents)} on this order`;
       }
-    } else if (appliedCode) {
-      if (discountRow) discountRow.style.display = 'none';
-      if (appliedBanner) {
-        appliedBanner.style.display = 'flex';
-        if (appliedCodeLabel) appliedCodeLabel.textContent = appliedCode;
-        if (appliedDescLabel) appliedDescLabel.textContent = 'Discount will be calculated at checkout';
+    } else {
+      // Completely reset and hide applied coupon display when no valid coupon is applied
+      if (discountRow) {
+        discountRow.style.display = 'none';
+        if (discountTag) discountTag.textContent = '';
+        if (discountVal) discountVal.textContent = '-₹0';
       }
+      if (appliedBanner) {
+        appliedBanner.style.display = 'none';
+        if (appliedCodeLabel) appliedCodeLabel.textContent = '';
+        if (appliedDescLabel) appliedDescLabel.textContent = '';
+      }
+      discountCents = 0;
     }
 
     const finalTotalCents = Math.max(0, currentSubtotalCents - discountCents);
@@ -1307,41 +1340,126 @@
     renderCouponsList();
   }
 
+  let couponMsgTimeout = null;
   function showCouponMsg(text, type) {
     const msgEl = document.getElementById('cart-coupon-message');
     if (!msgEl) return;
+    if (couponMsgTimeout) {
+      clearTimeout(couponMsgTimeout);
+      couponMsgTimeout = null;
+    }
     msgEl.textContent = text;
     msgEl.className = 'cart-coupon-msg ' + (type === 'error' ? 'cart-coupon-msg--error' : 'cart-coupon-msg--success');
     msgEl.style.display = 'block';
-    setTimeout(() => {
+    couponMsgTimeout = setTimeout(() => {
       msgEl.style.display = 'none';
-    }, 4000);
+    }, 4500);
   }
 
   window.selectCouponCode = function(code) {
+    if (!code || typeof code !== 'string') return;
+    const cleanCode = code.trim().toUpperCase();
     const current = getAppliedCouponCode();
-    if (current && current.toUpperCase() === code.toUpperCase()) {
+    if (current && current === cleanCode) {
       return; // Already applied
     }
-    setAppliedCouponCode(code);
-    showCouponMsg(`Coupon ${code} applied successfully!`, 'success');
+
+    const matchedCoupon = availableCouponsList.find(c => c.code === cleanCode);
+    if (!matchedCoupon) {
+      showCouponMsg(`Coupon code "${cleanCode}" is invalid, expired, or not applicable.`, 'error');
+      return;
+    }
+
+    const subtotalRs = currentSubtotalCents / 100;
+    if (matchedCoupon.min_order_value && subtotalRs < matchedCoupon.min_order_value) {
+      const shortfall = matchedCoupon.min_order_value - subtotalRs;
+      showCouponMsg(`Add ${formatMoney(Math.ceil(shortfall) * 100)} more to use ${matchedCoupon.code}`, 'error');
+      return;
+    }
+
+    setAppliedCouponCode(matchedCoupon.code);
+    showCouponMsg(`Coupon ${matchedCoupon.code} applied successfully!`, 'success');
     updateOrderSummary();
   };
 
+  let isApplyingCoupon = false;
   window.applyManualCoupon = function() {
+    if (isApplyingCoupon) return;
     const input = document.getElementById('cart-manual-coupon-input');
-    if (!input || !input.value.trim()) return;
-    const code = input.value.trim().toUpperCase();
-    setAppliedCouponCode(code);
-    input.value = '';
-    showCouponMsg(`Coupon ${code} applied!`, 'success');
-    updateOrderSummary();
+    const applyBtn = document.getElementById('cart-apply-coupon-btn');
+    if (!input) return;
+
+    const rawVal = input.value;
+    const cleanCode = (rawVal || '').trim().toUpperCase();
+
+    if (!cleanCode) {
+      showCouponMsg('Please enter a coupon code.', 'error');
+      return;
+    }
+
+    isApplyingCoupon = true;
+    const originalBtnText = applyBtn ? applyBtn.textContent : 'APPLY';
+    if (applyBtn) {
+      applyBtn.disabled = true;
+      applyBtn.textContent = '...';
+    }
+
+    try {
+      const matchedCoupon = availableCouponsList.find(c => c.code === cleanCode);
+      if (!matchedCoupon) {
+        showCouponMsg(`Coupon code "${cleanCode}" is invalid, expired, or not applicable.`, 'error');
+        return;
+      }
+
+      const subtotalRs = currentSubtotalCents / 100;
+      if (matchedCoupon.min_order_value && subtotalRs < matchedCoupon.min_order_value) {
+        const shortfall = matchedCoupon.min_order_value - subtotalRs;
+        showCouponMsg(`Add ${formatMoney(Math.ceil(shortfall) * 100)} more to use ${matchedCoupon.code}`, 'error');
+        return;
+      }
+
+      setAppliedCouponCode(matchedCoupon.code);
+      input.value = '';
+      showCouponMsg(`Coupon ${matchedCoupon.code} applied successfully!`, 'success');
+      updateOrderSummary();
+    } catch (err) {
+      console.error('Error applying coupon:', err);
+      showCouponMsg('Unable to apply coupon. Please try again.', 'error');
+    } finally {
+      isApplyingCoupon = false;
+      if (applyBtn) {
+        applyBtn.disabled = false;
+        applyBtn.textContent = originalBtnText;
+      }
+    }
   };
 
+  let isRemovingCoupon = false;
   window.removeAppliedCoupon = function() {
-    setAppliedCouponCode('');
-    showCouponMsg('Coupon removed', 'success');
-    updateOrderSummary();
+    if (isRemovingCoupon) return;
+    const removeBtn = document.querySelector('.cart-remove-coupon-btn');
+    isRemovingCoupon = true;
+    if (removeBtn) {
+      removeBtn.disabled = true;
+    }
+
+    try {
+      setAppliedCouponCode('');
+      // Safely clear Shopify server-side discount session via /discount/CLEAR
+      if (typeof fetch === 'function') {
+        fetch('/discount/CLEAR', { method: 'GET', credentials: 'same-origin' }).catch(function() {});
+      }
+      showCouponMsg('Coupon removed', 'success');
+      updateOrderSummary();
+    } catch (err) {
+      console.error('Error removing coupon:', err);
+      showCouponMsg('Unable to remove coupon. Please try again.', 'error');
+    } finally {
+      isRemovingCoupon = false;
+      if (removeBtn) {
+        removeBtn.disabled = false;
+      }
+    }
   };
 
   window.handleProceedToCheckout = function() {
@@ -1433,7 +1551,32 @@
   // Initialization
   document.addEventListener('DOMContentLoaded', function() {
     loadAllCoupons();
+
+    // Validate any pre-stored coupon against authoritative coupons
+    const storedCode = getAppliedCouponCode();
+    if (storedCode) {
+      const matched = availableCouponsList.find(c => c.code === storedCode);
+      if (!matched) {
+        setAppliedCouponCode('');
+      } else {
+        const subtotalRs = currentSubtotalCents / 100;
+        if (matched.min_order_value && subtotalRs < matched.min_order_value) {
+          setAppliedCouponCode('');
+        }
+      }
+    }
+
     updateOrderSummary();
+
+    const manualInput = document.getElementById('cart-manual-coupon-input');
+    if (manualInput) {
+      manualInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          applyManualCoupon();
+        }
+      });
+    }
   });
 })();
 </script>
