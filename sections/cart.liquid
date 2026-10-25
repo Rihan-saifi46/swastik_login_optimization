@@ -1087,9 +1087,36 @@
 
 <script>
 (function() {
+  const isCustomerLoggedIn = {% if customer %}true{% else %}false{% endif %};
+  const cartPageUrl = '{{ routes.cart_url }}';
   const APPLIED_COUPON_STORAGE_KEY = 'swastik_applied_coupon';
   let availableCouponsList = [];
   let currentSubtotalCents = {{ cart.original_total_price | default: cart.items_subtotal_price | default: cart.total_price | default: 0 }};
+
+  function redirectToLogin(targetUrl) {
+    const safeReturn = targetUrl || cartPageUrl;
+    if (typeof window.triggerLoginAndRedirectCheckout === 'function') {
+      window.triggerLoginAndRedirectCheckout(safeReturn);
+      return;
+    }
+    try {
+      sessionStorage.setItem('sw_post_login_return_url', safeReturn);
+      sessionStorage.setItem('post_login_redirect', safeReturn);
+      document.cookie = 'sw_post_login_return_url=' + encodeURIComponent(safeReturn) + '; path=/; max-age=1800; SameSite=Lax';
+    } catch(e) {}
+
+    const accountEl = document.getElementById('storefront-shopify-account');
+    if (accountEl) {
+      accountEl.setAttribute('sign-in-url', '/customer_authentication/login?return_to=' + encodeURIComponent(safeReturn));
+      const trigger = accountEl.querySelector('[slot="signed-out-avatar"]');
+      if (trigger) {
+        trigger.click();
+        return;
+      }
+    }
+
+    window.location.href = '/customer_authentication/login?return_to=' + encodeURIComponent(safeReturn);
+  }
 
   function formatMoney(cents) {
     if (typeof window.formatMoney === 'function') {
@@ -1463,6 +1490,13 @@
   };
 
   window.handleProceedToCheckout = function() {
+    // 1. Enforce authentication: Logged-out customers must log in first
+    if (!isCustomerLoggedIn) {
+      redirectToLogin(cartPageUrl);
+      return;
+    }
+
+    // 2. Logged-in customer proceeds to checkout
     const doProceed = function() {
       const appliedCode = getAppliedCouponCode();
       let checkoutUrl = '/checkout';
@@ -1575,6 +1609,15 @@
           e.preventDefault();
           applyManualCoupon();
         }
+      });
+    }
+
+    // Intercept checkout form submission (e.g. Enter key pressed anywhere in the checkout form)
+    const checkoutForm = document.getElementById('cart-checkout-form');
+    if (checkoutForm) {
+      checkoutForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        window.handleProceedToCheckout();
       });
     }
   });

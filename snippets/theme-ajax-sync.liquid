@@ -736,7 +736,7 @@
     if (!customerLoggedIn) {
       // Intercept clicks on links or buttons pointing to checkout
       document.addEventListener('click', function(e) {
-        const target = e.target.closest('a[href*="/checkout"], button[name="checkout"], .btn-checkout, .pp-btn-buy, .btn-buy-now');
+        const target = e.target.closest('a[href*="/checkout"], button[name="checkout"], .btn-checkout, .cart-checkout-btn, #cart-proceed-checkout-btn, .pp-btn-buy, .btn-buy-now');
         if (target) {
           if (target.disabled || target.classList.contains('is-out-of-stock') || target.getAttribute('aria-disabled') === 'true') {
             e.preventDefault();
@@ -784,7 +784,9 @@
         const isCheckoutSubmit = form.action.includes('/checkout') || 
                                  form.querySelector('input[name="return_to"]')?.value === '/checkout' ||
                                  e.submitter?.name === 'checkout' ||
-                                 e.submitter?.classList.contains('btn-checkout');
+                                 e.submitter?.classList.contains('btn-checkout') ||
+                                 e.submitter?.classList.contains('cart-checkout-btn') ||
+                                 form.id === 'cart-checkout-form';
         if (isCheckoutSubmit) {
           if (window.DiamondSale && typeof window.DiamondSale.shouldInterceptCartCheckout === 'function' && window.DiamondSale.shouldInterceptCartCheckout()) {
             e.preventDefault();
@@ -859,14 +861,17 @@
       const appliedCoupon = localStorage.getItem('swastik_applied_coupon') || sessionStorage.getItem('swastik_applied_coupon') || '';
       let safeReturnUrl = sanitizeStorefrontUrl(targetReturnUrl);
 
-      // If no valid product return URL provided, check if current page is PDP
+      // If no valid return URL provided, check current page:
+      // On cart page, return customer to /cart so they review their order and explicitly proceed to checkout.
       if (!safeReturnUrl) {
-        if (window.location.pathname.startsWith('/products/') || document.getElementById('pp-product-form')) {
+        if (window.location.pathname.startsWith('/cart')) {
+          safeReturnUrl = '/cart';
+        } else if (window.location.pathname.startsWith('/products/') || document.getElementById('pp-product-form')) {
           safeReturnUrl = sanitizeStorefrontUrl(window.location.pathname + window.location.search);
         }
       }
 
-      // Default fallback destination for non-PDP checkout triggers (e.g. cart drawer / cart page)
+      // Default fallback destination for other checkout triggers (e.g. cart drawer)
       if (!safeReturnUrl) {
         let targetCheckoutUrl = '/checkout';
         if (appliedCoupon) {
@@ -897,6 +902,9 @@
         window.location.href = '/customer_authentication/login?return_to=' + encodeURIComponent(safeReturnUrl);
       }
     }
+
+    // Expose for explicit section-level checkout guards
+    window.triggerLoginAndRedirectCheckout = triggerLoginAndRedirectCheckout;
 
   })();
 </script>
