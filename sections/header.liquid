@@ -3109,6 +3109,9 @@
       }
 
       function renderDesktopSearchResults(products, query, totalCount) {
+        const liveQuery = searchInput ? searchInput.value.trim() : '';
+        if (liveQuery.toLowerCase() !== query.trim().toLowerCase()) return;
+
         const safeTerm = query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const regex = safeTerm ? new RegExp(`(${safeTerm})`, 'gi') : null;
         const finalCount = (typeof totalCount === 'number' && totalCount > 0) ? totalCount : products.length;
@@ -3158,6 +3161,11 @@
       function performDesktopSearch(query) {
         const trimmedQuery = query ? query.trim() : '';
         if (trimmedQuery.length < 2) {
+          desktopSearchSeq++;
+          if (desktopSearchAbort) {
+            desktopSearchAbort.abort();
+            desktopSearchAbort = null;
+          }
           if (desktopSearchResults) {
             desktopSearchResults.style.display = 'none';
             desktopSearchResults.innerHTML = '';
@@ -3186,7 +3194,10 @@
         if (isSkuCandidate) {
           // Dedicated SKU lookup with top priority for SKU patterns
           window.searchSkuStorefront(trimmedQuery, signal).then(skuProduct => {
-            if (searchSeq !== desktopSearchSeq) return;
+            if (signal.aborted || searchSeq !== desktopSearchSeq) return;
+            const liveQuery = searchInput ? searchInput.value.trim() : '';
+            if (liveQuery.toLowerCase() !== trimmedQuery.toLowerCase()) return;
+
             if (skuProduct) {
               const mappedProduct = {
                 title: skuProduct.title,
@@ -3201,7 +3212,10 @@
                 fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=6`, { signal }).then(res => res.json()),
                 fetch(`{{ routes.search_url }}?q=${encodeURIComponent(trimmedQuery)}&type=product&view=count`, { signal }).then(res => res.json()).catch(() => null)
               ]).then(([suggestResult, countResult]) => {
-                if (searchSeq !== desktopSearchSeq) return;
+                if (signal.aborted || searchSeq !== desktopSearchSeq) return;
+                const liveQueryFallback = searchInput ? searchInput.value.trim() : '';
+                if (liveQueryFallback.toLowerCase() !== trimmedQuery.toLowerCase()) return;
+
                 const data = suggestResult.status === 'fulfilled' ? suggestResult.value : null;
                 const countData = countResult.status === 'fulfilled' ? countResult.value : null;
                 const products = data && data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
@@ -3213,7 +3227,7 @@
                   if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
                 }
               }).catch(err => {
-                if (searchSeq !== desktopSearchSeq) return;
+                if (signal.aborted || searchSeq !== desktopSearchSeq) return;
                 if (err.name !== 'AbortError') {
                   if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">No jewelry found for "${trimmedQuery}". Try searching "rings" or "diamonds".</div>`;
                 }
@@ -3226,7 +3240,10 @@
             fetch(`{{ routes.search_url }}/suggest.json?q=${encodeURIComponent(trimmedQuery)}&resources[type]=product&resources[limit]=6`, { signal }).then(res => res.json()),
             fetch(`{{ routes.search_url }}?q=${encodeURIComponent(trimmedQuery)}&type=product&view=count`, { signal }).then(res => res.json()).catch(() => null)
           ]).then(([suggestResult, countResult]) => {
-            if (searchSeq !== desktopSearchSeq) return;
+            if (signal.aborted || searchSeq !== desktopSearchSeq) return;
+            const liveQuery = searchInput ? searchInput.value.trim() : '';
+            if (liveQuery.toLowerCase() !== trimmedQuery.toLowerCase()) return;
+
             const data = suggestResult.status === 'fulfilled' ? suggestResult.value : null;
             const countData = countResult.status === 'fulfilled' ? countResult.value : null;
             const products = data && data.resources && data.resources.results && data.resources.results.products ? data.resources.results.products : [];
@@ -3236,7 +3253,10 @@
               // Secondary check for exact variant SKU
               if (window.searchSkuStorefront) {
                 window.searchSkuStorefront(trimmedQuery, signal).then(skuProduct => {
-                  if (searchSeq !== desktopSearchSeq) return;
+                  if (signal.aborted || searchSeq !== desktopSearchSeq) return;
+                  const liveQuerySku = searchInput ? searchInput.value.trim() : '';
+                  if (liveQuerySku.toLowerCase() !== trimmedQuery.toLowerCase()) return;
+
                   if (skuProduct) {
                     const mappedProduct = {
                       title: skuProduct.title,
@@ -3257,7 +3277,7 @@
 
             renderDesktopSearchResults(products, trimmedQuery, totalCount);
           }).catch(err => {
-            if (searchSeq !== desktopSearchSeq) return;
+            if (signal.aborted || searchSeq !== desktopSearchSeq) return;
             if (err.name !== 'AbortError') {
               if (desktopSearchResults) desktopSearchResults.innerHTML = `<div class="desktop-live-search-loading">Error loading suggestions. Please hit enter to search.</div>`;
             }
@@ -3266,13 +3286,21 @@
       }
 
       if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
+        searchInput.addEventListener('input', () => {
           clearTimeout(desktopSearchTimeout);
-          const val = e.target.value;
-          if (val.trim().length >= 2) {
+          const currentVal = searchInput ? searchInput.value : '';
+          if (currentVal.trim().length >= 2) {
             if (suggestionsBlock) suggestionsBlock.style.display = 'none';
-            desktopSearchTimeout = setTimeout(() => performDesktopSearch(val), 250);
+            desktopSearchTimeout = setTimeout(() => {
+              const liveVal = searchInput ? searchInput.value : '';
+              performDesktopSearch(liveVal);
+            }, 250);
           } else {
+            desktopSearchSeq++;
+            if (desktopSearchAbort) {
+              desktopSearchAbort.abort();
+              desktopSearchAbort = null;
+            }
             if (desktopSearchResults) {
               desktopSearchResults.style.display = 'none';
               desktopSearchResults.innerHTML = '';
@@ -3310,13 +3338,6 @@
       if (desktopSearchForm) {
         desktopSearchForm.addEventListener('submit', interceptSearchSubmit);
       }
-
-      // Safe global observer listener for mobile category form (using event delegation)
-      document.addEventListener('submit', function(e) {
-        if (e.target && e.target.id === 'MobileCategorySearchForm') {
-          interceptSearchSubmit(e);
-        }
-      });
     }
   });
 </script>

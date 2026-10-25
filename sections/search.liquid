@@ -165,40 +165,27 @@
 
 <script>
   (function() {
-    function initSearchPageAutoSubmit() {
+    // Normal search form submission on Enter or explicit Search button activation.
+    // Automatic submission on typing pause has been removed to prevent premature page reloads.
+    function initSearchPageForm() {
       const searchForm = document.querySelector('.search-page__form');
       if (!searchForm) return;
 
       const searchInput = searchForm.querySelector('.search-page__input');
       if (!searchInput) return;
 
-      let debounceTimer = null;
-      const initialQuery = (searchInput.value || '').trim();
-
-      searchInput.addEventListener('input', function(e) {
-        clearTimeout(debounceTimer);
-        const currentQuery = e.target.value.trim();
-
-        // Do not auto-submit if the field is empty or unchanged from currently loaded page query
-        if (currentQuery.length === 0 || currentQuery.toLowerCase() === initialQuery.toLowerCase()) {
-          return;
+      searchForm.addEventListener('submit', function(e) {
+        const query = (searchInput.value || '').trim();
+        if (query.length === 0) {
+          e.preventDefault();
         }
-
-        // Auto-submit after 500ms of typing inactivity
-        debounceTimer = setTimeout(function() {
-          if (typeof searchForm.requestSubmit === 'function') {
-            searchForm.requestSubmit();
-          } else {
-            searchForm.submit();
-          }
-        }, 500);
       });
     }
 
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initSearchPageAutoSubmit);
+      document.addEventListener('DOMContentLoaded', initSearchPageForm);
     } else {
-      initSearchPageAutoSubmit();
+      initSearchPageForm();
     }
   })();
 </script>
