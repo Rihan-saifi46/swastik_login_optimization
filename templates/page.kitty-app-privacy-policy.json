@@ -1,0 +1,11 @@
+{
+  "sections": {
+    "main": {
+      "type": "kitty-app-privacy-policy",
+      "settings": {}
+    }
+  },
+  "order": [
+    "main"
+  ]
+}
