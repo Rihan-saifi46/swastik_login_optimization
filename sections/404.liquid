@@ -1,38 +1,19 @@
 {% comment %}
-  404 Template Section with seamless Kitty App Privacy Policy fallback
+  This section is used in the 404 template to render page shown when customers
+  enter an invalid store URL.
+
+  https://shopify.dev/docs/storefronts/themes/architecture/templates/404
 {% endcomment %}
 
-<div id="kitty-pp-view" style="display: block;">
-  {% render 'kitty-app-privacy-policy' %}
-</div>
+<h1>{{ '404.title' | t }}</h1>
 
-<div id="kitty-default-404" style="display: none;">
-  <div class="page-width container" style="text-align: center; padding: 6rem 2rem;">
-    <h1>{{ '404.title' | t }}</h1>
-    <p>{{ '404.not_found' | t }}</p>
-    <a href="{{ routes.all_products_collection_url }}" class="button">
-      {{ '404.back_to_shopping' | t }}
-    </a>
-  </div>
-</div>
+<p>
+  {{ '404.not_found' | t }}
+</p>
 
-<script>
-  (function() {
-    var path = window.location.pathname || '';
-    if (path.indexOf('kitty-app-privacy-policy') !== -1) {
-      document.title = "Privacy Policy for Kitty App | Swastik Jewels";
-      var metaDesc = document.querySelector('meta[name="description"]');
-      if (metaDesc) {
-        metaDesc.setAttribute('content', 'Official Privacy Policy for Kitty App by Swastik Jewels - Gold & Silver Chit Savings.');
-      }
-    } else {
-      var pp = document.getElementById('kitty-pp-view');
-      var f404 = document.getElementById('kitty-default-404');
-      if (pp) pp.style.display = 'none';
-      if (f404) f404.style.display = 'block';
-    }
-  })();
-</script>
+<a href="{{ routes.all_products_collection_url }}">
+  {{ '404.back_to_shopping' | t }}
+</a>
 
 {% schema %}
 {
