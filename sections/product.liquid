@@ -631,7 +631,7 @@
               <!-- ROW 2: BOOK NOW + BUY NOW -->
               <div class="pp-actions-checkout-row{% unless is_dhanteras_enabled and is_dhanteras_eligible %} pp-actions-checkout-row--single{% endunless %}">
                 {%- if is_dhanteras_enabled and is_dhanteras_eligible -%}
-                  <button type="button" class="pp-btn-book{% if current_is_out_of_stock or is_already_reserved %} is-disabled{% endif %}{% if is_already_reserved %} is-reserved is-booked{% endif %}" id="pp-book-now" {% if current_is_out_of_stock or is_already_reserved %}disabled{% endif %}>
+                  <button type="button" class="pp-btn-book is-disabled" id="pp-book-now" disabled aria-disabled="true">
                     <svg class="pp-btn-book-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                       <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -1728,9 +1728,9 @@
   }
   .pp-btn-book {
     flex: 1 1 50% !important;
-    background: #013F3E !important;
-    color: #FFFFFF !important;
-    border: 1.5px solid #C89234 !important;
+    background: #E8E8E8 !important;
+    color: #888888 !important;
+    border: 1.5px solid #D0D0D0 !important;
     border-radius: 10px !important;
     min-height: 56px !important;
     height: 56px !important;
@@ -1744,19 +1744,25 @@
     align-items: center !important;
     justify-content: center !important;
     gap: 8px !important;
-    cursor: pointer !important;
-    transition: all 0.25s ease !important;
-    box-shadow: 0 6px 20px rgba(1, 63, 62, 0.2) !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    transition: none !important;
+    box-shadow: none !important;
     padding: 0 14px !important;
   }
-  .pp-btn-book:hover {
-    background: #012B2A !important;
-    border-color: #D4AF37 !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 24px rgba(1, 63, 62, 0.35) !important;
+  .pp-btn-book:hover,
+  .pp-btn-book:active,
+  .pp-btn-book:focus {
+    background: #E8E8E8 !important;
+    border-color: #D0D0D0 !important;
+    color: #888888 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
   }
   .pp-btn-book svg {
-    color: #D4AF37;
+    color: #888888 !important;
     flex-shrink: 0;
   }
   .pp-btn-book.is-disabled,
@@ -2899,10 +2905,9 @@
         if (buyText) buyText.textContent = 'BUY NOW';
       }
       if (elBtnBook) {
-        elBtnBook.removeAttribute('disabled');
-        elBtnBook.classList.remove('is-disabled', 'is-booked', 'is-reserved');
-        const bookText = elBtnBook.querySelector('.pp-btn-text');
-        if (bookText) bookText.textContent = 'BOOK NOW \u2014 \u20B9999';
+        elBtnBook.setAttribute('disabled', 'true');
+        elBtnBook.setAttribute('aria-disabled', 'true');
+        elBtnBook.classList.add('is-disabled');
       }
     } else {
       if (elStockStatus) {
@@ -2921,10 +2926,9 @@
         if (buyText) buyText.textContent = 'BUY NOW';
       }
       if (elBtnBook) {
-        elBtnBook.removeAttribute('disabled');
-        elBtnBook.classList.remove('is-disabled', 'is-booked', 'is-reserved');
-        const bookText = elBtnBook.querySelector('.pp-btn-text');
-        if (bookText) bookText.textContent = 'BOOK NOW \u2014 \u20B9999';
+        elBtnBook.setAttribute('disabled', 'true');
+        elBtnBook.setAttribute('aria-disabled', 'true');
+        elBtnBook.classList.add('is-disabled');
       }
     }
   }
@@ -3092,16 +3096,11 @@
       return;
     }
 
-    // Dhanteras Book Now Button
+    // Dhanteras Book Now Button (Disabled)
     const bookBtn = e.target.closest('.pp-btn-book');
     if (bookBtn) {
       e.preventDefault();
-      if (bookBtn.disabled || bookBtn.classList.contains('is-disabled') || bookBtn.classList.contains('is-reserved')) {
-        return;
-      }
-      if (window.dhanterasBookingController && typeof window.dhanterasBookingController.openModal === 'function') {
-        window.dhanterasBookingController.openModal();
-      }
+      e.stopPropagation();
       return;
     }
 
