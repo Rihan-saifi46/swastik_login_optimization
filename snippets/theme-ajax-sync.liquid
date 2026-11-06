@@ -333,92 +333,14 @@
       });
     };
 
-    // Global booking status badge synchronization across product listing cards & PDP
-    window.swSyncBookedBadges = function() {
-      try {
-        const confirmedStr = localStorage.getItem('sw_confirmed_bookings');
-        if (!confirmedStr) return;
-        const confirmed = JSON.parse(confirmedStr || '{}');
-        const bookedKeys = Object.keys(confirmed);
-        if (!bookedKeys.length) return;
-
-        // 1. Sync .product-card-ui cards
-        document.querySelectorAll('.product-card-ui').forEach(card => {
-          const vId = String(card.getAttribute('data-variant-id') || '');
-          const pId = String(card.getAttribute('data-product-id') || '');
-          const isBooked = (vId && confirmed[vId]) || (pId && confirmed['p_' + pId]);
-          if (isBooked) {
-            const pillsWrap = card.querySelector('.product-card-ui__pills');
-            if (pillsWrap) {
-              const existingBooked = pillsWrap.querySelector('.product-card-ui__pill--booked');
-              if (!existingBooked) {
-                const existingPill = pillsWrap.querySelector('.product-card-ui__pill');
-                if (existingPill) {
-                  existingPill.className = 'product-card-ui__pill product-card-ui__pill--booked';
-                  existingPill.textContent = 'BOOKED';
-                } else {
-                  const newPill = document.createElement('span');
-                  newPill.className = 'product-card-ui__pill product-card-ui__pill--booked';
-                  newPill.textContent = 'BOOKED';
-                  pillsWrap.appendChild(newPill);
-                }
-              }
-            }
-          }
-        });
-
-        // 2. Sync related product cards (.pp-related-item-card)
-        document.querySelectorAll('.pp-related-item-card').forEach(card => {
-          const vId = String(card.getAttribute('data-variant-id') || '');
-          const pId = String(card.getAttribute('data-product-id') || '');
-          const isBooked = (vId && confirmed[vId]) || (pId && confirmed['p_' + pId]);
-          if (isBooked) {
-            const pillsWrap = card.querySelector('.pp-related-pills');
-            if (pillsWrap) {
-              const existingBooked = pillsWrap.querySelector('.pp-rel-pill--booked');
-              if (!existingBooked) {
-                const existingPill = pillsWrap.querySelector('.pp-rel-pill');
-                if (existingPill) {
-                  existingPill.className = 'pp-rel-pill pp-rel-pill--booked';
-                  existingPill.textContent = 'BOOKED';
-                } else {
-                  const newPill = document.createElement('span');
-                  newPill.className = 'pp-rel-pill pp-rel-pill--booked';
-                  newPill.textContent = 'BOOKED';
-                  pillsWrap.appendChild(newPill);
-                }
-              }
-            }
-          }
-        });
-
-        // 3. Sync PDP active variant if on product page
-        const variantIdInput = document.getElementById('pp-variant-id');
-        if (variantIdInput) {
-          const activeVariantId = String(variantIdInput.value || '');
-          if (confirmed[activeVariantId] || (window.ShopifyAnalytics && window.ShopifyAnalytics.meta && confirmed['p_' + window.ShopifyAnalytics.meta.product.id])) {
-            if (typeof window.swUpdatePDPStockUI === 'function') {
-              window.swUpdatePDPStockUI(activeVariantId, false, null, 'deny', 0);
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('[Theme Ajax Sync] Error syncing booked badges:', err);
-      }
-    };
-
     // Set initial active state on load and storage sync
     document.addEventListener('DOMContentLoaded', () => {
       window.syncWishlistUI();
-      window.swSyncBookedBadges();
     });
     window.addEventListener('storage', (e) => {
       if (e.key === 'wishlist' || e.key === 'wishlist_items_data') {
         window.updateWishlistBadge();
         window.syncWishlistUI();
-      }
-      if (e.key === 'sw_confirmed_bookings') {
-        window.swSyncBookedBadges();
       }
     });
 
@@ -624,12 +546,6 @@
 
       const submitBtn = e.submitter || form.querySelector('[type="submit"], .btn-add-cart, .pp-btn-add') || (form.id ? document.querySelector('button[form="' + form.id + '"]') : null);
 
-      if (submitBtn && (submitBtn.disabled || submitBtn.classList.contains('is-out-of-stock') || submitBtn.getAttribute('aria-disabled') === 'true')) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-
       // Prevent concurrent/rapid duplicate requests
       if (form.dataset.submitting === 'true' || (submitBtn && submitBtn.classList.contains('btn-loading'))) {
         return;
@@ -725,22 +641,7 @@
           returnInput.name = 'return_to';
           returnInput.value = '/checkout';
           form.appendChild(returnInput);
-
-          const variantId = document.getElementById('pp-variant-id')?.value || form.querySelector('[name="id"]')?.value;
-          fetch('https://backend-api.swastikjewel.in/api/diamond-sale/instant-checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ variant_id: variantId })
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.status === 'success' && data.invoice_url) {
-              window.location.href = data.invoice_url;
-            } else {
-              form.submit();
-            }
-          })
-          .catch(() => form.submit());
+          form.submit();
         }
       }
     });
@@ -751,42 +652,8 @@
     if (!customerLoggedIn) {
       // Intercept clicks on links or buttons pointing to checkout
       document.addEventListener('click', function(e) {
-        const target = e.target.closest('a[href*="/checkout"], button[name="checkout"], .btn-checkout, .cart-checkout-btn, #cart-proceed-checkout-btn, .pp-btn-buy, .btn-buy-now');
+        const target = e.target.closest('a[href*="/checkout"], button[name="checkout"], .btn-checkout, .pp-btn-buy, .btn-buy-now');
         if (target) {
-          if (target.disabled || target.classList.contains('is-out-of-stock') || target.getAttribute('aria-disabled') === 'true') {
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-          }
-
-          // Check Diamond Sale pre-sale acknowledgement before checkout
-          if (window.DiamondSale) {
-            const isBuyNow = target.classList.contains('pp-btn-buy') || target.classList.contains('btn-buy-now');
-            if (isBuyNow && typeof window.DiamondSale.shouldInterceptPDPBuyNow === 'function' && window.DiamondSale.shouldInterceptPDPBuyNow()) {
-              e.preventDefault();
-              e.stopPropagation();
-              const currentPriceAttr = document.getElementById('pp-price')?.getAttribute('data-inr-price');
-              window.DiamondSale.openPreSaleWarningModal({
-                source: 'pdp_buy_now',
-                originalPriceCents: currentPriceAttr,
-                onAcknowledge: function() {
-                  handleCheckoutInterception(target);
-                }
-              });
-              return;
-            } else if (!isBuyNow && typeof window.DiamondSale.shouldInterceptCartCheckout === 'function' && window.DiamondSale.shouldInterceptCartCheckout()) {
-              e.preventDefault();
-              e.stopPropagation();
-              window.DiamondSale.openPreSaleWarningModal({
-                source: 'cart_checkout',
-                onAcknowledge: function() {
-                  handleCheckoutInterception(target);
-                }
-              });
-              return;
-            }
-          }
-
           e.preventDefault();
           e.stopPropagation();
           handleCheckoutInterception(target);
@@ -799,22 +666,8 @@
         const isCheckoutSubmit = form.action.includes('/checkout') || 
                                  form.querySelector('input[name="return_to"]')?.value === '/checkout' ||
                                  e.submitter?.name === 'checkout' ||
-                                 e.submitter?.classList.contains('btn-checkout') ||
-                                 e.submitter?.classList.contains('cart-checkout-btn') ||
-                                 form.id === 'cart-checkout-form';
+                                 e.submitter?.classList.contains('btn-checkout');
         if (isCheckoutSubmit) {
-          if (window.DiamondSale && typeof window.DiamondSale.shouldInterceptCartCheckout === 'function' && window.DiamondSale.shouldInterceptCartCheckout()) {
-            e.preventDefault();
-            e.stopPropagation();
-            window.DiamondSale.openPreSaleWarningModal({
-              source: 'cart_checkout_form',
-              onAcknowledge: function() {
-                handleCheckoutInterception(e.submitter || form);
-              }
-            });
-            return;
-          }
-
           e.preventDefault();
           e.stopPropagation();
           handleCheckoutInterception(e.submitter || form);
@@ -832,16 +685,9 @@
         document.body.style.overflow = '';
       }
 
-      const isBuyNow = triggerElement && (triggerElement.classList.contains('pp-btn-buy') || triggerElement.classList.contains('btn-buy-now'));
-      const isProductPage = window.location.pathname.startsWith('/products/') || document.getElementById('pp-product-form') !== null;
-      const pdpUrl = (isBuyNow || isProductPage) ? (window.location.pathname + window.location.search) : null;
-
       // If it's a "Buy Now" action, add to cart via AJAX first so guest doesn't lose their selection
-      const form = triggerElement ? triggerElement.closest('form') : null;
-      if (form && isBuyNow) {
-        if (triggerElement.disabled || triggerElement.classList.contains('is-out-of-stock') || triggerElement.getAttribute('aria-disabled') === 'true') {
-          return;
-        }
+      const form = triggerElement.closest('form');
+      if (form && (triggerElement.classList.contains('pp-btn-buy') || triggerElement.classList.contains('btn-buy-now'))) {
         const submitBtn = triggerElement;
         submitBtn.classList.add('btn-loading');
         
@@ -851,61 +697,26 @@
         })
         .then(response => {
           submitBtn.classList.remove('btn-loading');
-          triggerLoginAndRedirectCheckout(pdpUrl);
+          triggerLoginAndRedirectCheckout();
         })
         .catch(() => {
           submitBtn.classList.remove('btn-loading');
-          triggerLoginAndRedirectCheckout(pdpUrl);
+          triggerLoginAndRedirectCheckout();
         });
         return;
       }
 
-      triggerLoginAndRedirectCheckout(pdpUrl);
+      triggerLoginAndRedirectCheckout();
     }
 
-    function sanitizeStorefrontUrl(url) {
-      if (!url || typeof url !== 'string') return null;
-      const trimmed = url.trim();
-      if (!trimmed.startsWith('/') || trimmed.startsWith('//') || trimmed.includes('\\') || trimmed.includes('://') || trimmed.toLowerCase().includes('javascript:') || trimmed.toLowerCase().includes('data:')) {
-        return null;
-      }
-      return trimmed;
-    }
-
-    function triggerLoginAndRedirectCheckout(targetReturnUrl) {
-      const appliedCoupon = localStorage.getItem('swastik_applied_coupon') || sessionStorage.getItem('swastik_applied_coupon') || '';
-      let safeReturnUrl = sanitizeStorefrontUrl(targetReturnUrl);
-
-      // If no valid return URL provided, check current page:
-      // On cart page, return customer to /cart so they review their order and explicitly proceed to checkout.
-      if (!safeReturnUrl) {
-        if (window.location.pathname.startsWith('/cart')) {
-          safeReturnUrl = '/cart';
-        } else if (window.location.pathname.startsWith('/products/') || document.getElementById('pp-product-form')) {
-          safeReturnUrl = sanitizeStorefrontUrl(window.location.pathname + window.location.search);
-        }
-      }
-
-      // Default fallback destination for other checkout triggers (e.g. cart drawer)
-      if (!safeReturnUrl) {
-        let targetCheckoutUrl = '/checkout';
-        if (appliedCoupon) {
-          targetCheckoutUrl += '?discount=' + encodeURIComponent(appliedCoupon);
-        }
-        safeReturnUrl = targetCheckoutUrl;
-      }
-
-      // Persist the exact safe return destination across session and cookies
-      try {
-        sessionStorage.setItem('sw_post_login_return_url', safeReturnUrl);
-        sessionStorage.setItem('post_login_redirect', safeReturnUrl);
-        document.cookie = 'sw_post_login_return_url=' + encodeURIComponent(safeReturnUrl) + '; path=/; max-age=1800; SameSite=Lax';
-      } catch(e) {}
+    function triggerLoginAndRedirectCheckout() {
+      // Store intent in sessionStorage for reliable post-login redirection
+      sessionStorage.setItem('post_login_redirect', '/checkout');
       
       const accountEl = document.getElementById('storefront-shopify-account');
       if (accountEl) {
-        // Dynamically update the sign-in URL redirection parameter
-        accountEl.setAttribute('sign-in-url', '/customer_authentication/login?return_to=' + encodeURIComponent(safeReturnUrl));
+        // Dynamically update the sign-in URL redirection parameter (fallback)
+        accountEl.setAttribute('sign-in-url', '/customer_authentication/login?return_to=/checkout');
 
         // Trigger the login overlay via click on the profile icon
         const trigger = accountEl.querySelector('[slot="signed-out-avatar"]');
@@ -914,12 +725,9 @@
         }
       } else {
         // Fallback redirection to hosted login
-        window.location.href = '/customer_authentication/login?return_to=' + encodeURIComponent(safeReturnUrl);
+        window.location.href = '/customer_authentication/login?return_to=/checkout';
       }
     }
-
-    // Expose for explicit section-level checkout guards
-    window.triggerLoginAndRedirectCheckout = triggerLoginAndRedirectCheckout;
 
   })();
 </script>

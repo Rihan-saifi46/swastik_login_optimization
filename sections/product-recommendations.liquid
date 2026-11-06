@@ -101,54 +101,8 @@
 
         <div class="pr-rec-carousel" id="pr-rec-carousel">
           {%- for recommendation in display_products limit: section.settings.products_to_show -%}
-            {%- assign rec_variant = recommendation.selected_or_first_available_variant -%}
-            {%- assign rec_is_diamond = false -%}
-            {%- assign rec_p_title_lower = recommendation.title | downcase -%}
-            {%- assign rec_p_type_lower = recommendation.type | downcase -%}
-            {%- if rec_p_title_lower contains 'diamond' or rec_p_type_lower contains 'diamond' -%}
-              {%- assign rec_is_diamond = true -%}
-            {%- endif -%}
-            {%- for tag in recommendation.tags -%}
-              {%- assign tag_lower = tag | downcase -%}
-              {%- if tag_lower contains 'diamond' or tag_lower == 'diamond-sale' or tag_lower == 'dhanteras-sale' -%}
-                {%- assign rec_is_diamond = true -%}
-              {%- endif -%}
-            {%- endfor -%}
-            {%- for col in recommendation.collections -%}
-              {%- assign col_h = col.handle | downcase -%}
-              {%- if col_h contains 'diamond' -%}
-                {%- assign rec_is_diamond = true -%}
-              {%- endif -%}
-            {%- endfor -%}
-            {%- if recommendation.metafields.custom.diamond_weight != blank -%}
-              {%- assign rec_is_diamond = true -%}
-            {%- endif -%}
-            {%- for v in recommendation.variants -%}
-              {%- if v.metafields.custom.diamond_value != blank and v.metafields.custom.diamond_value > 0 -%}
-                {%- assign rec_is_diamond = true -%}
-              {%- endif -%}
-            {%- endfor -%}
-
-            {%- assign rec_orig_price = rec_variant.price -%}
-            {%- assign rec_diamond_val = rec_variant.metafields.custom.diamond_value | default: 0 | plus: 0 -%}
-            {%- if rec_is_diamond and rec_diamond_val > 0 -%}
-              {%- assign rec_dia_cents = rec_diamond_val | times: 100 -%}
-              {%- assign rec_dia_discount = rec_dia_cents | times: 30 | divided_by: 100 -%}
-              {%- assign rec_promo_price = rec_orig_price | minus: rec_dia_discount | divided_by: 100 | round | times: 100 -%}
-            {%- else -%}
-              {%- assign rec_dia_cents = 0 -%}
-              {%- assign rec_dia_discount = 0 -%}
-              {%- assign rec_promo_price = rec_orig_price -%}
-            {%- endif -%}
-
-            <a href="{{ recommendation.url }}" class="pp-related-item-card pr-rec-card" data-product-id="{{ recommendation.id }}" data-variant-id="{{ rec_variant.id }}" style="text-decoration: none;">
+            <a href="{{ recommendation.url }}" class="pp-related-item-card pr-rec-card" style="text-decoration: none;">
               <div class="pp-related-img-wrap">
-                {%- if rec_is_diamond and rec_promo_price < rec_orig_price -%}
-                  <span class="pp-rel-badge" style="background: #013f3e; border: 1px solid #d4af37; color: #ffe082;">30% OFF</span>
-                {%- elsif recommendation.compare_at_price > rec_orig_price -%}
-                  {%- assign badge_disc = recommendation.compare_at_price | minus: rec_orig_price | times: 100 | divided_by: recommendation.compare_at_price -%}
-                  <span class="pp-rel-badge">-{{ badge_disc }}%</span>
-                {%- endif -%}
                 {%- if recommendation.featured_image -%}
                   <img src="{{ recommendation.featured_image | image_url: width: 400 }}" alt="{{ recommendation.title | escape }}" width="400" height="400" loading="lazy">
                 {%- else -%}
@@ -158,50 +112,15 @@
               <div class="pp-related-info">
                 <h3 class="pp-related-item-title">{{ recommendation.title }}</h3>
                 <div class="pp-related-pills">
-                  {%- assign rec_is_mto = false -%}
-                  {%- if recommendation.tags contains 'Made to Order' or recommendation.tags contains 'made to order' or recommendation.tags contains 'made-to-order' -%}
-                    {%- assign rec_is_mto = true -%}
-                  {%- endif -%}
-                  {%- assign rec_is_out_of_stock = false -%}
-                  {%- if rec_variant.available == false -%}
-                    {%- assign rec_is_out_of_stock = true -%}
-                  {%- elsif rec_variant.inventory_management != blank and rec_variant.inventory_quantity != blank and rec_variant.inventory_quantity <= 0 and rec_is_mto == false -%}
-                    {%- assign rec_is_out_of_stock = true -%}
-                  {%- endif -%}
-
-                  {%- assign rec_is_booked = false -%}
-                  {%- if rec_variant.metafields.custom.reserved == true or rec_variant.metafields.custom.reserved == 'true' or rec_variant.metafields.custom.booked == true or rec_variant.metafields.custom.booked == 'true' or rec_variant.metafields.custom.booking_status == 'confirmed' or rec_variant.metafields.custom.booking_status == 'booked' -%}
-                    {%- assign rec_is_booked = true -%}
-                  {%- endif -%}
-                  {%- if recommendation.metafields.custom.reserved == true or recommendation.metafields.custom.reserved == 'true' or recommendation.metafields.custom.booked == true or recommendation.metafields.custom.booked == 'true' or recommendation.metafields.custom.booking_status == 'confirmed' or recommendation.metafields.custom.booking_status == 'booked' -%}
-                    {%- if recommendation.has_only_default_variant or recommendation.variants.size <= 1 -%}
-                      {%- assign rec_is_booked = true -%}
+                  {%- assign rec_variant = recommendation.selected_or_first_available_variant -%}
+                  {%- if rec_variant.available -%}
+                    {%- if rec_variant.inventory_management and rec_variant.inventory_quantity <= 0 and rec_variant.inventory_policy == 'continue' -%}
+                      <span class="pp-rel-pill pp-rel-pill--made-to-order">Made to Order</span>
+                    {%- else -%}
+                      <span class="pp-rel-pill pp-rel-pill--in-stock">In Stock</span>
                     {%- endif -%}
-                  {%- endif -%}
-                  {%- assign rec_v_id_str = rec_variant.id | append: '' -%}
-                  {%- for tag in recommendation.tags -%}
-                    {%- assign tag_lower = tag | downcase -%}
-                    {%- if tag_lower == 'dhanteras-reserved' or tag_lower == 'booked' or tag_lower == 'dhanteras-booked' or tag_lower == 'reserved' -%}
-                      {%- if recommendation.has_only_default_variant or recommendation.variants.size <= 1 -%}
-                        {%- assign rec_is_booked = true -%}
-                      {%- endif -%}
-                    {%- elsif tag_lower contains 'dhanteras-reserved:' or tag_lower contains 'booked:' or tag_lower contains 'dhanteras-booked:' or tag_lower contains 'reserved:' -%}
-                      {%- if tag_lower contains rec_v_id_str -%}
-                        {%- assign rec_is_booked = true -%}
-                      {%- elsif recommendation.has_only_default_variant or recommendation.variants.size <= 1 -%}
-                        {%- assign rec_is_booked = true -%}
-                      {%- endif -%}
-                    {%- endif -%}
-                  {%- endfor -%}
-
-                  {%- if rec_is_booked -%}
-                    <span class="pp-rel-pill pp-rel-pill--booked">BOOKED</span>
-                  {%- elsif rec_is_out_of_stock -%}
-                    <span class="pp-rel-pill pp-rel-pill--sold-out pp-rel-pill--out-of-stock">Out of Stock</span>
-                  {%- elsif rec_is_mto and rec_variant.inventory_policy == 'continue' -%}
-                    <span class="pp-rel-pill pp-rel-pill--made-to-order">Made to Order</span>
                   {%- else -%}
-                    <span class="pp-rel-pill pp-rel-pill--in-stock">In Stock</span>
+                    <span class="pp-rel-pill pp-rel-pill--sold-out">Sold Out</span>
                   {%- endif -%}
                 </div>
                 {% assign rev_count = recommendation.id | modulo: 80 | plus: 48 %}
@@ -209,15 +128,13 @@
                   <span class="pp-rel-stars">★★★★★</span>
                   <span class="pp-rel-rev-count">({{ rev_count }})</span>
                 </div>
-                <div class="pp-related-price-row" data-diamond-eligible="{{ rec_is_diamond }}" data-original-price="{{ rec_orig_price }}" data-diamond-value="{{ rec_dia_cents }}" data-promo-price="{{ rec_promo_price }}">
-                  {%- if rec_is_diamond and rec_promo_price < rec_orig_price -%}
-                    <span class="pp-rel-current money js-card-price-current" data-inr-price="{{ rec_promo_price }}">{{ rec_promo_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</span>
-                    <s class="pp-rel-compare money js-card-price-original" data-inr-price="{{ rec_orig_price }}">{{ rec_orig_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</s>
+                <div class="pp-related-price-row">
+                  <span class="pp-rel-current">{{ recommendation.price | money | replace: '$', '₹' | replace: 'USD', '₹' }}</span>
+                  {%- if recommendation.compare_at_price > recommendation.price -%}
+                    <s class="pp-rel-compare">{{ recommendation.compare_at_price | money | replace: '$', '₹' | replace: 'USD', '₹' }}</s>
                   {%- else -%}
-                    <span class="pp-rel-current money js-card-price-current" data-inr-price="{{ rec_orig_price }}">{{ rec_orig_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</span>
-                    {%- if recommendation.compare_at_price > rec_orig_price -%}
-                      <s class="pp-rel-compare money js-card-price-original" data-inr-price="{{ recommendation.compare_at_price }}">{{ recommendation.compare_at_price | money_without_trailing_zeros | replace: 'Rs.', '₹' | replace: 'Rs ', '₹' | replace: 'Rs', '₹' | replace: '$', '₹' | replace: 'USD', '₹' | replace: '₹ ', '₹' }}</s>
-                    {%- endif -%}
+                    {% assign approx_comp = recommendation.price | times: 1.6 | divided_by: 100 | round | times: 100 %}
+                    <s class="pp-rel-compare">{{ approx_comp | money | replace: '$', '₹' | replace: 'USD', '₹' }}</s>
                   {%- endif -%}
                 </div>
                 <div class="pp-rel-view-btn">
@@ -564,15 +481,9 @@
     background: #FFF3E0 !important;
     color: #E65100 !important;
   }
-  .pp-rel-pill--sold-out,
-  .pp-rel-pill--out-of-stock {
+  .pp-rel-pill--sold-out {
     background: #FFEBEE !important;
     color: #C62828 !important;
-  }
-  .pp-rel-pill--booked {
-    background: #FAF3E3 !important;
-    color: #8C6219 !important;
-    border: 1px solid #E5D5BA !important;
   }
 {% endstylesheet %}
 
@@ -595,10 +506,6 @@
 
           if (recommendations && (recommendations.querySelector('.pr-rec-card') || recommendations.querySelector('.pp-related-item-card'))) {
             this.innerHTML = recommendations.innerHTML;
-          }
-
-          if (window.DiamondSale && typeof window.DiamondSale.updateProductCardsPriceUI === 'function') {
-            window.DiamondSale.updateProductCardsPriceUI();
           }
           
           if (this.classList.contains('pp-recommendations-section')) {

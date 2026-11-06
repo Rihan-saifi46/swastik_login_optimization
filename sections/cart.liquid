@@ -6,34 +6,7 @@
 
 {%- assign shop_coupon_metafield = shop.metafields.custom.coupons | default: shop.metafields.custom.global_coupons -%}
 
-{%- assign cart_has_diamond = false -%}
-{%- for item in cart.items -%}
-  {%- assign it_title = item.product.title | downcase -%}
-  {%- assign it_type = item.product.type | downcase -%}
-  {%- if it_title contains 'diamond' or it_type contains 'diamond' -%}
-    {%- assign cart_has_diamond = true -%}
-  {%- endif -%}
-  {%- for tag in item.product.tags -%}
-    {%- assign tag_l = tag | downcase -%}
-    {%- if tag_l contains 'diamond' or tag_l == 'diamond-sale' or tag_l == 'dhanteras-sale' -%}
-      {%- assign cart_has_diamond = true -%}
-    {%- endif -%}
-  {%- endfor -%}
-  {%- for col in item.product.collections -%}
-    {%- assign col_h = col.handle | downcase -%}
-    {%- if col_h contains 'diamond' -%}
-      {%- assign cart_has_diamond = true -%}
-    {%- endif -%}
-  {%- endfor -%}
-  {%- if item.product.metafields.custom.diamond_weight != blank -%}
-    {%- assign cart_has_diamond = true -%}
-  {%- endif -%}
-  {%- if item.variant.metafields.custom.diamond_value != blank and item.variant.metafields.custom.diamond_value > 0 -%}
-    {%- assign cart_has_diamond = true -%}
-  {%- endif -%}
-{%- endfor -%}
-
-<div class="swastik-cart-page" id="SwastikCartPage" data-cart-has-diamond="{{ cart_has_diamond }}">
+<div class="swastik-cart-page" id="SwastikCartPage">
   <!-- Breadcrumb -->
   <div class="cart-breadcrumb-wrapper">
     <div class="cart-container">
@@ -218,17 +191,6 @@
             <!-- Dynamically populated from shop/metafields/fallback coupons -->
           </div>
         </div>
-
-        {%- if cart_has_diamond -%}
-          <!-- Diamond Sale Promotional Notice for Cart -->
-          <div class="cart-diamond-sale-notice" id="cart-diamond-sale-notice">
-            <span class="cart-diamond-sale-notice__icon">💎</span>
-            <div class="cart-diamond-sale-notice__content">
-              <strong>Upcoming 30% Diamond Sale (Nov 6, 2:00 PM–6:00 PM IST):</strong>
-              <span>Eligible diamond piece(s) in your bag qualify for 30% OFF during the scheduled sale. Purchasing now before the sale starts means paying the current regular price.</span>
-            </div>
-          </div>
-        {%- endif -%}
 
         <!-- ORDER SUMMARY CARD -->
         <div class="cart-summary-card">
@@ -1087,36 +1049,9 @@
 
 <script>
 (function() {
-  const isCustomerLoggedIn = {% if customer %}true{% else %}false{% endif %};
-  const cartPageUrl = '{{ routes.cart_url }}';
   const APPLIED_COUPON_STORAGE_KEY = 'swastik_applied_coupon';
   let availableCouponsList = [];
   let currentSubtotalCents = {{ cart.original_total_price | default: cart.items_subtotal_price | default: cart.total_price | default: 0 }};
-
-  function redirectToLogin(targetUrl) {
-    const safeReturn = targetUrl || cartPageUrl;
-    if (typeof window.triggerLoginAndRedirectCheckout === 'function') {
-      window.triggerLoginAndRedirectCheckout(safeReturn);
-      return;
-    }
-    try {
-      sessionStorage.setItem('sw_post_login_return_url', safeReturn);
-      sessionStorage.setItem('post_login_redirect', safeReturn);
-      document.cookie = 'sw_post_login_return_url=' + encodeURIComponent(safeReturn) + '; path=/; max-age=1800; SameSite=Lax';
-    } catch(e) {}
-
-    const accountEl = document.getElementById('storefront-shopify-account');
-    if (accountEl) {
-      accountEl.setAttribute('sign-in-url', '/customer_authentication/login?return_to=' + encodeURIComponent(safeReturn));
-      const trigger = accountEl.querySelector('[slot="signed-out-avatar"]');
-      if (trigger) {
-        trigger.click();
-        return;
-      }
-    }
-
-    window.location.href = '/customer_authentication/login?return_to=' + encodeURIComponent(safeReturn);
-  }
 
   function formatMoney(cents) {
     if (typeof window.formatMoney === 'function') {
@@ -1130,30 +1065,12 @@
     const code = c.code || c.promo_code || '';
     if (!code || typeof code !== 'string') return null;
 
-    // Filter expired discounts based on CRM timestamps
     const expiryRaw = c.expiry_date || c.endsAt || c.end_date || null;
     if (expiryRaw) {
       const expDate = new Date(expiryRaw);
       if (!isNaN(expDate.getTime()) && expDate.getTime() < Date.now()) {
         return null;
       }
-    }
-
-    // Filter not-yet-started discounts
-    const startsRaw = c.startsAt || c.start_date || null;
-    if (startsRaw) {
-      const startDate = new Date(startsRaw);
-      if (!isNaN(startDate.getTime()) && startDate.getTime() > Date.now()) {
-        return null;
-      }
-    }
-
-    // Filter inactive/disabled status
-    if (c.status && ['inactive', 'disabled', 'draft', 'expired'].includes(String(c.status).toLowerCase())) {
-      return null;
-    }
-    if (c.active === false || c.is_active === false) {
-      return null;
     }
 
     let formattedExpiry = '';
@@ -1172,15 +1089,14 @@
       value = Math.round(value * 100);
     }
 
-    const minOrder = c.min_order_value !== undefined && c.min_order_value !== null ? c.min_order_value : (c.minimum_order_value !== undefined && c.minimum_order_value !== null ? c.minimum_order_value : (c.minimumRequirement?.subtotal?.greaterThanOrEqualToSubtotal || null));
+    const minOrder = c.min_order_value || c.minimum_order_value || c.minimumRequirement?.subtotal?.greaterThanOrEqualToSubtotal || null;
     const desc = c.short_description || c.campaign_name || c.title || '';
 
     return {
       code: code.trim().toUpperCase(),
-      title: c.title || '',
       type: type,
-      value: parseFloat(value) || 0,
-      min_order_value: minOrder !== null ? parseFloat(minOrder) : null,
+      value: value,
+      min_order_value: minOrder ? parseFloat(minOrder) : null,
       expiry_date: formattedExpiry,
       short_description: desc
     };
@@ -1212,6 +1128,17 @@
       } catch(e) {}
     }
 
+    // 3. Fallback welcome coupon if none from metafields
+    if (rawList.length === 0) {
+      rawList.push({
+        code: 'WELCOME10',
+        type: 'percentage',
+        value: 10,
+        short_description: 'Welcome 10% discount on handcrafted jewellery',
+        expiry_date: 'Limited time offer'
+      });
+    }
+
     // Normalize & Deduplicate
     const uniqueMap = new Map();
     rawList.forEach(item => {
@@ -1241,7 +1168,7 @@
 
   function getAppliedCouponCode() {
     try {
-      return (localStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || sessionStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || '').trim().toUpperCase();
+      return localStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || sessionStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || '';
     } catch(e) {
       return '';
     }
@@ -1249,15 +1176,12 @@
 
   function setAppliedCouponCode(code) {
     try {
-      const clean = (code || '').trim().toUpperCase();
-      if (clean) {
-        localStorage.setItem(APPLIED_COUPON_STORAGE_KEY, clean);
-        sessionStorage.setItem(APPLIED_COUPON_STORAGE_KEY, clean);
-        document.cookie = 'discount_code=' + encodeURIComponent(clean) + '; path=/; SameSite=Lax';
+      if (code) {
+        localStorage.setItem(APPLIED_COUPON_STORAGE_KEY, code);
+        sessionStorage.setItem(APPLIED_COUPON_STORAGE_KEY, code);
       } else {
         localStorage.removeItem(APPLIED_COUPON_STORAGE_KEY);
         sessionStorage.removeItem(APPLIED_COUPON_STORAGE_KEY);
-        document.cookie = 'discount_code=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
       }
     } catch(e) {}
   }
@@ -1270,7 +1194,7 @@
     let html = '';
 
     availableCouponsList.forEach(c => {
-      const isApplied = appliedCode && appliedCode === c.code;
+      const isApplied = appliedCode && appliedCode.toUpperCase() === c.code.toUpperCase();
       let discountText = '';
       if (c.type === 'percentage') {
         discountText = `${c.value}% OFF`;
@@ -1317,25 +1241,24 @@
     let appliedCoupon = null;
 
     if (appliedCode) {
-      appliedCoupon = availableCouponsList.find(c => c.code === appliedCode);
+      appliedCoupon = availableCouponsList.find(c => c.code.toUpperCase() === appliedCode.toUpperCase()) || {
+        code: appliedCode,
+        type: 'percentage',
+        value: 10,
+        min_order_value: null,
+        short_description: 'Coupon code applied'
+      };
 
-      if (!appliedCoupon) {
-        // Unknown, arbitrary, or expired coupon in storage - purge it immediately
-        setAppliedCouponCode('');
-      } else {
-        const subtotalRs = currentSubtotalCents / 100;
-        if (appliedCoupon.min_order_value && subtotalRs < appliedCoupon.min_order_value) {
-          const shortfall = appliedCoupon.min_order_value - subtotalRs;
-          showCouponMsg(`Add ${formatMoney(Math.ceil(shortfall) * 100)} more to use ${appliedCoupon.code}`, 'error');
-          setAppliedCouponCode('');
-          appliedCoupon = null;
-        } else {
-          discountCents = calculateDiscount(appliedCoupon, currentSubtotalCents);
-        }
+      discountCents = calculateDiscount(appliedCoupon, currentSubtotalCents);
+
+      // Check min order value requirement
+      if (appliedCoupon.min_order_value && (currentSubtotalCents / 100) < appliedCoupon.min_order_value) {
+        showCouponMsg(`Add ₹${(appliedCoupon.min_order_value - (currentSubtotalCents / 100)).toLocaleString('en-IN')} more to use ${appliedCoupon.code}`, 'error');
+        discountCents = 0;
       }
     }
 
-    if (appliedCoupon && discountCents > 0) {
+    if (appliedCode && discountCents > 0) {
       if (discountRow) {
         discountRow.style.display = 'flex';
         if (discountTag) discountTag.textContent = appliedCoupon.code;
@@ -1347,18 +1270,8 @@
         if (appliedDescLabel) appliedDescLabel.textContent = `You saved ${formatMoney(discountCents)} on this order`;
       }
     } else {
-      // Completely reset and hide applied coupon display when no valid coupon is applied
-      if (discountRow) {
-        discountRow.style.display = 'none';
-        if (discountTag) discountTag.textContent = '';
-        if (discountVal) discountVal.textContent = '-₹0';
-      }
-      if (appliedBanner) {
-        appliedBanner.style.display = 'none';
-        if (appliedCodeLabel) appliedCodeLabel.textContent = '';
-        if (appliedDescLabel) appliedDescLabel.textContent = '';
-      }
-      discountCents = 0;
+      if (discountRow) discountRow.style.display = 'none';
+      if (appliedBanner) appliedBanner.style.display = 'none';
     }
 
     const finalTotalCents = Math.max(0, currentSubtotalCents - discountCents);
@@ -1367,155 +1280,50 @@
     renderCouponsList();
   }
 
-  let couponMsgTimeout = null;
   function showCouponMsg(text, type) {
     const msgEl = document.getElementById('cart-coupon-message');
     if (!msgEl) return;
-    if (couponMsgTimeout) {
-      clearTimeout(couponMsgTimeout);
-      couponMsgTimeout = null;
-    }
     msgEl.textContent = text;
     msgEl.className = 'cart-coupon-msg ' + (type === 'error' ? 'cart-coupon-msg--error' : 'cart-coupon-msg--success');
     msgEl.style.display = 'block';
-    couponMsgTimeout = setTimeout(() => {
+    setTimeout(() => {
       msgEl.style.display = 'none';
-    }, 4500);
+    }, 4000);
   }
 
   window.selectCouponCode = function(code) {
-    if (!code || typeof code !== 'string') return;
-    const cleanCode = code.trim().toUpperCase();
     const current = getAppliedCouponCode();
-    if (current && current === cleanCode) {
+    if (current && current.toUpperCase() === code.toUpperCase()) {
       return; // Already applied
     }
-
-    const matchedCoupon = availableCouponsList.find(c => c.code === cleanCode);
-    if (!matchedCoupon) {
-      showCouponMsg(`Coupon code "${cleanCode}" is invalid, expired, or not applicable.`, 'error');
-      return;
-    }
-
-    const subtotalRs = currentSubtotalCents / 100;
-    if (matchedCoupon.min_order_value && subtotalRs < matchedCoupon.min_order_value) {
-      const shortfall = matchedCoupon.min_order_value - subtotalRs;
-      showCouponMsg(`Add ${formatMoney(Math.ceil(shortfall) * 100)} more to use ${matchedCoupon.code}`, 'error');
-      return;
-    }
-
-    setAppliedCouponCode(matchedCoupon.code);
-    showCouponMsg(`Coupon ${matchedCoupon.code} applied successfully!`, 'success');
+    setAppliedCouponCode(code);
+    showCouponMsg(`Coupon ${code} applied successfully!`, 'success');
     updateOrderSummary();
   };
 
-  let isApplyingCoupon = false;
   window.applyManualCoupon = function() {
-    if (isApplyingCoupon) return;
     const input = document.getElementById('cart-manual-coupon-input');
-    const applyBtn = document.getElementById('cart-apply-coupon-btn');
-    if (!input) return;
-
-    const rawVal = input.value;
-    const cleanCode = (rawVal || '').trim().toUpperCase();
-
-    if (!cleanCode) {
-      showCouponMsg('Please enter a coupon code.', 'error');
-      return;
-    }
-
-    isApplyingCoupon = true;
-    const originalBtnText = applyBtn ? applyBtn.textContent : 'APPLY';
-    if (applyBtn) {
-      applyBtn.disabled = true;
-      applyBtn.textContent = '...';
-    }
-
-    try {
-      const matchedCoupon = availableCouponsList.find(c => c.code === cleanCode);
-      if (!matchedCoupon) {
-        showCouponMsg(`Coupon code "${cleanCode}" is invalid, expired, or not applicable.`, 'error');
-        return;
-      }
-
-      const subtotalRs = currentSubtotalCents / 100;
-      if (matchedCoupon.min_order_value && subtotalRs < matchedCoupon.min_order_value) {
-        const shortfall = matchedCoupon.min_order_value - subtotalRs;
-        showCouponMsg(`Add ${formatMoney(Math.ceil(shortfall) * 100)} more to use ${matchedCoupon.code}`, 'error');
-        return;
-      }
-
-      setAppliedCouponCode(matchedCoupon.code);
-      input.value = '';
-      showCouponMsg(`Coupon ${matchedCoupon.code} applied successfully!`, 'success');
-      updateOrderSummary();
-    } catch (err) {
-      console.error('Error applying coupon:', err);
-      showCouponMsg('Unable to apply coupon. Please try again.', 'error');
-    } finally {
-      isApplyingCoupon = false;
-      if (applyBtn) {
-        applyBtn.disabled = false;
-        applyBtn.textContent = originalBtnText;
-      }
-    }
+    if (!input || !input.value.trim()) return;
+    const code = input.value.trim().toUpperCase();
+    setAppliedCouponCode(code);
+    input.value = '';
+    showCouponMsg(`Coupon ${code} applied!`, 'success');
+    updateOrderSummary();
   };
 
-  let isRemovingCoupon = false;
   window.removeAppliedCoupon = function() {
-    if (isRemovingCoupon) return;
-    const removeBtn = document.querySelector('.cart-remove-coupon-btn');
-    isRemovingCoupon = true;
-    if (removeBtn) {
-      removeBtn.disabled = true;
-    }
-
-    try {
-      setAppliedCouponCode('');
-      // Safely clear Shopify server-side discount session via /discount/CLEAR
-      if (typeof fetch === 'function') {
-        fetch('/discount/CLEAR', { method: 'GET', credentials: 'same-origin' }).catch(function() {});
-      }
-      showCouponMsg('Coupon removed', 'success');
-      updateOrderSummary();
-    } catch (err) {
-      console.error('Error removing coupon:', err);
-      showCouponMsg('Unable to remove coupon. Please try again.', 'error');
-    } finally {
-      isRemovingCoupon = false;
-      if (removeBtn) {
-        removeBtn.disabled = false;
-      }
-    }
+    setAppliedCouponCode('');
+    showCouponMsg('Coupon removed', 'success');
+    updateOrderSummary();
   };
 
   window.handleProceedToCheckout = function() {
-    // 1. Enforce authentication: Logged-out customers must log in first
-    if (!isCustomerLoggedIn) {
-      redirectToLogin(cartPageUrl);
-      return;
+    const appliedCode = getAppliedCouponCode();
+    let checkoutUrl = '/checkout';
+    if (appliedCode) {
+      checkoutUrl += '?discount=' + encodeURIComponent(appliedCode);
     }
-
-    // 2. Logged-in customer proceeds to checkout
-    const doProceed = function() {
-      const appliedCode = getAppliedCouponCode();
-      let checkoutUrl = '/checkout';
-      if (appliedCode) {
-        checkoutUrl += '?discount=' + encodeURIComponent(appliedCode);
-      }
-      window.location.href = checkoutUrl;
-    };
-
-    if (window.DiamondSale && typeof window.DiamondSale.shouldInterceptCartCheckout === 'function' && window.DiamondSale.shouldInterceptCartCheckout()) {
-      window.DiamondSale.openPreSaleWarningModal({
-        source: 'cart_page',
-        originalPriceCents: {{ cart.total_price | json }},
-        onAcknowledge: doProceed
-      });
-      return;
-    }
-
-    doProceed();
+    window.location.href = checkoutUrl;
   };
 
   window.handleCartQtyChange = function(key, quantity) {
@@ -1585,41 +1393,7 @@
   // Initialization
   document.addEventListener('DOMContentLoaded', function() {
     loadAllCoupons();
-
-    // Validate any pre-stored coupon against authoritative coupons
-    const storedCode = getAppliedCouponCode();
-    if (storedCode) {
-      const matched = availableCouponsList.find(c => c.code === storedCode);
-      if (!matched) {
-        setAppliedCouponCode('');
-      } else {
-        const subtotalRs = currentSubtotalCents / 100;
-        if (matched.min_order_value && subtotalRs < matched.min_order_value) {
-          setAppliedCouponCode('');
-        }
-      }
-    }
-
     updateOrderSummary();
-
-    const manualInput = document.getElementById('cart-manual-coupon-input');
-    if (manualInput) {
-      manualInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          applyManualCoupon();
-        }
-      });
-    }
-
-    // Intercept checkout form submission (e.g. Enter key pressed anywhere in the checkout form)
-    const checkoutForm = document.getElementById('cart-checkout-form');
-    if (checkoutForm) {
-      checkoutForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        window.handleProceedToCheckout();
-      });
-    }
   });
 })();
 </script>

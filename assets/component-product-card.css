@@ -143,16 +143,9 @@
   color: #E65100 !important;
 }
 
-.product-card-ui__pill--sold-out,
-.product-card-ui__pill--out-of-stock {
+.product-card-ui__pill--sold-out {
   background: #FFEBEE !important;
   color: #C62828 !important;
-}
-
-.product-card-ui__pill--booked {
-  background: #FAF3E3 !important;
-  color: #8C6219 !important;
-  border: 1px solid #E5D5BA !important;
 }
 
 .product-card-ui__reviews {
@@ -256,6 +249,9 @@
   }
   .product-card-ui__subtitle {
     font-size: 10.5px !important;
+  }
+  .product-card-ui__pills {
+    display: none !important;
   }
   .product-card-ui__stars {
     font-size: 11.5px !important;

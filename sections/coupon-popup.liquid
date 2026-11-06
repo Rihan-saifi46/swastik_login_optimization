@@ -62,9 +62,13 @@
     {{ shop_coupon_metafield | default: '[]' }}
   </script>
 
-  <!-- Popup Config Data JSON -->
-  <script id="site-popup-config-json" type="application/json">
+  <!-- Fallback Settings Data JSON -->
+  <script id="site-fallback-coupon-json" type="application/json">
     {
+      "code": {{ section.settings.fallback_code | default: 'WELCOME10' | json }},
+      "discount": {{ section.settings.fallback_discount | default: '10% OFF' | json }},
+      "desc": {{ section.settings.fallback_description | default: 'Welcome discount on your first luxury order' | json }},
+      "expiry": {{ section.settings.fallback_validity | default: 'Limited time offer' | json }},
       "delay": {{ section.settings.popup_delay | default: 1.5 | json }}
     }
   </script>
@@ -490,23 +494,6 @@
           }
         }
 
-        // Filter not-yet-started discounts
-        const startsRaw = c.startsAt || c.start_date || null;
-        if (startsRaw) {
-          const startDate = new Date(startsRaw);
-          if (!isNaN(startDate.getTime()) && startDate.getTime() > Date.now()) {
-            return null; // Inactive / Future
-          }
-        }
-
-        // Filter inactive/disabled status
-        if (c.status && (c.status === 'inactive' || c.status === 'disabled' || c.status === 'draft' || c.status === 'expired')) {
-          return null;
-        }
-        if (c.active === false || c.is_active === false) {
-          return null;
-        }
-
         // Format human-readable expiry
         let formattedExpiry = '';
         if (expiryRaw) {
@@ -548,6 +535,7 @@
 
       function getSiteCoupons() {
         const shopJsonEl = document.getElementById('site-shop-coupons-json');
+        const fallbackJsonEl = document.getElementById('site-fallback-coupon-json');
 
         let coupons = [];
         if (shopJsonEl) {
@@ -561,6 +549,25 @@
             }
           } catch (e) {
             console.error('Error parsing site coupons:', e);
+          }
+        }
+
+        // If no coupons from metafields, use custom section fallback
+        if (coupons.length === 0 && fallbackJsonEl) {
+          try {
+            const fb = JSON.parse(fallbackJsonEl.textContent || '{}');
+            if (fb && fb.code) {
+              coupons.push({
+                code: String(fb.code).trim().toUpperCase(),
+                type: 'custom',
+                value: 0,
+                custom_discount: fb.discount || '10% OFF',
+                short_description: fb.desc || 'Special Welcome Discount',
+                expiry_date: fb.expiry || ''
+              });
+            }
+          } catch (e) {
+            console.error('Error parsing fallback coupon:', e);
           }
         }
 
@@ -580,16 +587,7 @@
         if (!container) return;
 
         if (!coupons || coupons.length === 0) {
-          container.innerHTML = `
-            <div class="site-coupon-empty-state" style="text-align: center; padding: 28px 16px; color: #666; font-family: Inter, sans-serif;">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 12px; color: #D4AF37; display: block;">
-                <rect x="3" y="4" width="18" height="16" rx="2"></rect>
-                <line x1="12" y1="4" x2="12" y2="20" stroke-dasharray="3 3"></line>
-              </svg>
-              <div style="font-weight: 600; font-size: 14px; color: #013F3E; margin-bottom: 4px;">No coupons currently available</div>
-              <div style="font-size: 12px; color: #888;">Check back soon for exclusive promotions on our luxury jewellery collections.</div>
-            </div>
-          `;
+          container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666; font-size: 13px; font-family: Inter, sans-serif;">Special offers available soon.</div>';
           return;
         }
 
@@ -632,11 +630,6 @@
       function openSiteCouponPopup(customCoupons, title, subtitle) {
         const overlay = document.getElementById('SiteCouponOverlay');
         if (!overlay) return;
-
-        // Ensure PDP Apply Coupon modal is closed if open
-        if (window.pdpCouponController && typeof window.pdpCouponController.closeModal === 'function') {
-          window.pdpCouponController.closeModal();
-        }
 
         let coupons = [];
         const isCustom = Array.isArray(customCoupons);
@@ -697,23 +690,12 @@
 
         overlay.classList.remove('is-active');
         overlay.setAttribute('aria-hidden', 'true');
-
-        // Only restore body scrolling if the PDP coupon modal is not currently open
-        const pdpOverlay = document.getElementById('PdpCouponModalOverlay');
-        if (!pdpOverlay || !pdpOverlay.classList.contains('is-active')) {
-          document.body.style.overflow = '';
-        }
-
+        document.body.style.overflow = '';
         setTimeout(() => {
           if (!overlay.classList.contains('is-active')) {
             overlay.style.display = 'none';
           }
         }, 350);
-
-        const triggerBtn = document.getElementById('pp-coupon-trigger');
-        if (triggerBtn && triggerBtn.style.display !== 'none') {
-          triggerBtn.focus();
-        }
       }
 
       // Clipboard copy helper with fallback
@@ -834,15 +816,12 @@
 
         if (seen) return;
 
-        const siteCoupons = getSiteCoupons();
-        if (!siteCoupons || siteCoupons.length === 0) return;
-
-        const configJsonEl = document.getElementById('site-popup-config-json');
+        const fallbackJsonEl = document.getElementById('site-fallback-coupon-json');
         let delaySec = 1.5;
-        if (configJsonEl) {
+        if (fallbackJsonEl) {
           try {
-            const cfg = JSON.parse(configJsonEl.textContent || '{}');
-            if (cfg && typeof cfg.delay === 'number') delaySec = cfg.delay;
+            const fb = JSON.parse(fallbackJsonEl.textContent || '{}');
+            if (fb && typeof fb.delay === 'number') delaySec = fb.delay;
           } catch (e) {}
         }
 
@@ -905,6 +884,34 @@
       "max": 10,
       "step": 0.5,
       "default": 1.5
+    },
+    {
+      "type": "header",
+      "content": "Fallback / Default Coupon Offer"
+    },
+    {
+      "type": "text",
+      "id": "fallback_code",
+      "label": "Coupon Code",
+      "default": "WELCOME10"
+    },
+    {
+      "type": "text",
+      "id": "fallback_discount",
+      "label": "Discount Text",
+      "default": "10% OFF"
+    },
+    {
+      "type": "text",
+      "id": "fallback_description",
+      "label": "Description",
+      "default": "Welcome 10% Discount on your first order"
+    },
+    {
+      "type": "text",
+      "id": "fallback_validity",
+      "label": "Validity / Note",
+      "default": "Limited time offer"
     }
   ]
 }
