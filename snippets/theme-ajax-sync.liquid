@@ -725,7 +725,22 @@
           returnInput.name = 'return_to';
           returnInput.value = '/checkout';
           form.appendChild(returnInput);
-          form.submit();
+
+          const variantId = document.getElementById('pp-variant-id')?.value || form.querySelector('[name="id"]')?.value;
+          fetch('https://backend-api.swastikjewel.in/api/diamond-sale/instant-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ variant_id: variantId })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'success' && data.invoice_url) {
+              window.location.href = data.invoice_url;
+            } else {
+              form.submit();
+            }
+          })
+          .catch(() => form.submit());
         }
       }
     });

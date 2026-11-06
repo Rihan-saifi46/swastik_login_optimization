@@ -66,7 +66,7 @@
 <script id="diamond-sale-config-json" type="application/json">
 {
   "serverTimeUnix": {{ 'now' | date: '%s' | times: 1000 }},
-  "saleStartIso": "2026-11-06T14:00:00+05:30",
+  "saleStartIso": "2026-11-06T12:00:00+05:30",
   "saleEndIso": "2026-11-06T18:00:00+05:30",
   "timezone": "Asia/Kolkata",
   "discountPercent": 30,
@@ -565,7 +565,7 @@
   // Target timestamps in Asia/Kolkata (UTC+05:30)
   // 6 November 2026, 2:00 PM IST = 1793953800000 UTC
   // 6 November 2026, 6:00 PM IST = 1793968200000 UTC
-  const SALE_START_UTC = Date.parse(config.saleStartIso || '2026-11-06T14:00:00+05:30');
+  const SALE_START_UTC = Date.parse(config.saleStartIso || '2026-11-06T12:00:00+05:30');
   const SALE_END_UTC   = Date.parse(config.saleEndIso   || '2026-11-06T18:00:00+05:30');
   const DISCOUNT_PERCENT = config.discountPercent || 30;
 
