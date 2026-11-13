@@ -36,8 +36,7 @@ body {
 .wishlist-drawer:not(.is-open),
 .mobile-categories-drawer:not(.open),
 .mobile-menu-drawer:not(.mobile-menu-drawer--open),
-.video-call-modal:not(.is-open),
-.site-coupon-overlay:not(.is-active) {
+.video-call-modal:not(.is-open) {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
