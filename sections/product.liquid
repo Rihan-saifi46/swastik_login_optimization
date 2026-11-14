@@ -659,7 +659,13 @@
           <div class="pp-row-divider"></div>
 
           <!-- Diamond Value -->
-          <div class="breakdown-row">
+          {%- assign dia_val_num = v.diamond_value | default: 0 | plus: 0 -%}
+          {%- assign is_dia = p.is_diamond -%}
+          {%- assign hide_diamond = false -%}
+          {%- if dia_val_num <= 0 or v.diamond_value == '0' or v.diamond_value == 0 or v.diamond_value == blank or is_dia == false or is_dia == 'false' or product.selected_or_first_available_variant.metafields.custom.diamond_value == '0' or product.metafields.custom.is_diamond == 'false' -%}
+            {%- assign hide_diamond = true -%}
+          {%- endif -%}
+          <div class="breakdown-row" id="ui-row-diamond"{% if hide_diamond %} style="display: none !important;"{% endif %}>
             <div class="bd-col-desc">
               <div class="bd-title" id="ui-label-dia-val">Diamond Value</div>
               <div class="bd-subtitle">
@@ -671,7 +677,7 @@
             <div class="bd-col-qty" id="ui-bd-dia-qty">{{ p.diamond_weight | default: '0' }}</div>
             <div class="bd-col-amt money" id="ui-price-diamond" data-inr-price="{{ v.diamond_value | default: '0' | times: 100 }}">₹{{ v.diamond_value | default: '0' }}</div>
           </div>
-          <div class="pp-row-divider"></div>
+          <div class="pp-row-divider" id="ui-divider-diamond"{% if hide_diamond %} style="display: none !important;"{% endif %}></div>
 
           <!-- Stone Value -->
           {%- assign stone_wt = p.stone_weight | default: '0' -%}
@@ -691,12 +697,29 @@
           <div class="pp-row-divider" id="ui-divider-stone" {% unless stone_val > 0 %}style="display: none !important;"{% endunless %}></div>
 
           <!-- Making Charges -->
+          {%- assign making_rate_raw = v.custom_making_charge_rate | default: v.making_charge_rate | default: '0' | strip -%}
+          {%- assign is_making_pct = false -%}
+          {%- if making_rate_raw contains '%' -%}
+            {%- assign is_making_pct = true -%}
+          {%- endif -%}
           <div class="breakdown-row">
             <div class="bd-col-desc">
               <div class="bd-title">Making Charges</div>
-              <div class="bd-subtitle">₹<span id="ui-bd-making-rate-text">{{ v.custom_making_charge_rate | default: v.making_charge_rate | default: '0' }}</span> per gram (Net Weight)</div>
+              <div class="bd-subtitle" id="ui-bd-making-subtitle">
+                {%- if is_making_pct -%}
+                  {{ making_rate_raw }} on 24K Gold Rate
+                {%- else -%}
+                  ₹<span id="ui-bd-making-rate-text">{{ making_rate_raw }}</span> per gram (Net Weight)
+                {%- endif -%}
+              </div>
             </div>
-            <div class="bd-col-rate" id="ui-bd-making-rate">₹{{ v.custom_making_charge_rate | default: v.making_charge_rate | default: '0' }} / gm</div>
+            <div class="bd-col-rate" id="ui-bd-making-rate">
+              {%- if is_making_pct -%}
+                {{ making_rate_raw }}
+              {%- else -%}
+                ₹{{ making_rate_raw }} / gm
+              {%- endif -%}
+            </div>
             <div class="bd-col-qty" id="ui-bd-making-qty">{{ p.net_weight | default: p.net_wight | default: '0' }}</div>
             <div class="bd-col-amt money" id="ui-price-making" data-inr-price="{{ v.making_charges | default: '0' | times: 100 }}">₹{{ v.making_charges | default: '0' }}</div>
           </div>
@@ -882,7 +905,8 @@
     "net_weight": {{ product.metafields.custom.net_weight | json }},
     "diamond_weight": {{ product.metafields.custom.diamond_weight | json }},
     "stone_weight": {{ product.metafields.custom.stone_weight | json }},
-    "making_charges": {{ product.metafields.custom.making_charges | json }}
+    "making_charges": {{ product.metafields.custom.making_charges | json }},
+    "is_diamond": {{ product.metafields.custom.is_diamond | json }}
   }
 </script>
 
@@ -2642,17 +2666,39 @@
               const elStoneRateM = document.getElementById('ui-bd-stone-rate-m');
               if(elStoneRateM) elStoneRateM.textContent = `₹${stoneRate}/ct`;
               
+              // A. Toggle Diamond Row (Hide when 0, Show when > 0)
+              const elDiaVal = document.getElementById('ui-price-diamond');
+              const elDiaRow = document.getElementById('ui-row-diamond') || elDiaVal?.closest('.breakdown-row');
+              const elDiaDivider = document.getElementById('ui-divider-diamond') || elDiaRow?.nextElementSibling;
+
+              if (diamondValue > 0) {
+                if (elDiaRow) elDiaRow.style.setProperty('display', 'flex', 'important');
+                if (elDiaDivider) elDiaDivider.style.display = '';
+                if (elDiaVal) elDiaVal.textContent = fmt(diamondValue);
+              } else {
+                if (elDiaRow) elDiaRow.style.setProperty('display', 'none', 'important');
+                if (elDiaDivider) elDiaDivider.style.setProperty('display', 'none', 'important');
+              }
+
+              // B. Making Charges (Check if % or flat ₹/gm)
+              const rawMakingRate = String(variantMeta.custom_making_charge_rate || '').trim();
               const elMakingRate = document.getElementById('ui-bd-making-rate');
-              if(elMakingRate) elMakingRate.textContent = `₹${makingRate} / gm`;
-              
               const elMakingRateText = document.getElementById('ui-bd-making-rate-text');
-              if(elMakingRateText) elMakingRateText.textContent = makingRate;
+              const elMakingSubtitle = document.getElementById('ui-bd-making-subtitle') || elMakingRateText?.parentElement;
+
+              if (rawMakingRate.includes('%')) {
+                // Pure Gold Items (Percentage)
+                if (elMakingRate) elMakingRate.textContent = rawMakingRate;
+                if (elMakingSubtitle) elMakingSubtitle.textContent = `${rawMakingRate} on 24K Gold Rate`;
+              } else {
+                // Diamond Items (Flat Per Gram)
+                if (elMakingRate) elMakingRate.textContent = `₹${makingRate} / gm`;
+                if (elMakingRateText) elMakingRateText.textContent = makingRate;
+                if (elMakingSubtitle) elMakingSubtitle.innerHTML = `₹<span id="ui-bd-making-rate-text">${makingRate}</span> per gram (Net Weight)`;
+              }
 
               const elGoldVal = document.getElementById('ui-price-gold');
               if(elGoldVal) elGoldVal.textContent = fmt(goldValue > 0 ? goldValue : 0);
-              
-              const elDiaVal = document.getElementById('ui-price-diamond');
-              if(elDiaVal) elDiaVal.textContent = fmt(diamondValue);
               
               const stoneWeightStr = String(meta.stone_weight || '0').trim();
               const hasStone = stoneWeightStr !== '0' && stoneWeightStr !== '';
