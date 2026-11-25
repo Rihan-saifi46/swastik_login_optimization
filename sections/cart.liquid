@@ -1128,17 +1128,6 @@
       } catch(e) {}
     }
 
-    // 3. Fallback welcome coupon if none from metafields
-    if (rawList.length === 0) {
-      rawList.push({
-        code: 'WELCOME10',
-        type: 'percentage',
-        value: 10,
-        short_description: 'Welcome 10% discount on handcrafted jewellery',
-        expiry_date: 'Limited time offer'
-      });
-    }
-
     // Normalize & Deduplicate
     const uniqueMap = new Map();
     rawList.forEach(item => {
@@ -1168,7 +1157,13 @@
 
   function getAppliedCouponCode() {
     try {
-      return localStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || sessionStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || '';
+      const code = localStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || sessionStorage.getItem(APPLIED_COUPON_STORAGE_KEY) || '';
+      if (code && code.toUpperCase() === 'WELCOME10') {
+        localStorage.removeItem(APPLIED_COUPON_STORAGE_KEY);
+        sessionStorage.removeItem(APPLIED_COUPON_STORAGE_KEY);
+        return '';
+      }
+      return code;
     } catch(e) {
       return '';
     }
