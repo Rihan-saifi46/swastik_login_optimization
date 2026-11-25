@@ -652,6 +652,10 @@
   .cart-coupon-apply-btn:hover {
     background: #012B2A;
   }
+  .cart-coupon-apply-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 
   .cart-coupon-msg {
     font-size: 12px;
@@ -1219,6 +1223,8 @@
     listContainer.innerHTML = html;
   }
 
+  let isApplyingCoupon = false;
+
   function updateOrderSummary() {
     const subtotalEl = document.getElementById('summary-subtotal-val');
     const discountRow = document.getElementById('summary-discount-row');
@@ -1236,24 +1242,23 @@
     let appliedCoupon = null;
 
     if (appliedCode) {
-      appliedCoupon = availableCouponsList.find(c => c.code.toUpperCase() === appliedCode.toUpperCase()) || {
-        code: appliedCode,
-        type: 'percentage',
-        value: 10,
-        min_order_value: null,
-        short_description: 'Coupon code applied'
-      };
+      appliedCoupon = availableCouponsList.find(c => c.code.toUpperCase() === appliedCode.toUpperCase()) || null;
 
-      discountCents = calculateDiscount(appliedCoupon, currentSubtotalCents);
+      if (appliedCoupon) {
+        discountCents = calculateDiscount(appliedCoupon, currentSubtotalCents);
 
-      // Check min order value requirement
-      if (appliedCoupon.min_order_value && (currentSubtotalCents / 100) < appliedCoupon.min_order_value) {
-        showCouponMsg(`Add ₹${(appliedCoupon.min_order_value - (currentSubtotalCents / 100)).toLocaleString('en-IN')} more to use ${appliedCoupon.code}`, 'error');
-        discountCents = 0;
+        // Check min order value requirement
+        if (appliedCoupon.min_order_value && (currentSubtotalCents / 100) < appliedCoupon.min_order_value) {
+          showCouponMsg(`Add ₹${Math.ceil(appliedCoupon.min_order_value - (currentSubtotalCents / 100)).toLocaleString('en-IN')} more to use ${appliedCoupon.code}`, 'error');
+          discountCents = 0;
+        }
+      } else {
+        // Unrecognized code in storage — purge it so invalid codes do not persist
+        setAppliedCouponCode('');
       }
     }
 
-    if (appliedCode && discountCents > 0) {
+    if (appliedCoupon && discountCents > 0) {
       if (discountRow) {
         discountRow.style.display = 'flex';
         if (discountTag) discountTag.textContent = appliedCoupon.code;
@@ -1287,23 +1292,88 @@
   }
 
   window.selectCouponCode = function(code) {
+    if (isApplyingCoupon) return;
     const current = getAppliedCouponCode();
     if (current && current.toUpperCase() === code.toUpperCase()) {
-      return; // Already applied
+      showCouponMsg(`Coupon ${code} is already applied!`, 'success');
+      return;
     }
-    setAppliedCouponCode(code);
-    showCouponMsg(`Coupon ${code} applied successfully!`, 'success');
+
+    const matchedCoupon = availableCouponsList.find(c => c.code.toUpperCase() === code.toUpperCase());
+    if (!matchedCoupon) {
+      showCouponMsg(`Coupon "${code}" is not available`, 'error');
+      return;
+    }
+
+    const currentSubtotalRs = currentSubtotalCents / 100;
+    if (matchedCoupon.min_order_value && currentSubtotalRs < matchedCoupon.min_order_value) {
+      const diff = Math.ceil(matchedCoupon.min_order_value - currentSubtotalRs);
+      showCouponMsg(`Add ₹${diff.toLocaleString('en-IN')} more to use ${matchedCoupon.code}`, 'error');
+      return;
+    }
+
+    setAppliedCouponCode(matchedCoupon.code);
+    showCouponMsg(`Coupon ${matchedCoupon.code} applied successfully!`, 'success');
     updateOrderSummary();
   };
 
   window.applyManualCoupon = function() {
+    if (isApplyingCoupon) return;
+
     const input = document.getElementById('cart-manual-coupon-input');
-    if (!input || !input.value.trim()) return;
+    const applyBtn = document.getElementById('cart-apply-coupon-btn');
+    if (!input || !input.value.trim()) {
+      showCouponMsg('Please enter a coupon code', 'error');
+      if (input) input.focus();
+      return;
+    }
+
     const code = input.value.trim().toUpperCase();
-    setAppliedCouponCode(code);
-    input.value = '';
-    showCouponMsg(`Coupon ${code} applied!`, 'success');
-    updateOrderSummary();
+
+    // Prevent duplicate submissions while processing
+    isApplyingCoupon = true;
+    if (applyBtn) {
+      applyBtn.disabled = true;
+      applyBtn.textContent = 'CHECKING...';
+    }
+
+    try {
+      // Validate against the verified available coupons
+      const matchedCoupon = availableCouponsList.find(c => c.code.toUpperCase() === code);
+
+      if (!matchedCoupon) {
+        showCouponMsg(`"${code}" is not a valid coupon code`, 'error');
+        return;
+      }
+
+      // Check min order value requirement
+      const currentSubtotalRs = currentSubtotalCents / 100;
+      if (matchedCoupon.min_order_value && currentSubtotalRs < matchedCoupon.min_order_value) {
+        const diff = Math.ceil(matchedCoupon.min_order_value - currentSubtotalRs);
+        showCouponMsg(`Add ₹${diff.toLocaleString('en-IN')} more to use ${matchedCoupon.code}`, 'error');
+        return;
+      }
+
+      // Check if already applied
+      const currentApplied = getAppliedCouponCode();
+      if (currentApplied && currentApplied.toUpperCase() === matchedCoupon.code) {
+        showCouponMsg(`Coupon ${matchedCoupon.code} is already applied!`, 'success');
+        input.value = '';
+        return;
+      }
+
+      // Legitimate coupon verified: apply it
+      setAppliedCouponCode(matchedCoupon.code);
+      input.value = '';
+      showCouponMsg(`Coupon ${matchedCoupon.code} applied successfully!`, 'success');
+      updateOrderSummary();
+    } finally {
+      isApplyingCoupon = false;
+      if (applyBtn) {
+        applyBtn.disabled = false;
+        applyBtn.textContent = 'APPLY';
+      }
+    }
   };
 
   window.removeAppliedCoupon = function() {
@@ -1389,6 +1459,16 @@
   document.addEventListener('DOMContentLoaded', function() {
     loadAllCoupons();
     updateOrderSummary();
+
+    const input = document.getElementById('cart-manual-coupon-input');
+    if (input) {
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+          e.preventDefault();
+          window.applyManualCoupon();
+        }
+      });
+    }
   });
 })();
 </script>
